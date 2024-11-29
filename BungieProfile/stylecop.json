@@ -1,0 +1,54 @@
+{
+  "Settings": {
+    "Version": "105",
+    "GlobalSettings": {
+      "MergeSettingsFiles": "Yes"
+    },
+    "Analyzers": {
+      "StyleCop.CSharp.OrderingRules": {
+        "Rules": {
+          "UsingDirectivesMustBePlacedWithinNamespace": {
+            "Enabled": true
+          }
+        }
+      },
+      "StyleCop.CSharp.DocumentationRules": {
+        "Rules": {
+          "ElementsMustBeDocumented": {
+            "Enabled": true,
+            "CheckPrivateAndProtected": true
+          }
+        }
+      },
+      "StyleCop.CSharp.MaintainabilityRules": {
+        "Rules": {
+          "ElementsMustBeSeparatedByBlankLine": {
+            "Enabled": true
+          }
+        }
+      },
+      "StyleCop.CSharp.SpacingRules": {
+        "Rules": {
+          "TabsMustNotBeUsed": {
+            "Enabled": true
+          },
+          "CodeMustNotContainTrailingWhitespace": {
+            "Enabled": true
+          },
+          "CodeMustNotContainMultipleWhitespaceInARow": {
+            "Enabled": true
+          },
+          "SingleLineCommentsMustBePrecededByBlankLine": {
+            "Enabled": true
+          }
+        }
+      }
+    },
+    "settings": {
+      "documentationRules": {
+        "companyName": "Max Broome",
+        "copyrightText": "Copyright (c) Max Broome. All rights reserved."
+      }
+    }
+  }
+}
