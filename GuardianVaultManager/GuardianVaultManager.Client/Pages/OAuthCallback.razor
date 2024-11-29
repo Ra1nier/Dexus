@@ -1,0 +1,48 @@
+﻿@page "/oauth-callback"
+@inject NavigationManager Navigation
+@inject HttpClient Http
+
+<h3>Processing Authentication...</h3>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        // Retrieve the query string parameters
+        var uri = Navigation.Uri;
+        var queryParams = new Uri(uri).Query;
+
+        // Extract the authorization code from the URL
+        var authorizationCode = GetQueryParameter(queryParams, "code");
+        var error = GetQueryParameter(queryParams, "error");
+
+        if (!string.IsNullOrEmpty(authorizationCode))
+        {
+            // Send the authorization code to the server for token exchange
+            var response = await Http.GetFromJsonAsync<TokenResponse>($"api/auth/callback?code={authorizationCode}");
+
+            if (response != null && !string.IsNullOrEmpty(response.AccessToken))
+            {
+                // Store the access token in sessionStorage or cookies
+                await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "bungieAccessToken", response.AccessToken);
+
+                // Redirect the user to the main app after successful authentication
+                Navigation.NavigateTo("/dashboard"); // or wherever you want
+            }
+            else
+            {
+                Navigation.NavigateTo("/error");
+            }
+        }
+        else if (!string.IsNullOrEmpty(error))
+        {
+            // Handle any errors that Bungie returned in the URL (e.g., user denied access)
+            Navigation.NavigateTo("/error");
+        }
+    }
+
+    private string GetQueryParameter(string query, string paramName)
+    {
+        var queryDictionary = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(query);
+        return queryDictionary.ContainsKey(paramName) ? queryDictionary[paramName].ToString() : null;
+    }
+}
