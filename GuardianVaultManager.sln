@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GuardianVaultManager", "Gua
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GuardianVaultManager.Client", "GuardianVaultManager\GuardianVaultManager.Client\GuardianVaultManager.Client.csproj", "{FD44C716-940D-4162-8672-CDFCD1A78D88}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BungieProfile", "BungieProfile\BungieProfile.csproj", "{9C7543A1-6589-4E75-9197-E909AF0AA89B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OAuthManger", "BungieProfile\OAuthManger.csproj", "{9C7543A1-6589-4E75-9197-E909AF0AA89B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E0C087D9-5468-4A66-B84F-9AC2C200DED8}"
 	ProjectSection(SolutionItems) = preProject

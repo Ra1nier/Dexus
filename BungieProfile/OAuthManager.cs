@@ -1,5 +1,5 @@
-﻿// <copyright file="BungieProfile.cs" company="PlaceholderCompany">
-// Copyright (c) PlaceholderCompany. All rights reserved.
+﻿// <copyright file="OAuthManager.cs" company="Max Broome">
+// Copyright (c) Max Broome. All rights reserved.
 // </copyright>
 
 namespace BungieProfile;
@@ -9,7 +9,7 @@ using Microsoft.Extensions.Configuration;
 /// <summary>
 /// Contains the needed Bungie access points and tokens in a data class.
 /// </summary>
-public class BungieProfile
+public class OAuthManager
 {
     private readonly string apikey;
     private readonly string clientID;
@@ -19,12 +19,12 @@ public class BungieProfile
     private readonly string redirectURL = "https://partly-notable-buzzard.ngrok-free.app/callback";
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BungieProfile"/> class.
+    /// Initializes a new instance of the <see cref="OAuthManager"/> class.
     /// </summary>
-    public BungieProfile()
+    public OAuthManager()
     {
         // Grab information from user secrets file
-        var bungieSecrets = new ConfigurationBuilder().AddUserSecrets<BungieProfile>();
+        var bungieSecrets = new ConfigurationBuilder().AddUserSecrets<OAuthManager>();
         IConfigurationRoot configuration = bungieSecrets.Build();
         var secrets = configuration.GetSection("BungieAPIKeys");
 
