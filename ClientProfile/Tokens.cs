@@ -1,10 +1,10 @@
-﻿namespace ClientProfile;
+﻿// <copyright file="Tokens.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
+
+namespace ClientProfile;
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 /// <summary>
 /// Object that stores user tokens.
@@ -18,6 +18,17 @@ internal class Tokens
     private string membershipID;
     private string destinyMembershipID;
     private string membershipType = "1";
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Tokens"/> class.
+    /// </summary>
+    public Tokens()
+    {
+        this.accessToken = string.Empty;
+        this.refreshToken = string.Empty;
+        this.membershipID = string.Empty;
+        this.destinyMembershipID = string.Empty;
+    }
 
     /// <summary>
     /// Gets or sets the Access Token for the client.

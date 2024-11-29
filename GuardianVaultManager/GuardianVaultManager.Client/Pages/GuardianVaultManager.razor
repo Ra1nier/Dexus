@@ -1,19 +1,23 @@
-﻿@page "/counter"
+﻿@page "/GuardianVaultManager"
 @rendermode InteractiveAuto
 
-<PageTitle>Counter</PageTitle>
+@using GuardianManagerCore
 
-<h1>Counter</h1>
+<PageTitle>GVM</PageTitle>
 
-<p role="status">Current count: @currentCount</p>
+<h1>Guardian Vault Manager</h1>
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+<p>This will be a great website some day.</p>
 
-@code {
-    private int currentCount = 0;
+@code
+{
+    private Core core;
 
-    private void IncrementCount()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        currentCount++;
+        if (firstRender)
+        {
+            
+        }
     }
 }

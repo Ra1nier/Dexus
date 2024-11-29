@@ -1,11 +1,10 @@
-﻿// <copyright file="Profile.cs" company="Max Broome">
-// Copyright (c) Max Broome. All rights reserved.
+﻿// <copyright file="Profile.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
 namespace ClientProfile;
 
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 /// <summary>
 /// Contains the definition of a Profle created from Bungie.
@@ -80,6 +79,7 @@ public class Profile
         {
             return false;
         }
+
         return true;
     }
 

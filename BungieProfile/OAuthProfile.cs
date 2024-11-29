@@ -1,5 +1,5 @@
-﻿// <copyright file="OAuthProfile.cs" company="Max Broome">
-// Copyright (c) Max Broome. All rights reserved.
+﻿// <copyright file="OAuthProfile.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
 namespace OAuthManager;
@@ -29,9 +29,9 @@ public class OAuthProfile
         var secrets = configuration.GetSection("BungieAPIKeys");
 
         // Store keys from secrets file
-        this.apikey = secrets["API_Key"];
-        this.clientID = secrets["Client_ID"];
-        this.clientSecret = secrets["Client_Secret"];
+        this.apikey = secrets["API_Key"] ?? string.Empty;
+        this.clientID = secrets["Client_ID"] ?? string.Empty;
+        this.clientSecret = secrets["Client_Secret"] ?? string.Empty;
     }
 
     /// <summary>

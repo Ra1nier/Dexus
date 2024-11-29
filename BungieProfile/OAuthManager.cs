@@ -1,5 +1,5 @@
-﻿// <copyright file="OAuthManager.cs" company="Max Broome">
-// Copyright (c) Max Broome. All rights reserved.
+﻿// <copyright file="OAuthManager.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
 namespace OAuthManger;

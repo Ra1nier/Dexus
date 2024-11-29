@@ -1,5 +1,5 @@
-﻿// <copyright file="OAuthServer.cs" company="Max Broome">
-// Copyright (c) Max Broome. All rights reserved.
+﻿// <copyright file="OAuthServer.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
 namespace OAuthManger;
@@ -15,5 +15,4 @@ using System.Threading.Tasks;
 /// </summary>
 public class OAuthServer
 {
-
 }
