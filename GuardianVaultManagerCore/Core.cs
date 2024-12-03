@@ -11,7 +11,6 @@ using ClientProfile;
 /// </summary>
 public class Core
 {
-    private bool authorizationComplete = false;
     private Profile profile;
 
     /// <summary>
@@ -20,6 +19,25 @@ public class Core
     public Core()
     {
         this.profile = new Profile();
+
+        // Create the client profile and assign client OAuth status.
+        if (this.profile.Create()) // FIXME: This might not be the best way to check OAuth completion. Additional checks may be need.
+        {
+            this.OAuthStatus = true;
+        }
+        else
+        {
+            this.OAuthStatus = false;
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether oAuth has been completed.
+    /// </summary>
+    public bool OAuthStatus
+    {
+        get;
+        private set;
     }
 
     /// <summary>
@@ -27,7 +45,7 @@ public class Core
     /// </summary>
     public void StartCoreService()
     {
-        if (this.authorizationComplete)
+        if (!this.OAuthStatus)
         {
         }
     }
