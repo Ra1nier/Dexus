@@ -14,6 +14,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GuardianVaultManagerCore", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientProfile", "ClientProfile\ClientProfile.csproj", "{2150A7B9-B7F5-4A01-8554-A142B4B0CB61}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GuardianVaultManager", "GuardianVaultManager\GuardianVaultManager\GuardianVaultManager.csproj", "{10A591C9-6DAF-423D-AD39-942E8438DB52}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GuardianVaultManager.Client", "GuardianVaultManager\GuardianVaultManager.Client\GuardianVaultManager.Client.csproj", "{8B16B2A3-6EEC-4019-BB57-ED75C533C9C8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +36,14 @@ Global
 		{2150A7B9-B7F5-4A01-8554-A142B4B0CB61}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2150A7B9-B7F5-4A01-8554-A142B4B0CB61}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2150A7B9-B7F5-4A01-8554-A142B4B0CB61}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10A591C9-6DAF-423D-AD39-942E8438DB52}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10A591C9-6DAF-423D-AD39-942E8438DB52}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10A591C9-6DAF-423D-AD39-942E8438DB52}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10A591C9-6DAF-423D-AD39-942E8438DB52}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B16B2A3-6EEC-4019-BB57-ED75C533C9C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B16B2A3-6EEC-4019-BB57-ED75C533C9C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B16B2A3-6EEC-4019-BB57-ED75C533C9C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B16B2A3-6EEC-4019-BB57-ED75C533C9C8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
