@@ -1,13 +1,14 @@
 ﻿@page "/GVM"
-@rendermode InteractiveAuto
 
 @using GuardianVaultManagerCore
 
 <PageTitle>Guardian Vault Manager</PageTitle>
 
-@if (! core.OAuthStatus)
-{
-    <body class="bg-dark">
+<h1>GVM</h1>
+
+<body class="bg-dark">
+    @if (!core.OAuthStatus)
+    {
         <div class="container mt-5">
             <div class="row justify-content-center">
                 <div class="col-md-6">
@@ -21,11 +22,9 @@
                 </div>
             </div>
         </div>
-    </body>
-}
-else
-{
-    <body class="bg-dark">
+    }
+    else
+    {
         <div class="container mt-5">
             <div class="row justify-content-center">
                 <div class="col-md-6">
@@ -38,8 +37,9 @@ else
                 </div>
             </div>
         </div>
-    </body>
-}
+    }
+</body>
+
 
 @code
 {
@@ -55,11 +55,11 @@ else
     //     }
     // }
 
-    // protected override void OnInitialized()
-    // {
-    //     TODO: Implement any logic for the first render
-    //     core.StartCoreService();
-    // }
+    protected override void OnInitialized()
+    {
+        // TODO: Implement any logic for the first render
+        core.StartCoreService();
+    }
 
     private void HandleSignIn()
     {
