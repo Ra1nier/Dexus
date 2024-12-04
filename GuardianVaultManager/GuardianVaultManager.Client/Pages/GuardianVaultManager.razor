@@ -1,23 +1,63 @@
 ﻿@page "/GuardianVaultManager"
 @rendermode InteractiveAuto
 
-@using GuardianManagerCore
+@using GuardianVaultManagerCore
 
-<PageTitle>GVM</PageTitle>
-
-<h1>Guardian Vault Manager</h1>
-
-<p>This will be a great website some day.</p>
+<body class="bg-light">
+    <div class="container mt-5">
+        @if (!core.OAuthStatus)
+        {
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card shadow-lg">
+                        <div class="card-body text-center">
+                            <h1 class="card-title mb-4">Guardian Vault Manager</h1>
+                            <p class="card-text mb-4">Welcome to Guardian Vault Manager. Looks like we can't spy on your vault. Would you mind signing in so that we can harvest your data?</p>
+                            <button class="btn btn-primary" @onclick="HandleSignIn">Sign In</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card shadow-lg">
+                        <div class="card-body text-center">
+                            <h1 class="card-title mb-4">Guardian Vault Manager</h1>
+                            <p class="card-text mb-4">This will be a great website some day.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</body>
 
 @code
 {
     private Core core;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    // protected override async Task OnAfterRenderAsync(bool firstRender)
+    // {
+    //     if (firstRender)
+    //     {
+    //         TODO: Implement any logic for the first render
+    //         core = new();
+    //         core.StartCoreService();
+    //     }
+    // }
+
+    protected override void OnInitialized()
     {
-        if (firstRender)
-        {
-            
-        }
+        // TODO: Implement any logic for the first render
+        core = new();
+        core.StartCoreService();
+    }
+
+    private void HandleSignIn()
+    {
+        // TODO: Implement the sign-in logic
     }
 }

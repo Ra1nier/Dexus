@@ -21,7 +21,7 @@ public class Core
         this.profile = new Profile();
 
         // Create the client profile and assign client OAuth status.
-        if (this.profile.Create()) // FIXME: This might not be the best way to check OAuth completion. Additional checks may be need.
+        if (this.profile.Create())
         {
             this.OAuthStatus = true;
         }
