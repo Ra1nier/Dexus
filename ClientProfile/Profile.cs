@@ -92,7 +92,7 @@ public class Profile
     {
         try
         {
-            this.tokens = JsonSerializer.Deserialize<Tokens>(path) ?? new Tokens(); // Find better solution then just  assigning empty token object,.
+            this.tokens = JsonSerializer.Deserialize<Tokens>(path) ?? new Tokens(); // Find better solution then just assigning empty token object.
         }
         catch (Exception e)
         {
