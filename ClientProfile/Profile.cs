@@ -32,37 +32,37 @@ public class Profile
     /// <summary>
     /// Gets the Access Token for the client.
     /// </summary>
-    public string AccessToken { get => this.tokens.AccessToken; }
+    public string AccessToken { get => this.tokens.AccessToken ?? string.Empty; }
 
     /// <summary>
     /// Gets the Access Token Expire Date for the client.
     /// </summary>
-    public DateTime AccessTokenExpireDate { get => this.tokens.AccessTokenExpireDate; }
+    public int AccessTokenExpireDate { get => this.tokens.ExpiresIn; }
 
     /// <summary>
     /// Gets the Refresh Token for the client.
     /// </summary>
-    public string RefreshToken { get => this.tokens.RefreshToken; }
+    public string RefreshToken { get => this.tokens.RefreshToken ?? string.Empty; }
 
     /// <summary>
     /// Gets the Refresh Token Expire Date for the client.
     /// </summary>
-    public DateTime RefreshTokenExpireDate { get => this.tokens.RefreshTokenExpireDate; }
+    public int RefreshTokenExpireDate { get => this.tokens.RefreshExpiresIn; }
 
     /// <summary>
     /// Gets the Membership ID for the client.
     /// </summary>
-    public string MembershipID { get => this.tokens.MembershipID; }
+    public string MembershipID { get => this.tokens.MembershipId ?? string.Empty; }
 
-    /// <summary>
-    /// Gets the Destiny Membership ID for the client.
-    /// </summary>
-    public string DestinyMembershipID { get => this.tokens.DestinyMembershipID; }
+    ///// <summary>
+    ///// Gets the Destiny Membership ID for the client.
+    ///// </summary>
+    // public string DestinyMembershipID { get => this.tokens.DestinyMembershipID; }
 
-    /// <summary>
-    /// Gets the Membership Type for the client.
-    /// </summary>
-    public string MembershipType { get => this.tokens.MembershipType; }
+    ///// <summary>
+    ///// Gets the Membership Type for the client.
+    ///// </summary>
+    // public string MembershipType { get => this.tokens.MembershipType; }
 
     /// <summary>
     /// Creates a new Client Profile containing the nessisary keys for the user.

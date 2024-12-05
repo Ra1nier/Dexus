@@ -5,63 +5,46 @@
 namespace ClientProfile;
 
 using System;
+using System.Text.Json.Serialization;
 
 /// <summary>
 /// Object that stores user tokens.
 /// </summary>
 internal class Tokens
 {
-    private string accessToken;
-    private DateTime accessTokenExpireDate;
-    private string refreshToken;
-    private DateTime refreshTokenExpireDate;
-    private string membershipID;
-    private string destinyMembershipID;
-    private string membershipType = "1";
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="Tokens"/> class.
-    /// </summary>
-    public Tokens()
-    {
-        this.accessToken = string.Empty;
-        this.refreshToken = string.Empty;
-        this.membershipID = string.Empty;
-        this.destinyMembershipID = string.Empty;
-    }
-
     /// <summary>
     /// Gets or sets the Access Token for the client.
     /// </summary>
-    public string AccessToken { get => this.accessToken; set => this.accessToken = value; }
+    [JsonPropertyName("access_token")]
+    public string? AccessToken { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Token Type for the client.
+    /// </summary>
+    [JsonPropertyName("token_type")]
+    public string? TokenType { get; set; }
 
     /// <summary>
     /// Gets or sets the Access Token Expire Date for the client.
     /// </summary>
-    public DateTime AccessTokenExpireDate { get => this.accessTokenExpireDate; set => this.accessTokenExpireDate = value; }
+    [JsonPropertyName("expires_in")]
+    public int ExpiresIn { get; set; }
 
     /// <summary>
     /// Gets or sets the Refresh Token for the client.
     /// </summary>
-    public string RefreshToken { get => this.refreshToken; set => this.refreshToken = value; }
+    [JsonPropertyName("refresh_token")]
+    public string? RefreshToken { get; set; }
 
     /// <summary>
     /// Gets or sets the Refresh Token Expire Date for the client.
     /// </summary>
-    public DateTime RefreshTokenExpireDate { get => this.refreshTokenExpireDate; set => this.refreshTokenExpireDate = value; }
+    [JsonPropertyName("refresh_expires_in")]
+    public int RefreshExpiresIn { get; set; }
 
     /// <summary>
     /// Gets or sets the Membership ID for the client.
     /// </summary>
-    public string MembershipID { get => this.membershipID; set => this.membershipID = value; }
-
-    /// <summary>
-    /// Gets or sets the Destiny Membership ID for the client.
-    /// </summary>
-    public string DestinyMembershipID { get => this.destinyMembershipID; set => this.destinyMembershipID = value; }
-
-    /// <summary>
-    /// Gets or sets the Membership Type for the client.
-    /// </summary>
-    public string MembershipType { get => this.membershipType; set => this.membershipType = value; }
+    [JsonPropertyName("membership_id")]
+    public string? MembershipId { get; set; }
 }
