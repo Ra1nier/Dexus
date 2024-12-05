@@ -2,9 +2,8 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-namespace OAuthManger;
+namespace OAuthService;
 
-using global::OAuthManager;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +16,7 @@ using System.Text;
 public class OAuthManager
 {
     private HttpRequestMessage request;
+    private HttpRequestMessage requestToken;
     private OAuthProfile profile;
 
     /// <summary>
@@ -29,12 +29,13 @@ public class OAuthManager
 
         // Generate OAuth URL
         this.request = new HttpRequestMessage(HttpMethod.Get, this.profile.Authorization_URL);
+        this.requestToken = new HttpRequestMessage(HttpMethod.Get, this.profile.Token_Endpoint);
     }
 
     /// <summary>
     /// Starts the OAuth Procces.
     /// </summary>
-    /// <returns>A task representing the asynchronous operation, containing a boolean indicating success.</returns>
+    /// <returns>A task representing the asynchronous operation, containing a authorization code or Error if the request failed.</returns>
     public async Task<string> SendOAuthRequestAsync()
     {
         // Add query parameters
@@ -42,7 +43,7 @@ public class OAuthManager
         {
             { "client_id", this.profile.Client_ID },
             { "response_type", "code" },
-            { "redirect_uri", this.profile.Redirect_URL },
+            { "state", this.profile.State },
         };
 
         var uriBuilder = new UriBuilder(this.profile.Authorization_URL)
@@ -72,10 +73,62 @@ public class OAuthManager
                 return "Error";
             }
         }
-        catch (Exception ex)
+        catch (Exception e)
         {
             // Log or handle the exception
-            Console.WriteLine($"Error sending OAuth request: {ex.Message}");
+            Console.WriteLine($"Error sending OAuth request: {e.Message}");
+            return "Error";
+        }
+    }
+
+    /// <summary>
+    /// Exchanges the provided Authorization code for a token from bungie.
+    /// </summary>
+    /// <param name="authroizationCode">Code used to send the exchange request.</param>
+    /// <returns>A task representing the asynchronous operation, containing a token indicating success.</returns>
+    public async Task<string> ExchangeForTokenAsync(string authroizationCode)
+    {
+        // Add query parameters
+        var queryParameters = new Dictionary<string, string>
+        {
+            { "grant_type", "authorization_code" },
+            { "code", authroizationCode },
+            { "client_id", this.profile.Client_ID },
+            { "client_secret", this.profile.Client_Secret },
+            { "client_secret", this.profile.Client_Secret },
+        };
+
+        var uriBuilder = new UriBuilder(this.profile.Token_Endpoint)
+        {
+            Query = string.Join("&", queryParameters.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}")),
+        };
+
+        using var client = new HttpClient();
+        this.requestToken.RequestUri = uriBuilder.Uri;
+
+        try
+        {
+            var response = await client.SendAsync(this.request);
+            if (response.IsSuccessStatusCode)
+            {
+                string jsonResponse = await response.Content.ReadAsStringAsync();
+
+                Console.WriteLine($"Token Retreived Successfully: {response.StatusCode}");
+                Console.WriteLine($"Token Retreived: {jsonResponse}");
+
+                return jsonResponse;
+            }
+            else
+            {
+                Console.WriteLine($"Token Retreive failed: {response.StatusCode}");
+
+                return "Error";
+            }
+        }
+        catch (Exception e)
+        {
+            // Log or handle the exception
+            Console.WriteLine($"Error sending token retreive request: {e.Message}");
             return "Error";
         }
     }

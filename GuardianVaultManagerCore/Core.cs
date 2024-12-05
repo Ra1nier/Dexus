@@ -5,6 +5,7 @@
 namespace GuardianVaultManagerCore;
 
 using ClientProfile;
+using OAuthService;
 
 /// <summary>
 /// Wraps the model of GuardianVaultManager in a single core application manager.
@@ -32,7 +33,7 @@ public class Core
     }
 
     /// <summary>
-    /// Gets a value indicating whether oAuth has been completed.
+    /// Gets a value indicating whether OAuth has been completed.
     /// </summary>
     public bool OAuthStatus
     {
@@ -45,8 +46,27 @@ public class Core
     /// </summary>
     public void StartCoreService()
     {
-        if (!this.OAuthStatus)
+    }
+
+    /// <summary>
+    /// Handles signing in the user to bungie to reterive nessissary data.
+    /// </summary>
+    public async void StartSignIn()
+    {
+        OAuthServer oauth = new OAuthServer();
+
+        string tokens = await oauth.StartOAuthProcessAsync();
+
+        if (this.profile.StoreUserTokens(tokens))
         {
+            if (this.profile.Create())
+            {
+                this.OAuthStatus = true;
+            }
+            else
+            {
+                throw new Exception("Profile could not be created after tokens were retrived.");
+            }
         }
     }
 }

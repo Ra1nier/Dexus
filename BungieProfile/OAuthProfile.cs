@@ -2,7 +2,7 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-namespace OAuthManager;
+namespace OAuthService;
 
 using Microsoft.Extensions.Configuration;
 
@@ -14,6 +14,7 @@ public class OAuthProfile
     private readonly string apikey;
     private readonly string clientID;
     private readonly string clientSecret;
+    private readonly string state;
     private readonly string authorizationURL = "https://www.bungie.net/en/OAuth/Authorize";
     private readonly string tokenEndpoint = "https://www.bungie.net/Platform/App/OAuth/Token/";
     private readonly string redirectURL = "https://partly-notable-buzzard.ngrok-free.app/callback";
@@ -32,6 +33,7 @@ public class OAuthProfile
         this.apikey = secrets["API_Key"] ?? string.Empty;
         this.clientID = secrets["Client_ID"] ?? string.Empty;
         this.clientSecret = secrets["Client_Secret"] ?? string.Empty;
+        this.state = secrets["State"] ?? string.Empty;
     }
 
     /// <summary>
@@ -48,6 +50,11 @@ public class OAuthProfile
     /// Gets the Client Secret key for GuardianVaultManger given by Bungie.
     /// </summary>
     public string Client_Secret => this.clientSecret;
+
+    /// <summary>
+    /// Gets the Application State Code. Used to prevent Cross site forgery.
+    /// </summary>
+    public string State => this.clientSecret;
 
     /// <summary>
     /// Gets the Authorization URL for Bungie.

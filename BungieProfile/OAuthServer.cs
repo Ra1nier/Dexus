@@ -2,15 +2,9 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-namespace OAuthManger;
+namespace OAuthService;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime;
-using System.Text;
 using System.Threading.Tasks;
-using global::OAuthManager;
 
 /// <summary>
 /// Wraps all OAuth functionality into a servlet.
@@ -32,9 +26,42 @@ public class OAuthServer
     /// <summary>
     /// Starts the OAuth process.
     /// </summary>
-    /// <returns>A task representing the asynchronous operation, returning true if successful.</returns>
-    public async Task<bool> StartOAuthProcessAsync()
+    /// <returns>A task representing the asynchronous operation, returning json conatining tokens if successful.</returns>
+    public async Task<string> StartOAuthProcessAsync()
     {
+        string authorizationCode;
+
         string response = await this.oauthManager.SendOAuthRequestAsync();
+        if (response.Contains("Error"))
+        {
+            return "Error";
+        }
+        else
+        {
+            authorizationCode = this.ExtractAuthorizationCode(response);
+        }
+
+        string tokens = await this.oauthManager.ExchangeForTokenAsync(authorizationCode);
+
+        if (tokens.Contains("access_token"))
+        {
+            return tokens;
+        }
+        else
+        {
+            return "Error";
+        }
+    }
+
+    private string ExtractAuthorizationCode(string json)
+    {
+        if (json.Contains("code="))
+        {
+            return json.Split("code=")[1].Split("&")[0];
+        }
+        else
+        {
+            throw new InvalidDataException("Json does not contain code.");
+        }
     }
 }

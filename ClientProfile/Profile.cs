@@ -84,6 +84,29 @@ public class Profile
     }
 
     /// <summary>
+    /// Stores the current tokens in te profile object into the file.
+    /// </summary>
+    /// <param name="path">Path to the user tokens file.</param>
+    /// <exception cref="IOException">Thrown if the file containing the user tokens could not be created.</exception>
+    /// <returns>True of tokens were stored.</returns>
+    public bool StoreUserTokens(string path)
+    {
+        try
+        {
+            string userTokensJSON = JsonSerializer.Serialize<Tokens>(this.tokens);
+
+            File.WriteAllText(path, userTokensJSON);
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            return false;
+            throw new IOException($"Could not write tokens to user tokens file: {e.Message}");
+        }
+    }
+
+    /// <summary>
     /// Loads the user tokens stored in the file.
     /// </summary>
     /// <param name="path">Path to the user tokens file.</param>
@@ -97,25 +120,6 @@ public class Profile
         catch (Exception e)
         {
             throw new IOException($"Could not load tokens from the specified user tokens file: {e.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Stores the current tokens in te profile object into the file.
-    /// </summary>
-    /// <param name="path">Path to the user tokens file.</param>
-    /// <exception cref="IOException">Thrown if the file containing the user tokens could not be created.</exception>
-    private void StoreUserTokens(string path)
-    {
-        try
-        {
-            string userTokensJSON = JsonSerializer.Serialize<Tokens>(this.tokens);
-
-            File.WriteAllText(path, userTokensJSON);
-        }
-        catch (Exception e)
-        {
-            throw new IOException($"Could not write tokens to user tokens file: {e.Message}");
         }
     }
 }

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35521.163
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OAuthManger", "BungieProfile\OAuthManger.csproj", "{9C7543A1-6589-4E75-9197-E909AF0AA89B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OAuthService", "BungieProfile\OAuthService.csproj", "{9C7543A1-6589-4E75-9197-E909AF0AA89B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E0C087D9-5468-4A66-B84F-9AC2C200DED8}"
 	ProjectSection(SolutionItems) = preProject
