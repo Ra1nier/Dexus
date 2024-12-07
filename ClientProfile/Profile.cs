@@ -14,7 +14,7 @@ public class Profile
     /// <summary>
     /// Path to store files related to user tokens.
     /// </summary>
-    private readonly string userTokenFileLocation = "/data/UserTokens.json";
+    private readonly string userTokenFileLocation = "C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\ClientProfile\\data\\UserTokens.json";
 
     /// <summary>
     /// Stores all user tokens.
@@ -86,16 +86,36 @@ public class Profile
     /// <summary>
     /// Stores the current tokens in te profile object into the file.
     /// </summary>
-    /// <param name="path">Path to the user tokens file.</param>
     /// <exception cref="IOException">Thrown if the file containing the user tokens could not be created.</exception>
     /// <returns>True of tokens were stored.</returns>
-    public bool StoreUserTokens(string path)
+    public bool StoreUserTokens()
     {
         try
         {
             string userTokensJSON = JsonSerializer.Serialize<Tokens>(this.tokens);
 
-            File.WriteAllText(path, userTokensJSON);
+            File.WriteAllText(this.userTokenFileLocation, userTokensJSON);
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            return false;
+            throw new IOException($"Could not write tokens to user tokens file: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Stores the current tokens in the profile object into the file.
+    /// </summary>
+    /// <param name="json">Json text to write file to.</param>
+    /// <returns>Thrown if the file containing the user tokens could not be created.</returns>
+    /// <exception cref="IOException">The file could not be written to.</exception>
+    public bool StoreUserTokens(string json)
+    {
+        try
+        {
+            File.WriteAllText(this.userTokenFileLocation, json);
 
             return true;
         }
@@ -115,7 +135,9 @@ public class Profile
     {
         try
         {
-            this.tokens = JsonSerializer.Deserialize<Tokens>(path) ?? new Tokens(); // Find better solution then just assigning empty token object.
+            string json = File.ReadAllText(path);
+
+            this.tokens = JsonSerializer.Deserialize<Tokens>(json) ?? new Tokens(); // Find better solution then just assigning empty token object.
         }
         catch (Exception e)
         {

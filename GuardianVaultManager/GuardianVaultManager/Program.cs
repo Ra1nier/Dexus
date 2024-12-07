@@ -1,4 +1,3 @@
-using GuardianVaultManager.Client.Pages;
 using GuardianVaultManager.Components;
 
 var builder = WebApplication.CreateBuilder(args);

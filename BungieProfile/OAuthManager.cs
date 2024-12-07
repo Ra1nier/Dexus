@@ -6,6 +6,7 @@ namespace OAuthService;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 /// <summary>
@@ -27,11 +28,11 @@ public class OAuthManager
 
         // Generate OAuth URL
         this.request = new HttpRequestMessage(HttpMethod.Get, this.profile.Authorization_URL);
-        this.requestToken = new HttpRequestMessage(HttpMethod.Get, this.profile.Token_Endpoint);
+        this.requestToken = new HttpRequestMessage(HttpMethod.Post, this.profile.Token_Endpoint);
     }
 
     /// <summary>
-    /// Starts the OAuth Process.
+    /// Starts the OAuth Process. DEPRECIATED -- LIKELY TO BE REMOVED.
     /// </summary>
     /// <returns>A task representing the asynchronous operation, containing a authorization code or Error if the request failed.</returns>
     public async Task<string> SendOAuthRequestAsync()
@@ -73,39 +74,44 @@ public class OAuthManager
     /// <returns>A task representing the asynchronous operation, containing a token indicating success.</returns>
     public async Task<string> ExchangeForTokenAsync(string authorizationCode)
     {
-        // Add query parameters
-        var queryParameters = new Dictionary<string, string>
+        // Add form parameters for the POST body
+        var formData = new Dictionary<string, string>
         {
             { "grant_type", "authorization_code" },
             { "code", authorizationCode },
             { "client_id", this.profile.Client_ID },
             { "client_secret", this.profile.Client_Secret },
-            { "client_secret", this.profile.Client_Secret },
         };
 
-        var uriBuilder = new UriBuilder(this.profile.Token_Endpoint)
-        {
-            Query = string.Join("&", queryParameters.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}")),
-        };
+        // Create a FormUrlEncodedContent with the parameters
+        var content = new FormUrlEncodedContent(formData);
 
         using var client = new HttpClient();
-        this.requestToken.RequestUri = uriBuilder.Uri;
+        this.requestToken.Method = HttpMethod.Post; // Ensure the method is POST
+        this.requestToken.Content = content; // Attach the form data as the request body
 
         try
         {
-            var response = await client.SendAsync(this.request);
+            // Log the request body for debugging purposes
+            var contentString = await content.ReadAsStringAsync();
+            Debug.WriteLine($"Request Body: {contentString}");
+
+            var response = await client.SendAsync(this.requestToken);
             if (response.IsSuccessStatusCode)
             {
                 string jsonResponse = await response.Content.ReadAsStringAsync();
 
-                Console.WriteLine($"Token Retrieved Successfully: {response.StatusCode}");
-                Console.WriteLine($"Token Retrieved: {jsonResponse}");
+                Debug.WriteLine($"Token Retrieved Successfully: {response.StatusCode}");
+                Debug.WriteLine($"Token Retrieved: {jsonResponse}");
 
                 return jsonResponse;
             }
             else
             {
-                Console.WriteLine($"Token Retrieve failed: {response.StatusCode}");
+                // Log the response for debugging purposes
+                string errorResponse = await response.Content.ReadAsStringAsync();
+                Debug.WriteLine($"Token Retrieve failed: {response.StatusCode}");
+                Debug.WriteLine($"Error Response: {errorResponse}");
 
                 return "Error";
             }
@@ -113,8 +119,7 @@ public class OAuthManager
         catch (Exception e)
         {
             // Log or handle the exception
-            Console.WriteLine($"Error sending token retrieve request: {e.Message}");
-            return "Error";
+            throw new HttpRequestException($"Unable to exchange code for token: {e.Message}");
         }
     }
 }

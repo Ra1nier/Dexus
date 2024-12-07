@@ -60,9 +60,11 @@ public class Core
     /// <summary>
     /// Handles signing in the user to bungie to retrieve necessary data.
     /// </summary>
-    public async void StartSignIn()
+    /// <param name="code">Authorization code.</param>
+    /// <exception cref="Exception">If the Exchange could not take place.</exception>
+    public async void StartOAuth(string code)
     {
-        string tokens = await this.oauth.StartOAuthProcessAsync(this.oauthProfile);
+        string tokens = await this.oauth.StartOAuthProcessAsync(this.oauthProfile, code);
 
         if (this.profile.StoreUserTokens(tokens))
         {
@@ -72,7 +74,7 @@ public class Core
             }
             else
             {
-                throw new Exception("Profile could not be created after tokens were retrieved.");
+                throw new Exception("Profile could not be created after tokens were retrieved:");
             }
         }
     }
