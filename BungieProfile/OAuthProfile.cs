@@ -70,4 +70,27 @@ public class OAuthProfile
     /// Gets the Redirect URL for Bungie.
     /// </summary>
     public string Redirect_URL => this.redirectURL;
+
+    /// <summary>
+    /// Constructs a Authorization URL from the OAuthProfile.
+    /// </summary>
+    /// <returns>The Authorization URI.</returns>
+    public Uri ConstructAuthorizationURL()
+    {
+        // Add query parameters
+        var queryParameters = new Dictionary<string, string>
+        {
+            { "client_id", this.Client_ID },
+            { "response_type", "code" },
+            { "state", this.State },
+        };
+
+        // Build URI
+        var uriBuilder = new UriBuilder(this.Authorization_URL)
+        {
+            Query = string.Join("&", queryParameters.Select(kvp => $"{kvp.Key}={Uri.EscapeDataString(kvp.Value)}")),
+        };
+
+        return uriBuilder.Uri;
+    }
 }

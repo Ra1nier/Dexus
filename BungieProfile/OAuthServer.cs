@@ -11,24 +11,19 @@ using System.Threading.Tasks;
 /// </summary>
 public class OAuthServer
 {
-    private OAuthProfile profile;
-    private OAuthManager oauthManager;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="OAuthServer"/> class.
-    /// </summary>
-    public OAuthServer()
-    {
-        this.profile = new ();
-        this.oauthManager = new OAuthManager(this.profile);
-    }
+    private OAuthProfile? profile;
+    private OAuthManager? oauthManager;
 
     /// <summary>
     /// Starts the OAuth process.
     /// </summary>
-    /// <returns>A task representing the asynchronous operation, returning json conatining tokens if successful.</returns>
-    public async Task<string> StartOAuthProcessAsync()
+    /// <param name="profileToUse">OAuthProfile to use for initializing the OAuth Process.</param>
+    /// <returns>A <see cref="Task{TResult}"/>A task representing the asynchronous operation, returning json containing tokens if successful.</returns>
+    public async Task<string> StartOAuthProcessAsync(OAuthProfile profileToUse)
     {
+        this.profile = profileToUse;
+        this.oauthManager = new OAuthManager(this.profile);
+
         string authorizationCode;
 
         string response = await this.oauthManager.SendOAuthRequestAsync();
@@ -53,6 +48,12 @@ public class OAuthServer
         }
     }
 
+    /// <summary>
+    /// Extracts the OAuth Code from the given json string.
+    /// </summary>
+    /// <param name="json">JSON to extract code from.</param>
+    /// <returns>The OAuthCode.</returns>
+    /// <exception cref="InvalidDataException">If the JSON does not contain a valid OAuthCode.</exception>
     private string ExtractAuthorizationCode(string json)
     {
         if (json.Contains("code="))

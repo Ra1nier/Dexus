@@ -12,7 +12,9 @@ using OAuthService;
 /// </summary>
 public class Core
 {
+    private OAuthProfile oauthProfile;
     private Profile profile;
+    private OAuthServer oauth;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Core"/> class.
@@ -20,6 +22,8 @@ public class Core
     public Core()
     {
         this.profile = new Profile();
+        this.oauthProfile = new OAuthProfile();
+        this.oauth = new OAuthServer();
 
         // Create the client profile and assign client OAuth status.
         if (this.profile.Create())
@@ -42,6 +46,11 @@ public class Core
     }
 
     /// <summary>
+    /// Gets the OAuthProfile used in the server.
+    /// </summary>
+    public OAuthProfile OAuthProfile => this.oauthProfile;
+
+    /// <summary>
     /// Starts the GuardianVaultManagerCore.
     /// </summary>
     public void StartCoreService()
@@ -49,13 +58,11 @@ public class Core
     }
 
     /// <summary>
-    /// Handles signing in the user to bungie to reterive nessissary data.
+    /// Handles signing in the user to bungie to retrieve necessary data.
     /// </summary>
     public async void StartSignIn()
     {
-        OAuthServer oauth = new OAuthServer();
-
-        string tokens = await oauth.StartOAuthProcessAsync();
+        string tokens = await this.oauth.StartOAuthProcessAsync(this.oauthProfile);
 
         if (this.profile.StoreUserTokens(tokens))
         {
@@ -65,7 +72,7 @@ public class Core
             }
             else
             {
-                throw new Exception("Profile could not be created after tokens were retrived.");
+                throw new Exception("Profile could not be created after tokens were retrieved.");
             }
         }
     }
