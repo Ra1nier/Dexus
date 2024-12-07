@@ -2,22 +2,30 @@
 
 @using Microsoft.AspNetCore.WebUtilities
 @using GuardianVaultManager.Client.Pages;
+@using System.Diagnostics
 
 @inject NavigationManager Navigation
 
 <h3>Processing your sign-in...</h3>
 
 @code {
+    private bool _oauthCalled = false;
+
     protected override void OnInitialized()
     {
+        if (_oauthCalled) // Prevent further calls to StartOAuth FIXME: Find a better way
+            return;
+        else
+            _oauthCalled = true;
+
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var queryParams = QueryHelpers.ParseQuery(uri.Query);
 
         if (queryParams.TryGetValue("code", out var code))
         {
+            Debug.WriteLine("CallBack..............................");
             // Redirect to GVM with code
             GVM.core.StartOAuth(code);
-            // Navigation.NavigateTo($"/GVM", true);
         }
         else
         {
@@ -25,3 +33,4 @@
         }
     }
 }
+

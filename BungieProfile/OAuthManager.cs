@@ -87,8 +87,8 @@ public class OAuthManager
         var content = new FormUrlEncodedContent(formData);
 
         using var client = new HttpClient();
-        this.requestToken.Method = HttpMethod.Post; // Ensure the method is POST
-        this.requestToken.Content = content; // Attach the form data as the request body
+        this.requestToken.Method = HttpMethod.Post;
+        this.requestToken.Content = content;
 
         try
         {

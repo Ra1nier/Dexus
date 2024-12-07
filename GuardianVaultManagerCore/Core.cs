@@ -6,6 +6,7 @@ namespace GuardianVaultManagerCore;
 
 using ClientProfile;
 using OAuthService;
+using System.Diagnostics;
 
 /// <summary>
 /// Wraps the model of GuardianVaultManager in a single core application manager.
@@ -64,17 +65,26 @@ public class Core
     /// <exception cref="Exception">If the Exchange could not take place.</exception>
     public async void StartOAuth(string code)
     {
+        Debug.WriteLine("Starting OAuth");
         string tokens = await this.oauth.StartOAuthProcessAsync(this.oauthProfile, code);
 
-        if (this.profile.StoreUserTokens(tokens))
+        Debug.WriteLine("Creating profile");
+        if (tokens != "Error")
         {
-            if (this.profile.Create())
+            if (this.profile.StoreUserTokens(tokens))
             {
-                this.OAuthStatus = true;
+                if (this.profile.Create())
+                {
+                    this.OAuthStatus = true;
+                }
+                else
+                {
+                    throw new Exception("Profile could not be created after tokens were retrieved.");
+                }
             }
             else
             {
-                throw new Exception("Profile could not be created after tokens were retrieved:");
+                throw new Exception("Tokens were retrieved but could not be stored.");
             }
         }
     }
