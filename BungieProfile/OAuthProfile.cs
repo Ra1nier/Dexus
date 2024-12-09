@@ -17,7 +17,7 @@ public class OAuthProfile
     private readonly string state;
     private readonly string authorizationURL = "https://www.bungie.net/en/OAuth/Authorize";
     private readonly string tokenEndpoint = "https://www.bungie.net/Platform/App/OAuth/Token/";
-    private readonly string redirectURL = "https://partly-notable-buzzard.ngrok-free.app/callback";
+    private readonly string redirectURL = "https://partly-notable-buzzard.ngrok-free.app/callback"; // FIXME: No longer correct.
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OAuthProfile"/> class.

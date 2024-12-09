@@ -14,7 +14,7 @@ public class Profile
     /// <summary>
     /// Path to store files related to user tokens.
     /// </summary>
-    private readonly string userTokenFileLocation = "C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\ClientProfile\\data\\UserTokens.json";
+    private readonly string userTokenFileLocation = "C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\ClientProfile\\data\\UserTokens.json"; // FIXME: Obviously cant be hard coded like this.
 
     /// <summary>
     /// Stores all user tokens.

@@ -13,10 +13,10 @@
 
     protected override void OnInitialized()
     {
-        if (_oauthCalled) // Prevent further calls to StartOAuth FIXME: Find a better way
+        if (_oauthCalled) // Prevent further calls to StartOAuth
             return;
-        else
-            _oauthCalled = true;
+
+        _oauthCalled = true;
 
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var queryParams = QueryHelpers.ParseQuery(uri.Query);
@@ -24,8 +24,14 @@
         if (queryParams.TryGetValue("code", out var code))
         {
             Debug.WriteLine("CallBack..............................");
-            // Redirect to GVM with code
             GVM.core.StartOAuth(code);
+
+            // Use Task.Run with a delay to perform navigation asynchronously
+            Task.Run(async () =>
+            {
+                await Task.Delay(1000); // Tiny delay to allow rendering to complete
+                Navigation.NavigateTo("/GVM");
+            });
         }
         else
         {
@@ -33,4 +39,3 @@
         }
     }
 }
-

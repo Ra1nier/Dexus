@@ -48,9 +48,10 @@
 
 @code
 {
+    /// <summary>
+    /// Core of GuardianVaultManger.
+    /// </summary>
     public static Core core = new Core();
-
-    private string acode;
 
     protected override void OnInitialized()
     {
@@ -66,10 +67,11 @@
             Console.WriteLine($"Error in OnInitialized: {ex.Message}");
             throw;
         }
-
-  
     }
 
+    /// <summary>
+    /// Calls the core service to handle bungie OAuth Sign in
+    /// </summary>
     private void HandleSignIn()
     {
         Debug.WriteLine("Sign In Started");
