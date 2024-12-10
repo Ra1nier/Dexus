@@ -8,6 +8,7 @@
 
 
   <ItemGroup>
+    <ProjectReference Include="..\..\GuardianVaultManagerCore\GuardianVaultManagerCore.csproj" />
     <ProjectReference Include="..\GuardianVaultManager.Client\GuardianVaultManager.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.*" />
   </ItemGroup>

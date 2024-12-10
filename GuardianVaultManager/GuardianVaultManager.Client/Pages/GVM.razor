@@ -1,0 +1,92 @@
+﻿@page "/GVM"
+@rendermode InteractiveServer
+
+@using GuardianVaultManagerCore
+@using System.Diagnostics
+@using Microsoft.AspNetCore.WebUtilities
+
+@inject NavigationManager Navigation
+
+<PageTitle>Guardian Vault Manager</PageTitle>
+
+@if (!core.OAuthStatus)
+{
+    <MudContainer Class="d-flex flex-column align-items-center justify-content-center min-vh-100 bg-dark">
+        <MudCard Class="text-center" Elevation="10" Style="max-width: 400px;">
+            <MudCardContent>
+                <MudText Typo="Typo.h5" GutterBottom>Guardian Vault Manager</MudText>
+                <MudText Typo="Typo.body1" Class="mb-4">
+                    Welcome to Guardian Vault Manager. Looks like we can't spy on your vault. Would you mind signing in so that we can harvest your data?
+                </MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="HandleSignIn">Sign In to Bungie.com</MudButton>
+            </MudCardContent>
+        </MudCard>
+    </MudContainer>
+}
+else
+{
+    <MudContainer Class="mt-16 px-8">
+        <MudGrid GutterSize="GutterSize.Small">
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">Guardian Info 1</MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">Guardian Info 2</MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="12" md="4">
+                <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">Vault Info</MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudGrid GutterSize="GutterSize.Small">
+                    <MudItem xs="12">
+                        <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">Detailed View 1</MudPaper>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">Detailed View 2</MudPaper>
+                    </MudItem>
+                </MudGrid>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudPaper Elevation="2" Class="pa-4" Style="height: 100%;">Additional Info</MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">Statistics</MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">Progress</MudPaper>
+            </MudItem>
+            <MudItem xs="12" sm="12" md="4">
+                <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">Summary</MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
+}
+
+@code {
+    public static Core core = new Core();
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            Console.WriteLine("OnInitialized started.");
+            core.StartCoreService();
+            Console.WriteLine("OnInitialized completed successfully.");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error in OnInitialized: {e.Message}");
+            throw;
+        }
+    }
+
+    private void HandleSignIn()
+    {
+        Debug.WriteLine("Sign In Started");
+
+        if (!core.OAuthStatus)
+        {
+            Navigation.NavigateTo(core.OAuthProfile.ConstructAuthorizationURL().ToString(), true);
+        }
+    }
+}
