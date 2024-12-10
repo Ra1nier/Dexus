@@ -20,6 +20,16 @@
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var queryParams = QueryHelpers.ParseQuery(uri.Query);
 
+        if (queryParams.TryGetValue("state", out var state))
+        {
+            if (GVM.core.OAuthProfile.State != state)
+                throw new HttpRequestException("Bungie did not return the correct state");
+        }
+        else
+        {
+            throw new HttpRequestException("Bungie did not return a state value");
+        }
+
         if (queryParams.TryGetValue("code", out var code))
         {
             Debug.WriteLine("CallBack..............................");
