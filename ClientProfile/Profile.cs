@@ -4,6 +4,7 @@
 
 namespace ClientProfile;
 
+using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
 
 /// <summary>
@@ -54,15 +55,13 @@ public class Profile
     /// </summary>
     public string MembershipID { get => this.tokens.MembershipId ?? string.Empty; }
 
-    ///// <summary>
-    ///// Gets the Destiny Membership ID for the client.
-    ///// </summary>
-    // public string DestinyMembershipID { get => this.tokens.DestinyMembershipID; }
-
-    ///// <summary>
-    ///// Gets the Membership Type for the client.
-    ///// </summary>
-    // public string MembershipType { get => this.tokens.MembershipType; }
+    /// <summary>
+    /// Gets the Membership Type for the client.
+    /// </summary>
+    public string MembershipType
+    {
+        get => "1";
+    }
 
     /// <summary>
     /// Creates a new Client Profile containing the nessisary keys for the user.
