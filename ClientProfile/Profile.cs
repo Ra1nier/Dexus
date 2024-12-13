@@ -16,6 +16,7 @@ public class Profile
     /// Path to store files related to user tokens.
     /// </summary>
     private readonly string userTokenFileLocation = "C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\ClientProfile\\data\\UserTokens.json"; // FIXME: Obviously cant be hard coded like this.
+    private readonly string destinyMembershipIDFileLocation = "C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\ClientProfile\\data\\DestinyMembershipID.txt"; // FIXME: Obviously cant be hard coded like this and should probably be in JSON.
 
     /// <summary>
     /// Stores all user tokens.
@@ -57,9 +58,9 @@ public class Profile
     public string MembershipID { get => this.tokens.MembershipId ?? string.Empty; }
 
     /// <summary>
-    /// Gets or Sets the Destiny Membership ID for the client.
+    /// Gets the Destiny Membership ID for the client.
     /// </summary>
-    public string DestinyMembershipID { get; set; }
+    public string DestinyMembershipID { get; private set; }
 
     /// <summary>
     /// Gets the Membership Type for the client.
@@ -79,6 +80,7 @@ public class Profile
         try
         {
             this.LoadUserTokens(this.userTokenFileLocation);
+            this.LoadDestinyID(this.destinyMembershipIDFileLocation);
         }
         catch (Exception)
         {
@@ -114,13 +116,16 @@ public class Profile
     /// Stores the current tokens in the profile object into the file.
     /// </summary>
     /// <param name="json">Json text to write file to.</param>
+    /// <param name="destinyMembershipID">Destiny ID retrieved from Bungie.</param>
     /// <returns>Thrown if the file containing the user tokens could not be created.</returns>
     /// <exception cref="IOException">The file could not be written to.</exception>
-    public bool StoreUserTokens(string json)
+    public bool StoreUserTokens(string json, string destinyMembershipID)
     {
         try
         {
             File.WriteAllText(this.userTokenFileLocation, json);
+
+            File.WriteAllText(this.destinyMembershipIDFileLocation, destinyMembershipID);
 
             return true;
         }
@@ -134,15 +139,32 @@ public class Profile
     /// <summary>
     /// Loads the user tokens stored in the file.
     /// </summary>
-    /// <param name="path">Path to the user tokens file.</param>
+    /// <param name="tokenPath">Path to the user tokens file.</param>
     /// <exception cref="IOException">Thrown if the tokens could not be loaded from the file.</exception>
-    private void LoadUserTokens(string path)
+    private void LoadUserTokens(string tokenPath)
     {
         try
         {
-            string json = File.ReadAllText(path);
+            string json = File.ReadAllText(tokenPath);
 
             this.tokens = JsonSerializer.Deserialize<Tokens>(json) ?? new Tokens(); // Find better solution then just assigning empty token object.
+        }
+        catch (Exception e)
+        {
+            throw new IOException($"Could not load tokens from the specified user tokens file: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Loads the user tokens stored in the file.
+    /// </summary>
+    /// <param name="destinyIDPath">Path to the user tokens file.</param>
+    /// <exception cref="IOException">Thrown if the tokens could not be loaded from the file.</exception>
+    private void LoadDestinyID(string destinyIDPath)
+    {
+        try
+        {
+            this.DestinyMembershipID = File.ReadAllText(destinyIDPath);
         }
         catch (Exception e)
         {
