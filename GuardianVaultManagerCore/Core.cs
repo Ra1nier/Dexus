@@ -6,6 +6,7 @@ namespace GuardianVaultManagerCore;
 
 using ClientProfile;
 using OAuthService;
+using RequestManager;
 using System.Diagnostics;
 
 /// <summary>
@@ -16,6 +17,7 @@ public class Core
     private OAuthProfile oauthProfile;
     private Profile profile;
     private OAuthServer oauth;
+    private RequestServer request;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Core"/> class.
@@ -25,6 +27,7 @@ public class Core
         this.profile = new Profile();
         this.oauthProfile = new OAuthProfile();
         this.oauth = new OAuthServer();
+        this.request = new RequestServer(this.profile, this.oauthProfile);
 
         // Create the client profile and assign client OAuth status.
         if (this.profile.Create())
@@ -56,6 +59,7 @@ public class Core
     /// </summary>
     public void StartCoreService()
     {
+
     }
 
     /// <summary>
@@ -67,11 +71,12 @@ public class Core
     {
         Debug.WriteLine("Starting OAuth");
         string tokens = await this.oauth.StartOAuthProcessAsync(this.oauthProfile, code);
+        string destinyID = await this.request.PlatformDestiny2_Request_MembershipIDAsync();
 
         Debug.WriteLine("Creating profile");
         if (tokens != "Error")
         {
-            if (this.profile.StoreUserTokens(tokens))
+            if (this.profile.StoreUserTokens(tokens, destinyID))
             {
                 if (this.profile.Create())
                 {

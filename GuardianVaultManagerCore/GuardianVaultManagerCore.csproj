@@ -26,6 +26,7 @@
   <ItemGroup>
     <ProjectReference Include="..\BungieProfile\OAuthService.csproj" />
     <ProjectReference Include="..\ClientProfile\ClientProfile.csproj" />
+    <ProjectReference Include="..\RequestManager\RequestManager.csproj" />
   </ItemGroup>
 
 </Project>
