@@ -28,6 +28,7 @@ public class Profile
     public Profile()
     {
         this.tokens = new Tokens();
+        this.DestinyMembershipID = "-1";
     }
 
     /// <summary>
@@ -54,6 +55,11 @@ public class Profile
     /// Gets the Membership ID for the client.
     /// </summary>
     public string MembershipID { get => this.tokens.MembershipId ?? string.Empty; }
+
+    /// <summary>
+    /// Gets or Sets the Destiny Membership ID for the client.
+    /// </summary>
+    public string DestinyMembershipID { get; set; }
 
     /// <summary>
     /// Gets the Membership Type for the client.
