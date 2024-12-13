@@ -116,15 +116,33 @@ public class Profile
     /// Stores the current tokens in the profile object into the file.
     /// </summary>
     /// <param name="json">Json text to write file to.</param>
-    /// <param name="destinyMembershipID">Destiny ID retrieved from Bungie.</param>
     /// <returns>Thrown if the file containing the user tokens could not be created.</returns>
     /// <exception cref="IOException">The file could not be written to.</exception>
-    public bool StoreUserTokens(string json, string destinyMembershipID)
+    public bool StoreUserTokens(string json)
     {
         try
         {
             File.WriteAllText(this.userTokenFileLocation, json);
 
+            return true;
+        }
+        catch (Exception e)
+        {
+            return false;
+            throw new IOException($"Could not write tokens to user tokens file: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Stores the DestinyMembershipID into the file.
+    /// </summary>
+    /// <param name="destinyMembershipID">Destiny ID retrieved from Bungie.</param>
+    /// <returns>Thrown if the file containing the user tokens could not be created.</returns>
+    /// <exception cref="IOException">The file could not be written to.</exception>
+    public bool StoreDestinyMembershipID(string destinyMembershipID)
+    {
+        try
+        {
             File.WriteAllText(this.destinyMembershipIDFileLocation, destinyMembershipID);
 
             return true;
