@@ -59,7 +59,6 @@ public class Core
     /// </summary>
     public void StartCoreService()
     {
-
     }
 
     /// <summary>
@@ -69,27 +68,35 @@ public class Core
     /// <exception cref="Exception">If the Exchange could not take place.</exception>
     public async void StartOAuth(string code)
     {
-        Debug.WriteLine("Starting OAuth");
-        string tokens = await this.oauth.StartOAuthProcessAsync(this.oauthProfile, code);
-        string destinyID = await this.request.PlatformDestiny2_Request_MembershipIDAsync();
+        bool tokensStored = false;
+        bool destinyIDStored = false;
 
-        Debug.WriteLine("Creating profile");
+        Debug.WriteLine("Starting OAuth");
+
+        // Get Tokens
+        string tokens = await this.oauth.StartOAuthProcessAsync(this.oauthProfile, code);
         if (tokens != "Error")
         {
-            if (this.profile.StoreUserTokens(tokens, destinyID))
+            tokensStored = this.profile.StoreUserTokens(tokens);
+        }
+
+        // Get DestinyMembershipID
+        string destinyID = await this.request.PlatformDestiny2_Request_MembershipIDAsync();
+        if (destinyID != "Error")
+        {
+            destinyIDStored = this.profile.StoreDestinyMembershipID(destinyID);
+        }
+
+        // Create Profile
+        if (tokensStored && destinyIDStored)
+        {
+            if (this.profile.Create())
             {
-                if (this.profile.Create())
-                {
-                    this.OAuthStatus = true;
-                }
-                else
-                {
-                    throw new Exception("Profile could not be created after tokens were retrieved.");
-                }
+                this.OAuthStatus = true;
             }
             else
             {
-                throw new Exception("Tokens were retrieved but could not be stored.");
+                Debug.WriteLine("Client Profile could not be created.");
             }
         }
     }
