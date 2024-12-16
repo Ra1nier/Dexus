@@ -5,6 +5,7 @@
 namespace GuardianVaultManagerCore;
 
 using ClientProfile;
+using Microsoft.Extensions.Logging;
 using OAuthService;
 using RequestManager;
 using System.Diagnostics;
@@ -19,6 +20,8 @@ public class Core
     private OAuthServer oauth;
     private RequestServer request;
 
+    private ILogger logger;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="Core"/> class.
     /// </summary>
@@ -28,6 +31,12 @@ public class Core
         this.oauthProfile = new OAuthProfile();
         this.oauth = new OAuthServer();
         this.request = new RequestServer(this.profile, this.oauthProfile);
+
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.SetMinimumLevel(LogLevel.Trace);
+        });
+        this.logger = loggerFactory.CreateLogger<Core>();
 
         // Create the client profile and assign client OAuth status.
         if (this.profile.Create())
@@ -71,13 +80,30 @@ public class Core
         bool tokensStored = false;
         bool destinyIDStored = false;
 
-        Debug.WriteLine("Starting OAuth");
+        this.logger.LogDebug("Starting OAuth");
 
         // Get Tokens
         string tokens = await this.oauth.StartOAuthProcessAsync(this.oauthProfile, code);
         if (tokens != "Error")
         {
             tokensStored = this.profile.StoreUserTokens(tokens);
+        }
+
+        // Create Profile
+        if (tokensStored)
+        {
+            if (this.profile.Create())
+            {
+                this.OAuthStatus = true;
+            }
+            else
+            {
+                this.logger.LogWarning("Client Profile could not be created. Functionality will be extremely limited.");
+            }
+        }
+        else
+        {
+            this.logger.LogWarning("Bungie Tokens could not be retrieved from Bungie. Functionality will be extremely limited.");
         }
 
         // Get DestinyMembershipID
@@ -88,16 +114,27 @@ public class Core
         }
 
         // Create Profile
-        if (tokensStored && destinyIDStored)
+        if (destinyIDStored)
         {
-            if (this.profile.Create())
+            if (this.profile.LoadDestinyID())
             {
                 this.OAuthStatus = true;
             }
             else
             {
-                Debug.WriteLine("Client Profile could not be created.");
+                this.OAuthStatus = false;
+
+                this.logger.LogWarning("Destiny ID could not be loaded into the profile. DestinyMembershipID failed to initialize");
             }
+        }
+        else
+        {
+            this.logger.LogWarning("Destiny ID could not be recovered. Functionality will be limited.");
+        }
+
+        if (tokensStored && destinyIDStored)
+        {
+            this.logger.LogDebug("Profile has been created.");
         }
     }
 }
