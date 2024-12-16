@@ -77,7 +77,7 @@ public class RequestServer
         }
         catch (Exception e)
         {
-            this.logger.LogError("REQUEST FAILED: Destiny Membership ID");
+            this.logger.LogError($"REQUEST FAILED: Destiny Membership ID, {e}");
             return "Error";
         }
     }

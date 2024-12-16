@@ -4,6 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\BungieProfile\OAuthService.csproj" />
     <ProjectReference Include="..\ClientProfile\ClientProfile.csproj" />
+    <ProjectReference Include="..\OAuthService\OAuthService.csproj" />
   </ItemGroup>
 
 </Project>
