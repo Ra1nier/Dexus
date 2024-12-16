@@ -42,6 +42,8 @@ public class OAuthManager
     /// <returns>A task representing the asynchronous operation, containing a authorization code or Error if the request failed.</returns>
     public async Task<string> SendOAuthRequestAsync()
     {
+        this.logger.LogDebug("Retrieving Authorization code from Bungie.");
+
         using var client = new HttpClient();
         this.request.RequestUri = this.profile.ConstructAuthorizationURL();
 
@@ -79,6 +81,8 @@ public class OAuthManager
     /// <returns>A task representing the asynchronous operation, containing a token indicating success.</returns>
     public async Task<string> ExchangeForTokenAsync(string authorizationCode)
     {
+        this.logger.LogDebug("Exchanging Authorization code for tokens.");
+
         // Add form parameters for the POST body
         var formData = new Dictionary<string, string>
         {
