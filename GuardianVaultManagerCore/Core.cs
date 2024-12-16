@@ -27,14 +27,19 @@ public class Core
     /// </summary>
     public Core()
     {
+        // Create local instances of libraries
         this.profile = new Profile();
         this.oauthProfile = new OAuthProfile();
         this.oauth = new OAuthServer();
         this.request = new RequestServer(this.profile, this.oauthProfile);
 
+        // Create logger
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            builder.SetMinimumLevel(LogLevel.Trace);
+            builder
+                .SetMinimumLevel(LogLevel.Trace)
+                .AddConsole()
+                .AddDebug();
         });
         this.logger = loggerFactory.CreateLogger<Core>();
 
@@ -59,7 +64,7 @@ public class Core
     }
 
     /// <summary>
-    /// Gets the OAuthProfile used in the server.
+    /// Gets the OAuthProfile used in the core.
     /// </summary>
     public OAuthProfile OAuthProfile => this.oauthProfile;
 
@@ -82,7 +87,7 @@ public class Core
 
         this.logger.LogDebug("Starting OAuth");
 
-        // Get Tokens
+        // Get Tokens from Bungie
         string tokens = await this.oauth.StartOAuthProcessAsync(this.oauthProfile, code);
         if (tokens != "Error")
         {
@@ -101,10 +106,6 @@ public class Core
                 this.logger.LogWarning("Client Profile could not be created. Functionality will be extremely limited.");
             }
         }
-        else
-        {
-            this.logger.LogWarning("Bungie Tokens could not be retrieved from Bungie. Functionality will be extremely limited.");
-        }
 
         // Get DestinyMembershipID
         string destinyID = await this.request.PlatformDestiny2_Request_MembershipIDAsync();
@@ -113,7 +114,7 @@ public class Core
             destinyIDStored = this.profile.StoreDestinyMembershipID(destinyID);
         }
 
-        // Create Profile
+        // Load the Destiny ID into the profile
         if (destinyIDStored)
         {
             if (this.profile.LoadDestinyID())
@@ -127,14 +128,16 @@ public class Core
                 this.logger.LogWarning("Destiny ID could not be loaded into the profile. DestinyMembershipID failed to initialize");
             }
         }
-        else
-        {
-            this.logger.LogWarning("Destiny ID could not be recovered. Functionality will be limited.");
-        }
 
         if (tokensStored && destinyIDStored)
         {
             this.logger.LogDebug("Profile has been created.");
+        }
+        else
+        {
+            string reason = tokensStored ? "Tokens could not be loaded." : "Destiny ID could not be loaded";
+
+            this.logger.LogError($"Profile failed to initialize. {reason}");
         }
     }
 }
