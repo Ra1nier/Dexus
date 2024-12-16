@@ -6,6 +6,7 @@
 @using Microsoft.AspNetCore.WebUtilities
 
 @inject NavigationManager Navigation
+@inject ILogger<GVM> Logger;
 
 <PageTitle>Guardian Vault Manager</PageTitle>
 
@@ -63,26 +64,27 @@ else
 }
 
 @code {
+
     public static Core core = new Core();
 
     protected override void OnInitialized()
     {
         try
         {
-            Console.WriteLine("OnInitialized started.");
             core.StartCoreService();
-            Console.WriteLine("OnInitialized completed successfully.");
+
+            Logger.LogDebug("Core started.");
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Error in OnInitialized: {e.Message}");
+            Logger.LogCritical($"Error in OnInitialized. Core could not be started: {e.Message}. (Warning: As of now these messages might be thrown in error. \"CALLBACK ISSUE: Callback starting multiple instances of Sign in process.\")");
             throw;
         }
     }
 
     private void HandleSignIn()
     {
-        Debug.WriteLine("Sign In Started");
+        Logger.LogDebug("Sign In Started");
 
         if (!core.OAuthStatus)
         {
