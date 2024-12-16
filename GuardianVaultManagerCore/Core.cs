@@ -135,9 +135,9 @@ public class Core
         }
         else
         {
-            string reason = tokensStored ? "Tokens could not be loaded." : "Destiny ID could not be loaded";
+            string reason = tokensStored ? "Destiny ID could not be loaded" : "Tokens could not be loaded.";
 
-            this.logger.LogError($"Profile failed to initialize. {reason}");
+            this.logger.LogError($"Profile failed to initialize. {reason} (WARNING: This error may be thrown incorrectly or multiple times due to Callback starting the sign in process multiple times)");
         }
     }
 }

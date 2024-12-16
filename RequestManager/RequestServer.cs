@@ -8,7 +8,7 @@ using ClientProfile;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using OAuthService;
-using System.Diagnostics;
+using System.Text.Json;
 
 /// <summary>
 /// Handles requests to bungie and returning the result to the application.
@@ -37,28 +37,22 @@ public class RequestServer
     }
 
     /// <summary>
-    /// Sends a request to Bungie for the users MembershipID.
+    /// Sends a request to Bungie for the user's MembershipID.
     /// </summary>
-    /// <returns>The membershipID.</returns>
-    public async Task<string> PlatformDestiny2_Request_MembershipIDAsync() // FIXME: This is not working
+    /// <returns>The membershipID or an error message.</returns>
+    public async Task<string> PlatformDestiny2_Request_MembershipIDAsync()
     {
         this.logger.LogInformation("REQUEST: Destiny Membership ID");
 
-        // Construct Http request
+        // Construct HTTP request
         string requestURI = $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.MembershipID}/LinkedProfiles/?getAllMemberships=false";
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
 
-        // Construct Request Headers
-        var formData = new Dictionary<string, string>
-        {
-            { "Authorization", $"Bearer {this.profile.AccessToken}" },
-            { "X-API-Key",  this.auth.API_Key },
-        };
+        // Add headers
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Add("X-API-Key", this.auth.API_Key);
 
-        var requestContent = new FormUrlEncodedContent(formData);
-        request.Content = requestContent;
-
-        // Send Request
+        // Send request
         try
         {
             HttpResponseMessage response = await this.client.SendAsync(request);
@@ -66,30 +60,48 @@ public class RequestServer
             if (response.IsSuccessStatusCode)
             {
                 string jsonResponse = await response.Content.ReadAsStringAsync();
+                this.logger.LogDebug($"Successful JSON Response: {jsonResponse}");
                 return this.ParseResponse(jsonResponse, "membershipId");
             }
             else
             {
                 string errorResponse = await response.Content.ReadAsStringAsync();
-
+                this.logger.LogError($"Error Response: {errorResponse}");
                 return "Error";
             }
         }
         catch (Exception e)
         {
-            this.logger.LogError($"REQUEST FAILED: Destiny Membership ID, {e}");
+            this.logger.LogError($"REQUEST FAILED: Destiny Membership ID, {e.Message}");
             return "Error";
         }
     }
 
     /// <summary>
-    /// Parses the given JSON for the Key contained in it.
+    /// Parses the given JSON for the key contained in it.
     /// </summary>
-    /// <param name="response">JSON String to parse.</param>
-    /// <param name="key">Value Key to parse.</param>
+    /// <param name="response">JSON string to parse.</param>
+    /// <param name="key">Value key to parse.</param>
     /// <returns>The parsed value.</returns>
     private string ParseResponse(string response, string key)
     {
-        return JObject.Parse(response)[key].ToString();
+        try
+        {
+            using JsonDocument document = JsonDocument.Parse(response);
+            if (document.RootElement.TryGetProperty(key, out JsonElement value))
+            {
+                return value.GetString() ?? string.Empty;
+            }
+            else
+            {
+                throw new KeyNotFoundException($"Key '{key}' not found in the JSON response.");
+            }
+        }
+        catch (JsonException e)
+        {
+            this.logger.LogError($"JSON Parsing Error: {e.Message}");
+            throw;
+        }
     }
+
 }
