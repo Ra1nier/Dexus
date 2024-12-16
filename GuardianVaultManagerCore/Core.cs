@@ -27,12 +27,6 @@ public class Core
     /// </summary>
     public Core()
     {
-        // Create local instances of libraries
-        this.profile = new Profile();
-        this.oauthProfile = new OAuthProfile();
-        this.oauth = new OAuthServer();
-        this.request = new RequestServer(this.profile, this.oauthProfile);
-
         // Create logger
         using var loggerFactory = LoggerFactory.Create(builder =>
         {
@@ -42,6 +36,12 @@ public class Core
                 .AddDebug();
         });
         this.logger = loggerFactory.CreateLogger<Core>();
+
+        // Create local instances of libraries
+        this.profile = new Profile();
+        this.oauthProfile = new OAuthProfile();
+        this.oauth = new OAuthServer(this.logger);
+        this.request = new RequestServer(this.profile, this.oauthProfile, this.logger);
 
         // Create the client profile and assign client OAuth status.
         if (this.profile.Create())
@@ -131,7 +131,7 @@ public class Core
 
         if (tokensStored && destinyIDStored)
         {
-            this.logger.LogDebug("Profile has been created.");
+            this.logger.LogDebug("Profile has been successfully created.");
         }
         else
         {

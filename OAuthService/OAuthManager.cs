@@ -4,6 +4,7 @@
 
 namespace OAuthService;
 
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -18,13 +19,17 @@ public class OAuthManager
     private HttpRequestMessage requestToken;
     private OAuthProfile profile;
 
+    private ILogger logger;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="OAuthManager"/> class.
     /// </summary>
     /// <param name="profile">OAuthProfile used to start the OAuthProcess.</param>
-    public OAuthManager(OAuthProfile profile)
+    /// <param name="logger">Logging service..</param>
+    public OAuthManager(OAuthProfile profile, ILogger logger)
     {
         this.profile = profile;
+        this.logger = logger;
 
         // Generate OAuth URL
         this.request = new HttpRequestMessage(HttpMethod.Get, this.profile.Authorization_URL);
@@ -47,14 +52,14 @@ public class OAuthManager
             {
                 string jsonResponse = await response.Content.ReadAsStringAsync();
 
-                Console.WriteLine($"OAuth request Accepted: {response.StatusCode}");
-                Console.WriteLine($"OAuth request: {jsonResponse}");
+                this.logger.LogTrace($"OAuth request Accepted: {response.StatusCode}");
+                this.logger.LogTrace($"OAuth request: {jsonResponse}");
 
                 return jsonResponse;
             }
             else
             {
-                Console.WriteLine($"OAuth request failed: {response.StatusCode}");
+                this.logger.LogError($"Authorization code was not retrieved: {response.StatusCode}");
 
                 return "Error";
             }
@@ -62,7 +67,7 @@ public class OAuthManager
         catch (Exception e)
         {
             // Log or handle the exception
-            Console.WriteLine($"Error sending OAuth request: {e.Message}");
+            this.logger.LogError($"Error sending OAuth request for Authorization code: {e.Message}");
             return "Error";
         }
     }
@@ -94,15 +99,14 @@ public class OAuthManager
         {
             // Log the request body for debugging purposes
             var contentString = await content.ReadAsStringAsync();
-            Debug.WriteLine($"Request Body: {contentString}");
 
             var response = await client.SendAsync(this.requestToken);
             if (response.IsSuccessStatusCode)
             {
                 string jsonResponse = await response.Content.ReadAsStringAsync();
 
-                Debug.WriteLine($"Token Retrieved Successfully: {response.StatusCode}");
-                Debug.WriteLine($"Token Retrieved: {jsonResponse}");
+                this.logger.LogTrace($"Token Retrieved Successfully: {response.StatusCode}");
+                this.logger.LogTrace($"Token Retrieved: {jsonResponse}");
 
                 return jsonResponse;
             }
@@ -110,16 +114,15 @@ public class OAuthManager
             {
                 // Log the response for debugging purposes
                 string errorResponse = await response.Content.ReadAsStringAsync();
-                Debug.WriteLine($"Token Retrieve failed: {response.StatusCode}");
-                Debug.WriteLine($"Error Response: {errorResponse}");
+                this.logger.LogError($"Token Retrieval failed: {response.StatusCode}, {errorResponse}");
 
                 return "Error";
             }
         }
         catch (Exception e)
         {
-            // Log or handle the exception
-            throw new HttpRequestException($"Unable to exchange code for token: {e.Message}");
+            this.logger.LogError($"Error sending OAuth request for Authorization code: {e.Message}");
+            return "Error";
         }
     }
 }
