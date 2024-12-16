@@ -71,7 +71,7 @@ public class Profile
     }
 
     /// <summary>
-    /// Creates a new Client Profile containing the nessisary keys for the user.
+    /// Creates a new Client Profile containing the necessary keys for the user.
     /// </summary>
     /// <returns>True if the operation was completed successfully.</returns>
     /// <exception cref="Exception">Thrown if the profile fails to create. Will not stop the program.</exception>
@@ -80,6 +80,23 @@ public class Profile
         try
         {
             this.LoadUserTokens(this.userTokenFileLocation);
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Loads the Destiny Membership ID from file.
+    /// </summary>
+    /// <returns>True if the operation completed successfully, False otherwise.</returns>
+    public bool LoadDestinyID()
+    {
+        try
+        {
             this.LoadDestinyID(this.destinyMembershipIDFileLocation);
         }
         catch (Exception)
