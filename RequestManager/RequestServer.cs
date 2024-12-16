@@ -61,7 +61,30 @@ public class RequestServer
             {
                 string jsonResponse = await response.Content.ReadAsStringAsync();
                 this.logger.LogDebug($"Successful JSON Response: {jsonResponse}");
-                return this.ParseResponse(jsonResponse, "membershipId");
+
+                // Parse the JSON response
+                using JsonDocument document = JsonDocument.Parse(jsonResponse);
+
+                // Navigate to the "profilesWithErrors" array
+                var profilesWithErrors = document.RootElement
+                    .GetProperty("Response")
+                    .GetProperty("profilesWithErrors");
+
+                string id = "Error";
+
+                // Loop through the array to find the target membershipId
+                foreach (var profile in profilesWithErrors.EnumerateArray())
+                {
+                    if (profile.TryGetProperty("infoCard", out JsonElement infoCard))
+                    {
+                        if (infoCard.TryGetProperty("membershipId", out JsonElement value))
+                        {
+                            id = value.GetString() ?? "Error"; // Return the matching membershipId
+                        }
+                    }
+                }
+
+                return id;
             }
             else
             {
@@ -103,5 +126,4 @@ public class RequestServer
             throw;
         }
     }
-
 }
