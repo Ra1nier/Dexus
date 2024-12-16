@@ -43,14 +43,12 @@ public class Core
         this.oauth = new OAuthServer(this.logger);
         this.request = new RequestServer(this.profile, this.oauthProfile, this.logger);
 
+        this.OAuthStatus = false;
+
         // Create the client profile and assign client OAuth status.
         if (this.profile.Create())
         {
             this.OAuthStatus = true;
-        }
-        else
-        {
-            this.OAuthStatus = false;
         }
     }
 
@@ -97,12 +95,9 @@ public class Core
         // Create Profile
         if (tokensStored)
         {
-            if (this.profile.Create())
+            if (!this.profile.Create())
             {
-                this.OAuthStatus = true;
-            }
-            else
-            {
+                tokensStored = false;
                 this.logger.LogWarning("Client Profile could not be created. Functionality will be extremely limited.");
             }
         }
@@ -117,14 +112,9 @@ public class Core
         // Load the Destiny ID into the profile
         if (destinyIDStored)
         {
-            if (this.profile.LoadDestinyID())
+            if (!this.profile.LoadDestinyID())
             {
-                this.OAuthStatus = true;
-            }
-            else
-            {
-                this.OAuthStatus = false;
-
+                destinyIDStored = false;
                 this.logger.LogWarning("Destiny ID could not be loaded into the profile. DestinyMembershipID failed to initialize");
             }
         }
@@ -132,12 +122,13 @@ public class Core
         if (tokensStored && destinyIDStored)
         {
             this.logger.LogDebug("Profile has been successfully created.");
+            this.OAuthStatus = true;
         }
         else
         {
             string reason = tokensStored ? "Destiny ID could not be loaded" : "Tokens could not be loaded.";
 
-            this.logger.LogError($"Profile failed to initialize. {reason} (WARNING: This error may be thrown incorrectly or multiple times due to Callback starting the sign in process multiple times)");
+            this.logger.LogError($"Profile failed to initialize. {reason}");
         }
     }
 }
