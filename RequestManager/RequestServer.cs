@@ -60,7 +60,6 @@ public class RequestServer
             if (response.IsSuccessStatusCode)
             {
                 string jsonResponse = await response.Content.ReadAsStringAsync();
-                this.logger.LogDebug($"Successful JSON Response: {jsonResponse}");
 
                 // Parse the JSON response
                 using JsonDocument document = JsonDocument.Parse(jsonResponse);
@@ -84,6 +83,7 @@ public class RequestServer
                     }
                 }
 
+                this.logger.LogDebug($"Successful JSON Response: DestinyMembershipID = {id}");
                 return id;
             }
             else
@@ -97,33 +97,6 @@ public class RequestServer
         {
             this.logger.LogError($"REQUEST FAILED: Destiny Membership ID, {e.Message}");
             return "Error";
-        }
-    }
-
-    /// <summary>
-    /// Parses the given JSON for the key contained in it.
-    /// </summary>
-    /// <param name="response">JSON string to parse.</param>
-    /// <param name="key">Value key to parse.</param>
-    /// <returns>The parsed value.</returns>
-    private string ParseResponse(string response, string key)
-    {
-        try
-        {
-            using JsonDocument document = JsonDocument.Parse(response);
-            if (document.RootElement.TryGetProperty(key, out JsonElement value))
-            {
-                return value.GetString() ?? string.Empty;
-            }
-            else
-            {
-                throw new KeyNotFoundException($"Key '{key}' not found in the JSON response.");
-            }
-        }
-        catch (JsonException e)
-        {
-            this.logger.LogError($"JSON Parsing Error: {e.Message}");
-            throw;
         }
     }
 }
