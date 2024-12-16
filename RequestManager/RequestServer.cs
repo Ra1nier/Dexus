@@ -5,6 +5,7 @@
 namespace RequestManager;
 
 using ClientProfile;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using OAuthService;
 using System.Diagnostics;
@@ -18,27 +19,34 @@ public class RequestServer
     private Profile profile;
     private OAuthProfile auth;
 
+    // Logger
+    private ILogger logger;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="RequestServer"/> class.
     /// </summary>
     /// <param name="profile">Client Profile.</param>
     /// <param name="auth">OAuth Profile.</param>
-    public RequestServer(Profile profile, OAuthProfile auth)
+    /// <param name="logger">logging service.</param>
+    public RequestServer(Profile profile, OAuthProfile auth, ILogger logger)
     {
         this.client = new HttpClient();
         this.profile = profile;
         this.auth = auth;
+        this.logger = logger;
     }
 
     /// <summary>
     /// Sends a request to Bungie for the users MembershipID.
     /// </summary>
     /// <returns>The membershipID.</returns>
-    public async Task<string> PlatformDestiny2_Request_MembershipIDAsync()
+    public async Task<string> PlatformDestiny2_Request_MembershipIDAsync() // FIXME: This is not working
     {
+        this.logger.LogInformation("REQUEST: Destiny Membership ID");
+
         // Construct Http request
         string requestURI = $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.MembershipID}/LinkedProfiles/?getAllMemberships=false";
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, requestURI);
+        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
 
         // Construct Request Headers
         var formData = new Dictionary<string, string>
@@ -69,7 +77,7 @@ public class RequestServer
         }
         catch (Exception e)
         {
-            Debug.WriteLine($"Exception occurred: {e.Message}");
+            this.logger.LogError("REQUEST FAILED: Destiny Membership ID");
             return "Error";
         }
     }
