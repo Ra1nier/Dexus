@@ -4,53 +4,74 @@
 @using System.Diagnostics
 
 @inject NavigationManager Navigation
+@inject ILogger<Callback> Logger;
 
 <style>
-    .loader {
-        width: 32px;
-        height: 16px;
-        display: flex;
+    /* Center the container */
+    .center-container {
+    display: flex;
+    flex-direction: column; /* Stack elements vertically */
+    align-items: center; /* Horizontally center */
+    justify-content: center; /* Vertically center */
+    height: 100vh; /* Full viewport height */
+    text-align: center; /* Center text */
     }
 
-        .loader:before,
-        .loader:after {
-            content: "";
-            flex: 1;
-            background: #3FB8AF;
-            transform-origin: top right;
-            animation: l10-1 2s infinite;
-        }
+    /* Loader styles */
+    .loader {
+    width: 32px;
+    height: 16px;
+    display: flex;
+    margin-top: 20px; /* Space between text and loader */
+    }
 
-        .loader:after {
-            background: #FF3D7F;
-            transform-origin: top left;
-            animation-delay: .25s;
-        }
+    .loader:before,
+    .loader:after {
+    content: "";
+    flex: 1;
+    background: #3FB8AF;
+    transform-origin: top right;
+    animation: l10-1 2s infinite;
+    }
+
+    .loader:after {
+    background: #FF3D7F;
+    transform-origin: top left;
+    animation-delay: .25s;
+    }
 
     @@keyframes l10-1 {
-        0%, 5% {
-            transform: rotate(0)
-        }
+    0%, 5%
 
-        20%, 30% {
-            transform: rotate(90deg)
-        }
+    {
+    transform: rotate(0);
+    }
 
-        45%, 55% {
-            transform: rotate(180deg)
-        }
+    20%, 30% {
+    transform: rotate(90deg);
+    }
 
-        70%, 80% {
-            transform: rotate(270deg)
-        }
+    45%, 55% {
+    transform: rotate(180deg);
+    }
 
-        95%, 100% {
-            transform: rotate(360deg)
-        }
+    70%, 80% {
+    transform: rotate(270deg);
+    }
+
+    95%, 100% {
+    transform: rotate(360deg);
+    }
+
     }
 </style>
 
-<h3>Processing your sign-in...       <div class="loader"></div></h3> <!--FIXME: Does not appear in the right place-->
+<!-- Centered container -->
+<div class="center-container">
+    <h3>Processing your sign-in...</h3>
+    <div class="loader"></div>
+</div>
+
 @code {
     private bool _oauthCalled = false;
 
@@ -66,16 +87,16 @@
             if (queryParams.TryGetValue("state", out var state))
             {
                 if (GVM.core.OAuthProfile.State != state)
-                    throw new HttpRequestException("Bungie did not return the correct state");
+                    throw new HttpRequestException("Bungie did not return the correct state"); // TODO: Don't throw error, instead alert user of the error.
             }
             else
             {
-                throw new HttpRequestException("Bungie did not return a state value");
+                throw new HttpRequestException("Bungie did not return a state value"); // TODO: Don't throw error, instead alert user of the error.
             }
 
             if (queryParams.TryGetValue("code", out var code))
             {
-                Debug.WriteLine("CallBack..............................");
+                Logger.LogDebug("Code retrieved. Starting Sign In");
                 GVM.core.StartOAuth(code);
 
                 // Use Task.Run with a delay to perform navigation asynchronously
@@ -84,9 +105,8 @@
             }
             else
             {
-                Console.WriteLine("No authorization code found in the query string.");
+                Logger.LogError("Code was not retrieved from Bungie.");
             }
         }
     }
 }
-
