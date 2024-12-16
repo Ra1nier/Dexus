@@ -28,71 +28,65 @@
         }
 
     @@keyframes l10-1 {
-        0%,5%
+        0%, 5% {
+            transform: rotate(0)
+        }
 
-    {
-        transform: rotate(0)
-    }
+        20%, 30% {
+            transform: rotate(90deg)
+        }
 
-    20%, 30% {
-        transform: rotate(90deg)
-    }
+        45%, 55% {
+            transform: rotate(180deg)
+        }
 
-    45%, 55% {
-        transform: rotate(180deg)
-    }
+        70%, 80% {
+            transform: rotate(270deg)
+        }
 
-    70%, 80% {
-        transform: rotate(270deg)
-    }
-
-    95%, 100% {
-        transform: rotate(360deg)
-    }
-
+        95%, 100% {
+            transform: rotate(360deg)
+        }
     }
 </style>
 
 <h3>Processing your sign-in...       <div class="loader"></div></h3> <!--FIXME: Does not appear in the right place-->
-
 @code {
     private bool _oauthCalled = false;
 
-    protected override void OnInitialized()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_oauthCalled) // Prevent further calls to StartOAuth
-            return;
-
-        _oauthCalled = true;
-
-        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-        var queryParams = QueryHelpers.ParseQuery(uri.Query);
-
-        if (queryParams.TryGetValue("state", out var state))
+        if (firstRender && !_oauthCalled)
         {
-            if (GVM.core.OAuthProfile.State != state)
-                throw new HttpRequestException("Bungie did not return the correct state");
-        }
-        else
-        {
-            throw new HttpRequestException("Bungie did not return a state value");
-        }
+            _oauthCalled = true; // Ensure this logic runs only once
 
-        if (queryParams.TryGetValue("code", out var code))
-        {
-            Debug.WriteLine("CallBack..............................");
-            GVM.core.StartOAuth(code);
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+            var queryParams = QueryHelpers.ParseQuery(uri.Query);
 
-            // Use Task.Run with a delay to perform navigation asynchronously
-            Task.Run(async () =>
+            if (queryParams.TryGetValue("state", out var state))
             {
+                if (GVM.core.OAuthProfile.State != state)
+                    throw new HttpRequestException("Bungie did not return the correct state");
+            }
+            else
+            {
+                throw new HttpRequestException("Bungie did not return a state value");
+            }
+
+            if (queryParams.TryGetValue("code", out var code))
+            {
+                Debug.WriteLine("CallBack..............................");
+                GVM.core.StartOAuth(code);
+
+                // Use Task.Run with a delay to perform navigation asynchronously
                 await Task.Delay(1000); // Tiny delay to allow rendering to complete
                 Navigation.NavigateTo("/GVM");
-            });
-        }
-        else
-        {
-            Console.WriteLine("No authorization code found in the query string.");
+            }
+            else
+            {
+                Console.WriteLine("No authorization code found in the query string.");
+            }
         }
     }
 }
+
