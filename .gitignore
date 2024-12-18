@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /ClientProfile/data/UserTokens.json
 /ClientProfile/data/DestinyMembershipID.txt
+/ClientProfile/data/DestinyMemberships.csv
