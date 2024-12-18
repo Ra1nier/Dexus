@@ -8,7 +8,6 @@ using ClientProfile;
 using Microsoft.Extensions.Logging;
 using OAuthService;
 using RequestManager;
-using System.Diagnostics;
 
 /// <summary>
 /// Wraps the model of GuardianVaultManager in a single core application manager.
@@ -46,7 +45,7 @@ public class Core
         this.OAuthStatus = false;
 
         // Create the client profile and assign client OAuth status.
-        if (this.profile.Create())
+        if (this.profile.Create() && this.profile.LoadDestinyID())
         {
             this.OAuthStatus = true;
         }
@@ -71,6 +70,7 @@ public class Core
     /// </summary>
     public void StartCoreService()
     {
+        // this.logger.LogCritical(await this.request.PlatformDestiny2_Request_Contents("CharacterInventories", true));
     }
 
     /// <summary>
@@ -103,10 +103,10 @@ public class Core
         }
 
         // Get DestinyMembershipID
-        string destinyID = await this.request.PlatformDestiny2_Request_MembershipIDAsync();
-        if (destinyID != "Error")
+        string[] destinyID = await this.request.PlatformDestiny2_Request_MembershipIDAsync();
+        if (destinyID[0] != "Error")
         {
-            destinyIDStored = this.profile.StoreDestinyMembershipID(destinyID);
+            destinyIDStored = this.profile.StoreDestinyMembershipID(destinyID[0], destinyID[1]);
         }
 
         // Load the Destiny ID into the profile

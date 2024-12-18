@@ -16,7 +16,7 @@ public class Profile
     /// Path to store files related to user tokens.
     /// </summary>
     private readonly string userTokenFileLocation = "C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\ClientProfile\\data\\UserTokens.json"; // FIXME: Obviously cant be hard coded like this.
-    private readonly string destinyMembershipIDFileLocation = "C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\ClientProfile\\data\\DestinyMembershipID.txt"; // FIXME: Obviously cant be hard coded like this and should probably be in JSON.
+    private readonly string destinyMembershipsFileLocation = "C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\ClientProfile\\data\\DestinyMemberships.csv"; // FIXME: Obviously cant be hard coded like this and should probably be in JSON.
 
     /// <summary>
     /// Stores all user tokens.
@@ -29,7 +29,6 @@ public class Profile
     public Profile()
     {
         this.tokens = new Tokens();
-        this.DestinyMembershipID = "-1";
     }
 
     /// <summary>
@@ -60,15 +59,12 @@ public class Profile
     /// <summary>
     /// Gets the Destiny Membership ID for the client.
     /// </summary>
-    public string DestinyMembershipID { get; private set; }
+    public string? DestinyMembershipID { get; private set; }
 
     /// <summary>
     /// Gets the Membership Type for the client.
     /// </summary>
-    public string MembershipType
-    {
-        get => "1";
-    }
+    public string? MembershipType { get; private set; }
 
     /// <summary>
     /// Creates a new Client Profile containing the necessary keys for the user.
@@ -97,7 +93,7 @@ public class Profile
     {
         try
         {
-            this.LoadDestinyID(this.destinyMembershipIDFileLocation);
+            this.LoadDestinyID(this.destinyMembershipsFileLocation);
         }
         catch (Exception)
         {
@@ -154,13 +150,14 @@ public class Profile
     /// Stores the DestinyMembershipID into the file.
     /// </summary>
     /// <param name="destinyMembershipID">Destiny ID retrieved from Bungie.</param>
+    /// <param name="membershipType">Membership Type retrieved from Bungie.</param>
     /// <returns>Thrown if the file containing the user tokens could not be created.</returns>
     /// <exception cref="IOException">The file could not be written to.</exception>
-    public bool StoreDestinyMembershipID(string destinyMembershipID)
+    public bool StoreDestinyMembershipID(string destinyMembershipID, string membershipType)
     {
         try
         {
-            File.WriteAllText(this.destinyMembershipIDFileLocation, destinyMembershipID);
+            File.WriteAllText(this.destinyMembershipsFileLocation, $"{destinyMembershipID},{membershipType}");
 
             return true;
         }
@@ -199,7 +196,12 @@ public class Profile
     {
         try
         {
-            this.DestinyMembershipID = File.ReadAllText(destinyIDPath);
+            string membershipsFile = File.ReadAllText(destinyIDPath);
+
+            string[] memberships = membershipsFile.Split(',');
+
+            this.DestinyMembershipID = memberships[0];
+            this.MembershipType = memberships[1];
         }
         catch (Exception e)
         {

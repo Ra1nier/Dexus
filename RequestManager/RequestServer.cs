@@ -6,7 +6,6 @@ namespace RequestManager;
 
 using ClientProfile;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using OAuthService;
 using System.Text.Json;
 
@@ -39,13 +38,14 @@ public class RequestServer
     /// <summary>
     /// Sends a request to Bungie for the user's MembershipID.
     /// </summary>
-    /// <returns>The membershipID or an error message.</returns>
-    public async Task<string> PlatformDestiny2_Request_MembershipIDAsync()
+    /// <returns>The primary membershipID or an error message.</returns>
+    public async Task<string[]> PlatformDestiny2_Request_MembershipIDAsync()
     {
+        string[] result = new string[2];
         this.logger.LogInformation("REQUEST: Destiny Membership ID");
 
         // Construct HTTP request
-        string requestURI = $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.MembershipID}/LinkedProfiles/?getAllMemberships=false";
+        string requestURI = $"https://www.bungie.net/Platform/Destiny2/-1/Profile/{this.profile.MembershipID}/LinkedProfiles/?getAllMemberships=false";
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
 
         // Add headers
@@ -63,28 +63,85 @@ public class RequestServer
 
                 // Parse the JSON response
                 using JsonDocument document = JsonDocument.Parse(jsonResponse);
+                JsonElement responseRoot = document.RootElement.GetProperty("Response");
 
-                // Navigate to the "profilesWithErrors" array
-                var profilesWithErrors = document.RootElement
-                    .GetProperty("Response")
-                    .GetProperty("profilesWithErrors");
+                string membershipId = "Error";
 
-                string id = "Error";
-
-                // Loop through the array to find the target membershipId
-                foreach (var profile in profilesWithErrors.EnumerateArray())
+                // Look for the primary profile where isCrossSavePrimary == true
+                if (responseRoot.TryGetProperty("profiles", out JsonElement profilesElement))
                 {
-                    if (profile.TryGetProperty("infoCard", out JsonElement infoCard))
+                    foreach (var profile in profilesElement.EnumerateArray())
                     {
-                        if (infoCard.TryGetProperty("membershipId", out JsonElement value))
+                        bool isCrossSavePrimary = profile.GetProperty("isCrossSavePrimary").GetBoolean();
+                        int crossSaveOverride = profile.GetProperty("crossSaveOverride").GetInt32();
+
+                        if (isCrossSavePrimary || crossSaveOverride != 0)
                         {
-                            id = value.GetString() ?? "Error"; // Return the matching membershipId
+                            membershipId = profile.GetProperty("membershipId").GetString();
+                            this.logger.LogDebug($"Primary Membership ID found: {membershipId}");
+
+                            result[1] = crossSaveOverride.ToString();
+                            result[0] = membershipId;
+
+                            return result;
                         }
                     }
                 }
 
-                this.logger.LogDebug($"Successful JSON Response: DestinyMembershipID = {id}");
-                return id;
+                this.logger.LogDebug($"JSON Response: No valid membership ID found. {jsonResponse}");
+                result[0] = "Error";
+
+                return result;
+            }
+            else
+            {
+                string errorResponse = await response.Content.ReadAsStringAsync();
+                this.logger.LogError($"Error Response: {errorResponse}");
+                result[0] = "Error";
+
+                return result;
+            }
+        }
+        catch (Exception e)
+        {
+            this.logger.LogError($"REQUEST FAILED: Destiny Membership ID, {e.Message}");
+            result[0] = "Error";
+
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// Sends a request to Bungie for the given content type.
+    /// </summary>
+    /// <param name="contentType">Content to request from bungie.</param>
+    /// <param name="includeDefinitions">Includes the definitions if true, ignores if false.</param>
+    /// <returns>The JSON response from bungie.</returns>
+    public async Task<string> PlatformDestiny2_Request_Contents(string contentType, bool includeDefinitions)
+    {
+        // Convert componentType to a component
+        int content = ComponentTypeLookup.GetContent(contentType);
+        this.logger.LogInformation($"REQUEST: Destiny Profile Content {contentType}={content}");
+
+        // Construct HTTP request
+        string requestURI = $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.DestinyMembershipID}/?components={content}&definitions={includeDefinitions}";
+        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
+
+        // Add headers
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Add("X-API-Key", this.auth.API_Key);
+
+        // Send request
+        try
+        {
+            HttpResponseMessage response = await this.client.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                string jsonResponse = await response.Content.ReadAsStringAsync();
+
+                this.logger.LogDebug($"Successful JSON Response: Content = {contentType}, {content}");
+                return jsonResponse;
             }
             else
             {
@@ -95,7 +152,7 @@ public class RequestServer
         }
         catch (Exception e)
         {
-            this.logger.LogError($"REQUEST FAILED: Destiny Membership ID, {e.Message}");
+            this.logger.LogError($"REQUEST FAILED: Destiny Profile Content {contentType}={content}, {e.Message}");
             return "Error";
         }
     }

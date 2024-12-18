@@ -77,7 +77,7 @@ else
         }
         catch (Exception e)
         {
-            Logger.LogCritical($"Error in OnInitialized. Core could not be started: {e.Message}. (Warning: As of now these messages might be thrown in error. \"CALLBACK ISSUE: Callback starting multiple instances of Sign in process.\")");
+            Logger.LogCritical($"Error in OnInitialized. Core could not be started: {e.Message}.");
             throw;
         }
     }
