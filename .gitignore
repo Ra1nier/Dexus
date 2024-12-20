@@ -365,3 +365,4 @@ FodyWeavers.xsd
 /ClientProfile/data/DestinyMembershipID.txt
 /ClientProfile/data/DestinyMemberships.csv
 /ClientProfile/data/ExpiryDates.csv
+/ClientProfile/data/ExpiryDates.json
