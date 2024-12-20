@@ -1,0 +1,29 @@
+﻿.vault-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px; /* Adds spacing between items */
+}
+
+.vault-item-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.vault-item {
+    padding: 8px;
+    text-align: center;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.vault-image {
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 8px;
+}
+
+.vault-text {
+    font-size: 14px;
+    font-weight: bold;
+}

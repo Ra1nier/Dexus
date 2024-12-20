@@ -11,7 +11,7 @@
             {
                 <MudItem xs="6" sm="4" md="2">
                     <MudPaper Class="vault-item" Elevation="5" @onclick="() => SelectItem(item)">
-                        <img src="@GetImageForItem(item.ItemHash)" alt="Weapon" class="vault-image" />
+                        <img src="Resources/Null.webp" alt="Weapon" class="vault-image" />
                         <div class="vault-text">
                             @item.ItemHash
                         </div>
@@ -42,24 +42,21 @@
 
     protected override async void OnInitialized()
     {
-        // string contents = await GVM.core.GetVaultContents();
-        // Items = JsonSerializer.Deserialize<List<Item>>(json);
+        string contents = await GVM.core.GetVaultContents();
+        JsonDocument vaultContents = JsonDocument.Parse(contents);
+        JsonElement itemsArray = vaultContents.RootElement.GetProperty("Response").GetProperty("profileInventory").GetProperty("data").GetProperty("items");
+
+        // Iterate over the items and populate the list
+        Items = new List<Item>();
+        foreach (JsonElement itemElement in itemsArray.EnumerateArray())
+        {
+            Item item = JsonSerializer.Deserialize<Item>(itemElement) ?? new Item();
+            Items.Add(item);
+        }
     }
 
     private void SelectItem(Item item)
     {
         SelectedItem = item;
-    }
-
-    private string GetImageForItem(uint itemHash)
-    {
-        // Replace with actual paths or URLs to images
-        var imageDictionary = new Dictionary<uint, string>
-        {
-            { 2935055281, "images/weapon1.png" },
-            { 2158868172, "images/weapon2.png" }
-        };
-
-        return imageDictionary.TryGetValue(itemHash, out var path) ? path : "images/default.png";
     }
 }

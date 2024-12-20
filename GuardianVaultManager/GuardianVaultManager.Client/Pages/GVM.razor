@@ -1,10 +1,11 @@
 ﻿@page "/GVM"
 @rendermode InteractiveServer
 
-@using GuardianVaultManager.Client.Components
+@using GuardianVaultManager.Client.Models
 @using GuardianVaultManagerCore
 @using System.Diagnostics
 @using Microsoft.AspNetCore.WebUtilities
+@using System.Text.Json
 @using MudBlazor
 
 @inject NavigationManager Navigation
@@ -28,60 +29,74 @@
 }
 else
 {
-    <MudContainer Class="mt-16 px-8">
+    <MudContainer Fixed="true">
+        <!-- Vault Grid -->
         <MudGrid GutterSize="GutterSize.Small">
-            <MudItem xs="12" sm="6" md="4">
-                <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">Guardian Info 1</MudPaper>
-            </MudItem>
-            <MudItem xs="12" sm="6" md="4">
-                <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">Guardian Info 2</MudPaper>
-            </MudItem>
-            <MudItem xs="12" sm="12" md="4">
-                <Vault/> <!--Vault Component-->
-            </MudItem>
-            <MudItem xs="12" sm="6">
-                <MudGrid GutterSize="GutterSize.Small">
-                    <MudItem xs="12">
-                        <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">Detailed View 1</MudPaper>
-                    </MudItem>
-                    <MudItem xs="12">
-                        <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">Detailed View 2</MudPaper>
-                    </MudItem>
-                </MudGrid>
-            </MudItem>
-            <MudItem xs="12" sm="6">
-                <MudPaper Elevation="2" Class="pa-4" Style="height: 100%;">Additional Info</MudPaper>
-            </MudItem>
-            <MudItem xs="12" sm="6" md="4">
-                <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">Statistics</MudPaper>
-            </MudItem>
-            <MudItem xs="12" sm="6" md="4">
-                <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">Progress</MudPaper>
-            </MudItem>
-            <MudItem xs="12" sm="12" md="4">
-                <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">Summary</MudPaper>
+            <!-- Vault Items -->
+            <MudItem xs="12" sm="4" md="4">
+                @if (Items.Any())
+                {
+                    <MudGrid Spacing="3" Class="d-flex flex-wrap">
+                        @foreach (var item in Items)
+                        {
+                            <MudItem xs="12" sm="4" md="3">
+                                <MudCard>
+                                    <MudCardMedia Image="Resources/Null.png" Height="100" />
+                                    <MudCardContent>
+                                        <MudText Typo="Typo.h6">@item.ItemHash</MudText>
+                                    </MudCardContent>
+                                </MudCard>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body1">No items found in the vault.</MudText>
+                }
             </MudItem>
         </MudGrid>
     </MudContainer>
 }
 
 @code {
-
     public static Core core = new Core();
+    private List<Item> Items = new List<Item>();
+    private Item SelectedItem;
 
-    protected override void OnInitialized()
+    protected override async void OnInitialized()
     {
         try
         {
             core.StartCoreService();
-
             Logger.LogDebug("Core started.");
+
+            // Fetch vault contents
+            string contents = await GVM.core.GetVaultContents();
+            JsonDocument vaultContents = JsonDocument.Parse(contents);
+            JsonElement itemsArray = vaultContents.RootElement.GetProperty("Response").GetProperty("profileInventory").GetProperty("data").GetProperty("items");
+
+            // Populate Items list
+            Items = new List<Item>();
+            foreach (JsonElement itemElement in itemsArray.EnumerateArray())
+            {
+                Item item = JsonSerializer.Deserialize<Item>(itemElement) ?? new Item();
+                Items.Add(item);
+            }
+
+            Logger.LogInformation($"Loaded {Items.Count} items into vault.");
         }
         catch (Exception e)
         {
-            Logger.LogCritical($"Error in OnInitialized. Core could not be started: {e.Message}.");
-            throw;
+            Logger.LogCritical($"Error in OnInitialized: {e.Message}");
         }
+
+        StateHasChanged();
+    }
+
+    private void SelectItem(Item item)
+    {
+        SelectedItem = item;
     }
 
     private void HandleSignIn()
