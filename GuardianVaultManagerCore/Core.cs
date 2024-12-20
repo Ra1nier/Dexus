@@ -40,7 +40,7 @@ public class Core
         // Create local instances of libraries
         this.profile = new Profile();
         this.oauthProfile = new OAuthProfile();
-        this.oauth = new OAuthServer(this.logger);
+        this.oauth = new OAuthServer(this.logger, this.oauthProfile);
         this.request = new RequestServer(this.profile, this.oauthProfile, this.logger);
 
         this.OAuthStatus = false;
@@ -81,7 +81,34 @@ public class Core
         if (this.profile.Create() && this.profile.LoadDestinyID())
         {
             this.OAuthStatus = true;
-            this.logger.LogCritical(await this.request.PlatformDestiny2_Request_Contents("CharacterInventories", true));
+
+            // Check if the refresh token is expired and if so start the OAuth process
+            if (this.CheckExpiry(this.profile.RefreshTokenExpireDate))
+            {
+                this.OAuthStatus = false;
+                return false;
+            }
+
+            // Check if access token is expired and if so refresh the user tokens
+            if (this.CheckExpiry(this.profile.AccessTokenExpireDate))
+            {
+                this.OAuthStatus = false;
+
+                string tokens = await this.oauth.RefreshAccessToken(this.profile.RefreshToken);
+                if (tokens != "Error" && this.profile.StoreUserTokens(tokens))
+                {
+                    this.logger.LogInformation("Refreshed User Tokens.");
+
+                    if (this.profile.Create() && this.profile.LoadDestinyID())
+                    {
+                        this.OAuthStatus = true;
+                    }
+                }
+                else
+                {
+                    this.logger.LogCritical("Unable to Refresh User Tokens.");
+                }
+            }
 
             return true;
         }
@@ -102,7 +129,7 @@ public class Core
         this.logger.LogDebug("Starting OAuth");
 
         // Get Tokens from Bungie
-        string tokens = await this.oauth.StartOAuthProcessAsync(this.oauthProfile, code);
+        string tokens = await this.oauth.StartOAuthProcessAsync(code);
         if (tokens != "Error")
         {
             tokensStored = this.profile.StoreUserTokens(tokens);
@@ -155,5 +182,24 @@ public class Core
     public async Task<string> GetVaultContents()
     {
         return await this.request.PlatformDestiny2_Request_Contents("CharacterInventories", true);
+    }
+
+    /// <summary>
+    /// Compares a DateTime value to the current time to see if the token has expired.
+    /// </summary>
+    /// <param name="expiry">DateTime value to compare.</param>
+    /// <returns>True if it has expired, False if not.</returns>
+    private bool CheckExpiry(DateTime expiry)
+    {
+        int expiredCondition = DateTime.Compare(DateTime.Now, expiry);
+
+        if (expiredCondition > 0 || expiredCondition == 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 }
