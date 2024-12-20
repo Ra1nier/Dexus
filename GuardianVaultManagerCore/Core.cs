@@ -8,7 +8,6 @@ using ClientProfile;
 using Microsoft.Extensions.Logging;
 using OAuthService;
 using RequestManager;
-using System.ComponentModel;
 
 /// <summary>
 /// Wraps the model of GuardianVaultManager in a single core application manager.
@@ -181,7 +180,7 @@ public class Core
     /// <returns>A string containing the vault JSON.</returns>
     public async Task<string> GetVaultContents()
     {
-        return await this.request.PlatformDestiny2_Request_Contents("CharacterInventories", true);
+        return await this.request.PlatformDestiny2_Request_Contents("ProfileInventories", true);
     }
 
     /// <summary>
