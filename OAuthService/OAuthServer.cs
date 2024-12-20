@@ -88,8 +88,7 @@ public class OAuthServer
             {
                 string jsonResponse = await response.Content.ReadAsStringAsync();
 
-                this.logger.LogCritical($"Token Retrieved Successfully: {response.StatusCode}");
-                this.logger.LogCritical($"Token Retrieved: {jsonResponse}");
+                this.logger.LogInformation($"Refresh Successful: {response.StatusCode}");
 
                 return jsonResponse;
             }
@@ -97,14 +96,14 @@ public class OAuthServer
             {
                 // Log the response for debugging purposes
                 string errorResponse = await response.Content.ReadAsStringAsync();
-                this.logger.LogError($"Token Retrieval failed: {response.StatusCode}, {errorResponse}");
+                this.logger.LogError($"Token Refresh failed: {response.StatusCode}, {errorResponse}");
 
                 return "Error";
             }
         }
         catch (Exception e)
         {
-            this.logger.LogError($"Error sending OAuth request for Authorization code: {e.Message}");
+            this.logger.LogError($"Error sending OAuth request for Refreshed Authorization code: {e.Message}");
             return "Error";
         }
     }
@@ -147,7 +146,6 @@ public class OAuthServer
                 string jsonResponse = await response.Content.ReadAsStringAsync();
 
                 this.logger.LogTrace($"Token Retrieved Successfully: {response.StatusCode}");
-                this.logger.LogTrace($"Token Retrieved: {jsonResponse}");
 
                 return jsonResponse;
             }
