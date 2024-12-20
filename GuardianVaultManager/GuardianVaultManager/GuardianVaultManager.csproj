@@ -6,6 +6,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Include="..\GuardianVaultManager.Client\Pages\VaultGrid.razor" Link="VaultGrid.razor" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <ProjectReference Include="..\..\GuardianVaultManagerCore\GuardianVaultManagerCore.csproj" />

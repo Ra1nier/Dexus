@@ -1,9 +1,11 @@
 ﻿@page "/GVM"
 @rendermode InteractiveServer
 
+@using GuardianVaultManager.Client.Components
 @using GuardianVaultManagerCore
 @using System.Diagnostics
 @using Microsoft.AspNetCore.WebUtilities
+@using MudBlazor
 
 @inject NavigationManager Navigation
 @inject ILogger<GVM> Logger;
@@ -35,7 +37,7 @@ else
                 <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">Guardian Info 2</MudPaper>
             </MudItem>
             <MudItem xs="12" sm="12" md="4">
-                <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">Vault Info</MudPaper>
+                <Vault/> <!--Vault Component-->
             </MudItem>
             <MudItem xs="12" sm="6">
                 <MudGrid GutterSize="GutterSize.Small">

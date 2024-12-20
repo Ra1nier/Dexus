@@ -68,9 +68,9 @@ public class Core
     /// <summary>
     /// Starts the GuardianVaultManagerCore.
     /// </summary>
-    public void StartCoreService()
+    public async void StartCoreService()
     {
-        // this.logger.LogCritical(await this.request.PlatformDestiny2_Request_Contents("CharacterInventories", true));
+        this.logger.LogCritical(await this.request.PlatformDestiny2_Request_Contents("CharacterInventories", true));
     }
 
     /// <summary>
@@ -130,5 +130,14 @@ public class Core
 
             this.logger.LogError($"Profile failed to initialize. {reason}");
         }
+    }
+
+    /// <summary>
+    /// Retrieves the clients vault contents from Bungie.
+    /// </summary>
+    /// <returns>A string containing the vault JSON.</returns>
+    public async Task<string> GetVaultContents()
+    {
+        return await this.request.PlatformDestiny2_Request_Contents("CharacterInventories", true);
     }
 }
