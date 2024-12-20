@@ -5,6 +5,7 @@
 namespace ClientProfile;
 
 using System.Reflection.Metadata.Ecma335;
+using System.Text;
 using System.Text.Json;
 
 /// <summary>
@@ -15,8 +16,10 @@ public class Profile
     /// <summary>
     /// Path to store files related to user tokens.
     /// </summary>
+    private readonly string dataFolderPath = "C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\ClientProfile\\data\\"; // FIXME: Obviously cant be hard coded
     private readonly string userTokenFileLocation = "C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\ClientProfile\\data\\UserTokens.json"; // FIXME: Obviously cant be hard coded like this.
     private readonly string destinyMembershipsFileLocation = "C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\ClientProfile\\data\\DestinyMemberships.csv"; // FIXME: Obviously cant be hard coded like this and should probably be in JSON.
+    private readonly string expiryDatesFileLocation = "C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\ClientProfile\\data\\ExpiryDates.json"; // FIXME: Obviously cant be hard coded like this and should probably be in JSON.
 
     /// <summary>
     /// Stores all user tokens.
@@ -39,7 +42,7 @@ public class Profile
     /// <summary>
     /// Gets the Access Token Expire Date for the client.
     /// </summary>
-    public int AccessTokenExpireDate { get => this.tokens.ExpiresIn; }
+    public DateTime AccessTokenExpireDate { get; private set; }
 
     /// <summary>
     /// Gets the Refresh Token for the client.
@@ -49,7 +52,7 @@ public class Profile
     /// <summary>
     /// Gets the Refresh Token Expire Date for the client.
     /// </summary>
-    public int RefreshTokenExpireDate { get => this.tokens.RefreshExpiresIn; }
+    public DateTime RefreshTokenExpireDate { get; private set; }
 
     /// <summary>
     /// Gets the Membership ID for the client.
@@ -75,7 +78,11 @@ public class Profile
     {
         try
         {
+            this.EnsureDataFolderExists();
+
             this.LoadUserTokens(this.userTokenFileLocation);
+
+            this.LoadExpiryDates(this.expiryDatesFileLocation);
         }
         catch (Exception)
         {
@@ -126,7 +133,7 @@ public class Profile
     }
 
     /// <summary>
-    /// Stores the current tokens in the profile object into the file.
+    /// Stores the current tokens in the profile object into the file. When stored the method will also calculate and the expiry dates of the tokens.
     /// </summary>
     /// <param name="json">Json text to write file to.</param>
     /// <returns>Thrown if the file containing the user tokens could not be created.</returns>
@@ -136,6 +143,13 @@ public class Profile
         try
         {
             File.WriteAllText(this.userTokenFileLocation, json);
+
+            JsonDocument tokens = JsonDocument.Parse(json);
+
+            int accessExpiryTime = tokens.RootElement.GetProperty("expires_in").GetInt32();
+            int refreshExpiryTime = tokens.RootElement.GetProperty("refresh_expires_in").GetInt32();
+
+            this.StoreExpiryDates(accessExpiryTime, refreshExpiryTime);
 
             return true;
         }
@@ -206,6 +220,64 @@ public class Profile
         catch (Exception e)
         {
             throw new IOException($"Could not load tokens from the specified user tokens file: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Stores the calculated expiry times for the access and refresh tokens.
+    /// </summary>
+    /// <param name="accessExpiryTime">Time until the access token expires.</param>
+    /// <param name="refreshExpiryTime">Time until the refresh token expires.</param>
+    private bool StoreExpiryDates(int accessExpiryTime, int refreshExpiryTime)
+    {
+        try
+        {
+            DateTime accessExpiryDate = DateTime.Now.AddSeconds(accessExpiryTime);
+            DateTime refreshExpiryDate = DateTime.Now.AddSeconds(refreshExpiryTime);
+
+            // Manually construct the JSON string
+            string jsonString = $"{{\"AccessExpiryDate\":\"{accessExpiryDate:O}\",\"RefreshExpiryDate\":\"{refreshExpiryDate:O}\"}}";
+
+            File.WriteAllText(this.expiryDatesFileLocation, jsonString);
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Exception occurred: {e.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Stores the calculated expiry times for the access and refresh tokens.
+    /// </summary>
+    private bool LoadExpiryDates(string expiryDatesLocation)
+    {
+        try
+        {
+            JsonDocument expiryTimes = JsonDocument.Parse(File.ReadAllText(expiryDatesLocation));
+
+            this.AccessTokenExpireDate = expiryTimes.RootElement.GetProperty("AccessExpiryDate").GetDateTime();
+            this.RefreshTokenExpireDate = expiryTimes.RootElement.GetProperty("RefreshExpiryDate").GetDateTime();
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Exception occurred: {e.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Ensures that the data folder exists.
+    /// </summary>
+    private void EnsureDataFolderExists()
+    {
+        if (!Directory.Exists(this.dataFolderPath))
+        {
+            Directory.CreateDirectory(this.dataFolderPath);
         }
     }
 }

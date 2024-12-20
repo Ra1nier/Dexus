@@ -364,3 +364,4 @@ FodyWeavers.xsd
 /ClientProfile/data/UserTokens.json
 /ClientProfile/data/DestinyMembershipID.txt
 /ClientProfile/data/DestinyMemberships.csv
+/ClientProfile/data/ExpiryDates.csv
