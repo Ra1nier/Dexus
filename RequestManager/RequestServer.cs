@@ -121,7 +121,7 @@ public class RequestServer
     {
         // Convert componentType to a component
         int content = ComponentTypeLookup.GetContent(contentType);
-        this.logger.LogInformation($"REQUEST: Destiny Profile Content {contentType}={content}");
+        this.logger.LogInformation($"REQUEST: Destiny Profile Content ({contentType}={content})");
 
         // Construct HTTP request
         string requestURI = $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.DestinyMembershipID}/?components={content}&definitions={includeDefinitions}";
@@ -140,7 +140,8 @@ public class RequestServer
             {
                 string jsonResponse = await response.Content.ReadAsStringAsync();
 
-                this.logger.LogDebug($"Successful JSON Response: Content = {contentType}, {content}");
+                this.logger.LogDebug($"Successful JSON Response: Content ({contentType}={content})");
+
                 return jsonResponse;
             }
             else
