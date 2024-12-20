@@ -8,6 +8,7 @@ using ClientProfile;
 using Microsoft.Extensions.Logging;
 using OAuthService;
 using RequestManager;
+using System.ComponentModel;
 
 /// <summary>
 /// Wraps the model of GuardianVaultManager in a single core application manager.
@@ -43,12 +44,6 @@ public class Core
         this.request = new RequestServer(this.profile, this.oauthProfile, this.logger);
 
         this.OAuthStatus = false;
-
-        // Create the client profile and assign client OAuth status.
-        if (this.profile.Create() && this.profile.LoadDestinyID())
-        {
-            this.OAuthStatus = true;
-        }
     }
 
     /// <summary>
@@ -70,7 +65,28 @@ public class Core
     /// </summary>
     public async void StartCoreService()
     {
-        this.logger.LogCritical(await this.request.PlatformDestiny2_Request_Contents("CharacterInventories", true));
+        if (!await this.SignIn())
+        {
+            this.logger.LogError("Could not sign the client in. Sign In Failed");
+        }
+    }
+
+    /// <summary>
+    /// Attempts to sign in the client and create the user profile.
+    /// </summary>
+    /// <returns>A bool value indicating whether or not Sign In was successful.</returns>
+    public async Task<bool> SignIn()
+    {
+        // Create the client profile and assign client OAuth status.
+        if (this.profile.Create() && this.profile.LoadDestinyID())
+        {
+            this.OAuthStatus = true;
+            this.logger.LogCritical(await this.request.PlatformDestiny2_Request_Contents("CharacterInventories", true));
+
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>
