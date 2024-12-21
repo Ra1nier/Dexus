@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 
 @using GuardianVaultManager.Client.Models
+@using GuardianVaultManager.Client.Models.Characters
 @using GuardianVaultManagerCore
 @using System.Diagnostics
 @using Microsoft.AspNetCore.WebUtilities
@@ -55,7 +56,7 @@ else
                 <ItemRenderer>
                     <MudCard Style="width: 75px; height: 100px; display: flex; flex-direction: column; justify-content: space-between;" Elevation="4">
                         <!-- Image Section -->
-                        <MudCardMedia Image="Resources/Null.png" Alt="Weapon" Style="flex: 8; height: 80%; width: 100%; object-fit: contain;"/>
+                        <MudCardMedia Image="Resources/Null.png" Alt="Weapon" Style="flex: 8; height: 80%; width: 100%; object-fit: contain;" />
                         <MudCardContent Style="flex: 2; text-align: center; padding: 4px;">
                             <MudText Typo="Typo.body2">@context.ItemHash</MudText>
                         </MudCardContent>
@@ -71,19 +72,125 @@ else
 }
 
 @code {
+    // GVM Objects
     public static Core core = new Core();
+
+    // Client specific objects
+    private List<Character> Characters = new List<Character>();
     private List<Item> Vault = new List<Item>();
     private List<Item> Inventories = new List<Item>();
 
-    protected override async void OnInitialized()
+    protected override void OnInitialized()
+    {
+        core.StartCoreService();
+        Logger.LogDebug("Core started.");
+
+        // Fetch Characters
+        FetchClientCharacters();
+
+        // Load Vault
+        LoadClientVault();
+
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Starts the Sign In process at Bungie
+    /// </summary>
+    private void HandleSignIn()
+    {
+        Logger.LogDebug("Sign In Started");
+
+        if (!core.OAuthStatus)
+        {
+            Navigation.NavigateTo(core.OAuthProfile.ConstructAuthorizationURL().ToString(), true);
+        }
+    }
+
+    /// <summary>
+    /// Handles transfers of items from one bucket to another.
+    /// </summary>
+    /// <param name="item">Item being transferred</param>
+    private void Transfer(MudItemDropInfo<Item> item)
+    {
+        if (item.Item != null)
+        {
+            item.Item.Identifier = item.DropzoneIdentifier;
+        }
+    }
+
+    /// <summary>
+    /// Gets clients character information from bungie.
+    /// </summary>
+    private async void FetchClientCharacters()
     {
         try
         {
-            core.StartCoreService();
-            Logger.LogDebug("Core started.");
+            string charactersJson = await core.GetCharacters();
+            JsonDocument charactersContent = JsonDocument.Parse(charactersJson);
+            JsonElement characters = charactersContent.RootElement.GetProperty("Response").GetProperty("characters").GetProperty("data");
 
+            foreach (JsonProperty characterJson in characters.EnumerateObject())
+            {
+                if (characterJson.Value.ValueKind != JsonValueKind.Null)
+                {
+                    var characterDetails = characterJson.Value;
+
+                    // Deserialize character details
+                    var character = JsonSerializer.Deserialize<Character>(characterDetails);
+
+                    if (character != null)
+                    {
+                        // Assign the character ID manually
+                        character.CharacterId = characterJson.Name;
+                        Characters.Add(character);
+                    }
+                }
+                else
+                {
+                    Logger.LogWarning($"Character details for ID {characterJson.Name} are null.");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.LogError($"GVM was unable to retrieve the client's characters: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Creates the clients character inventory contents from bungie.
+    /// </summary>
+    private async void LoadClientInventories()
+    {
+        try
+        {
+            // Fetch Inventories contents
+            string inventoriesContentsJson = await core.GetCharactersInventories();
+            JsonDocument inventoriesContents = JsonDocument.Parse(inventoriesContentsJson);
+            JsonElement charactersArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("characterInventories").GetProperty("data");
+
+            // Populate Inventories list
+            Inventories = new List<Item>();
+            // TODO: add logic for inventories
+
+            Logger.LogInformation($"Loaded {Inventories.Count} items into Inventories.");
+        }
+        catch (Exception e)
+        {
+            Logger.LogError($"GVM was unable to retrieve the client's inventories: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Creates the clients vault contents from bungie.
+    /// </summary>
+    private async void LoadClientVault()
+    {
+        try
+        {
             // Fetch vault contents
-            string vaultContentsJson = await GVM.core.GetVaultContents();
+            string vaultContentsJson = await core.GetVaultContents();
             JsonDocument vaultContents = JsonDocument.Parse(vaultContentsJson);
             JsonElement vaultArray = vaultContents.RootElement.GetProperty("Response").GetProperty("profileInventory").GetProperty("data").GetProperty("items");
 
@@ -97,39 +204,10 @@ else
             }
 
             Logger.LogInformation($"Loaded {Vault.Count} items into Vault.");
-
-            // Fetch Inventories contents
-            string inventoriesContentsJson = await GVM.core.GetCharactersInventories();
-            Logger.LogCritical(inventoriesContentsJson);
-            JsonDocument inventoriesContents = JsonDocument.Parse(inventoriesContentsJson);
-            JsonElement charactersArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("characterInventories").GetProperty("data");
-
-            // Populate Inventories list
-            Inventories = new List<Item>();
-            foreach (JsonElement characterElement in charactersArray.EnumerateArray())
-            // TODO: add logic for inventories
-
-            Logger.LogInformation($"Loaded {Inventories.Count} items into Inventories.");
         }
         catch (Exception e)
         {
-            Logger.LogCritical($"Error in OnInitialized: {e.Message}");
+            Logger.LogError($"GVM was unable to retrieve the client's vault: {e.Message}");
         }
-
-        StateHasChanged();
-    }
-
-    private void HandleSignIn()
-    {
-        Logger.LogDebug("Sign In Started");
-
-        if (!core.OAuthStatus)
-        {
-            Navigation.NavigateTo(core.OAuthProfile.ConstructAuthorizationURL().ToString(), true);
-        }
-    }
-    private void Transfer(MudItemDropInfo<Item> item)
-    {
-        item.Item.Identifier = item.DropzoneIdentifier;
     }
 }
