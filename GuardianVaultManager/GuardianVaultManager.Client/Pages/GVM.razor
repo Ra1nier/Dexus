@@ -29,40 +29,50 @@
 }
 else
 {
-    <MudContainer Fixed="true">
-        <!-- Vault Grid -->
-        <MudGrid GutterSize="GutterSize.Small">
-            <!-- Vault Items -->
-            <MudItem xs="12" sm="4" md="4">
-                @if (Items.Any())
-                {
-                    <MudGrid Spacing="3" Class="d-flex flex-wrap">
-                        @foreach (var item in Items)
-                        {
-                            <MudItem xs="12" sm="4" md="3">
-                                <MudCard>
-                                    <MudCardMedia Image="Resources/Null.png" Height="100" />
-                                    <MudCardContent>
-                                        <MudText Typo="Typo.h6">@item.ItemHash</MudText>
-                                    </MudCardContent>
-                                </MudCard>
+    <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge" Class="d-flex flex-row gap-3">
+        <!-- Vault Items -->
+        @if (Items.Any())
+        {
+            <MudDropContainer T="Item" Items="Items" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                <ChildContent>
+                    <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge">
+                        <MudGrid>
+                            <MudItem xs="6" Class="d-flex">
+                                <!-- Vault Drop Zone -->
+                                <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-6 ma-8 d-flex flex-wrap gap-2">
+                                    <MudText Typo="Typo.h6" Class="mb-4 w-100">Vault</MudText>
+                                </MudDropZone>
                             </MudItem>
-                        }
-                    </MudGrid>
-                }
-                else
-                {
-                    <MudText Typo="Typo.body1">No items found in the vault.</MudText>
-                }
-            </MudItem>
-        </MudGrid>
+                            <MudItem xs="6" Class="d-flex">
+                                 <!-- Dummy Drop Zone -->
+                                 <MudDropZone T="Item" Identifier="Dummy Drop" Class="rounded mud-background-gray pa-6 ma-8 d-flex flex-wrap gap-2">
+                                     <MudText Typo="Typo.h6" Class="mb-4 w-100">Dummy Drop</MudText>
+                                 </MudDropZone>
+                            </MudItem>
+                        </MudGrid>
+                    </MudContainer>
+                </ChildContent>
+                <ItemRenderer>
+                    <MudCard Style="width: 75px; height: 100px; display: flex; flex-direction: column; justify-content: space-between;" Elevation="4">
+                        <!-- Image Section -->
+                        <MudCardMedia Image="Resources/Null.png" Alt="Weapon" Style="flex: 8; height: 80%; width: 100%; object-fit: contain;"/>
+                        <MudCardContent Style="flex: 2; text-align: center; padding: 4px;">
+                            <MudText Typo="Typo.body2">@context.ItemHash</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </ItemRenderer>
+            </MudDropContainer>
+        }
+        else
+        {
+            <MudText Typo="Typo.body1">No items found in the vault.</MudText>
+        }
     </MudContainer>
 }
 
 @code {
     public static Core core = new Core();
     private List<Item> Items = new List<Item>();
-    private Item SelectedItem;
 
     protected override async void OnInitialized()
     {
@@ -81,6 +91,7 @@ else
             foreach (JsonElement itemElement in itemsArray.EnumerateArray())
             {
                 Item item = JsonSerializer.Deserialize<Item>(itemElement) ?? new Item();
+                item.Identifier = "Vault";
                 Items.Add(item);
             }
 
@@ -94,11 +105,6 @@ else
         StateHasChanged();
     }
 
-    private void SelectItem(Item item)
-    {
-        SelectedItem = item;
-    }
-
     private void HandleSignIn()
     {
         Logger.LogDebug("Sign In Started");
@@ -107,5 +113,9 @@ else
         {
             Navigation.NavigateTo(core.OAuthProfile.ConstructAuthorizationURL().ToString(), true);
         }
+    }
+    private void Transfer(MudItemDropInfo<Item> item)
+    {
+        item.Item.Identifier = item.DropzoneIdentifier;
     }
 }
