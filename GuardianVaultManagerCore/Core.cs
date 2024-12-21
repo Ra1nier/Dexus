@@ -184,6 +184,24 @@ public class Core
     }
 
     /// <summary>
+    /// Retrieves the clients vault contents from Bungie.
+    /// </summary>
+    /// <returns>A string containing the vault JSON.</returns>
+    public async Task<string> GetCharacters()
+    {
+        return await this.request.PlatformDestiny2_Request_Contents("Characters", true);
+    }
+
+    /// <summary>
+    /// Retrieves the clients vault contents from Bungie.
+    /// </summary>
+    /// <returns>A string containing the vault JSON.</returns>
+    public async Task<string> GetCharactersInventories()
+    {
+        return await this.request.PlatformDestiny2_Request_Contents("CharacterInventories", true);
+    }
+
+    /// <summary>
     /// Compares a DateTime value to the current time to see if the token has expired.
     /// </summary>
     /// <param name="expiry">DateTime value to compare.</param>
