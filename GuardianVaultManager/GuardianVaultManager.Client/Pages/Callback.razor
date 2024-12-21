@@ -41,9 +41,7 @@
     }
 
     @@keyframes l10-1 {
-    0%, 5%
-
-    {
+    0%, 5% {
     transform: rotate(0);
     }
 
@@ -62,7 +60,6 @@
     95%, 100% {
     transform: rotate(360deg);
     }
-
     }
 </style>
 
@@ -94,19 +91,25 @@
                 throw new HttpRequestException("Bungie did not return a state value"); // TODO: Don't throw error, instead alert user of the error.
             }
 
-            if (queryParams.TryGetValue("code", out var code))
+            if (queryParams.TryGetValue("code", out var codeValue))
             {
-                Logger.LogDebug("Code retrieved. Starting Sign In");
-                GVM.core.StartOAuth(code);
+                string? code = codeValue.FirstOrDefault();
 
-                // Wait for OAuth to be completed before rerouting user to home page
-                while(true)
+                if (!string.IsNullOrEmpty(code))
                 {
-                    if (GVM.core.OAuthStatus)
+                    Logger.LogDebug("Code retrieved. Starting Sign In");
+                    GVM.core.StartOAuth(code);
+
+                    // Wait for OAuth to be completed before rerouting user to the home page.
+                    while (!GVM.core.OAuthStatus)
                     {
                         Navigation.NavigateTo("/GVM");
+                        await Task.Delay(500);
                     }
-                    await Task.Delay(500);
+                }
+                else
+                {
+                    Logger.LogError("Code was retrieved but is null or empty.");
                 }
             }
             else
