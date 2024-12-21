@@ -62,19 +62,19 @@ public class Character
     /// Gets or sets the RaceHash.
     /// </summary>
     [JsonPropertyName("raceHash")]
-    public int? RaceHash { get; set; }
+    public long? RaceHash { get; set; }
 
     /// <summary>
     /// Gets or sets the genderHash.
     /// </summary>
     [JsonPropertyName("GenderHash")]
-    public int? GenderHash { get; set; }
+    public long? GenderHash { get; set; }
 
     /// <summary>
     /// Gets or sets the ClassHash.
     /// </summary>
     [JsonPropertyName("classHash")]
-    public int? ClassHash { get; set; }
+    public long? ClassHash { get; set; }
 
     /// <summary>
     /// Gets or sets the RaceType.
@@ -110,7 +110,7 @@ public class Character
     /// Gets or sets the EmblemHash.
     /// </summary>
     [JsonPropertyName("emblemHash")]
-    public int? EmblemHash { get; set; }
+    public long? EmblemHash { get; set; }
 
     /// <summary>
     /// Gets or sets the EmblemColor.
@@ -134,7 +134,7 @@ public class Character
     /// Gets or sets the PercentToNextLevel.
     /// </summary>
     [JsonPropertyName("percentToNextLevel")]
-    public int? PercentToNextLevel { get; set; }
+    public double? PercentToNextLevel { get; set; }
 
     /// <summary>
     /// Gets or sets the TitleRecordHash.

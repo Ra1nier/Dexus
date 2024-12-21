@@ -31,34 +31,36 @@
 else
 {
     <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge" Class="d-flex flex-row gap-3">
-        <!-- Vault Items -->
-        @if (Vault.Any())
+        @if (initializationComplete)
         {
-            <MudDropContainer T="Item" Items="Vault" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+            <MudDropContainer T="Item" Items="DropzoneBackingStore" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
                 <ChildContent>
-                    <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge">
-                        <MudGrid>
-                            <MudItem xs="6" Class="d-flex">
-                                <!-- Guardian Zones -->
-                                <MudDropZone T="Item" Identifier="Dummy Drop" Class="rounded mud-background-gray pa-6 ma-8 d-flex flex-wrap gap-2">
-                                    <MudText Typo="Typo.h6" Class="mb-4 w-100">Dummy Drop</MudText>
+                    <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
+                        @foreach (var character in Characters)
+                        {
+                            <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
+                                <!-- Label Above Drop Zone -->
+                                <MudText Typo="Typo.h6" Class="mb-1 text-center">@character.CharacterId</MudText>
+                                <!-- Guardian Drop Zone -->
+                                <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
                                 </MudDropZone>
                             </MudItem>
-                            <MudItem xs="6" Class="d-flex">
-                                <!-- Vault Drop Zone -->
-                                <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-6 ma-8 d-flex flex-wrap gap-2">
-                                    <MudText Typo="Typo.h6" Class="mb-4 w-100">Vault</MudText>
-                                </MudDropZone>
-                            </MudItem>
-                        </MudGrid>
-                    </MudContainer>
+                        }
+                        <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
+                            <!-- Label Above Drop Zone -->
+                            <MudText Typo="Typo.h6" Class="mb-1 text-center">Vault</MudText>
+                            <!-- Vault Drop Zone -->
+                            <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;">
+                            </MudDropZone>
+                        </MudItem>
+                    </MudGrid>
                 </ChildContent>
                 <ItemRenderer>
-                    <MudCard Style="width: 75px; height: 100px; display: flex; flex-direction: column; justify-content: space-between;" Elevation="4">
+                    <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
                         <!-- Image Section -->
-                        <MudCardMedia Image="Resources/Null.png" Alt="Weapon" Style="flex: 8; height: 80%; width: 100%; object-fit: contain;" />
-                        <MudCardContent Style="flex: 2; text-align: center; padding: 4px;">
-                            <MudText Typo="Typo.body2">@context.ItemHash</MudText>
+                        <MudCardMedia Image="Resources/Null.png" alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
+                        <MudCardContent Style="text-align: center; padding: 4px;">
+                            <MudText Typo="Typo.body2" Style="font-size: 10px;">@context.ItemHash</MudText>
                         </MudCardContent>
                     </MudCard>
                 </ItemRenderer>
@@ -69,28 +71,37 @@ else
             <MudText Typo="Typo.body1">No items found in the vault.</MudText>
         }
     </MudContainer>
+
 }
 
 @code {
     // GVM Objects
     public static Core core = new Core();
+    private bool initializationComplete = false;
 
     // Client specific objects
     private List<Character> Characters = new List<Character>();
     private List<Item> Vault = new List<Item>();
     private List<Item> Inventories = new List<Item>();
 
-    protected override void OnInitialized()
+    private List<Item> DropzoneBackingStore = new List<Item>();
+
+    protected override async void OnInitialized()
     {
         core.StartCoreService();
         Logger.LogDebug("Core started.");
 
         // Fetch Characters
-        FetchClientCharacters();
+        await FetchClientCharacters();
 
         // Load Vault
-        LoadClientVault();
+        await LoadClientVault();
 
+        // Load Inventories
+        await LoadClientInventories();
+
+        DropzoneBackingStore = Inventories.Concat(Vault).ToList();
+        initializationComplete = true;
         StateHasChanged();
     }
 
@@ -122,7 +133,7 @@ else
     /// <summary>
     /// Gets clients character information from bungie.
     /// </summary>
-    private async void FetchClientCharacters()
+    private async Task FetchClientCharacters()
     {
         try
         {
@@ -161,7 +172,7 @@ else
     /// <summary>
     /// Creates the clients character inventory contents from bungie.
     /// </summary>
-    private async void LoadClientInventories()
+    private async Task LoadClientInventories()
     {
         try
         {
@@ -172,7 +183,20 @@ else
 
             // Populate Inventories list
             Inventories = new List<Item>();
-            // TODO: add logic for inventories
+            foreach (Character character in Characters)
+            {
+                if (character.CharacterId != null)
+                {
+                    JsonElement characterInventory = charactersArray.GetProperty(character.CharacterId).GetProperty("items");
+
+                    foreach (JsonElement itemJson in characterInventory.EnumerateArray())
+                    {
+                        Item item = JsonSerializer.Deserialize<Item>(itemJson) ?? new Item();
+                        item.Identifier = character.CharacterId;
+                        Inventories.Add(item);
+                    }
+                }
+            }
 
             Logger.LogInformation($"Loaded {Inventories.Count} items into Inventories.");
         }
@@ -185,7 +209,7 @@ else
     /// <summary>
     /// Creates the clients vault contents from bungie.
     /// </summary>
-    private async void LoadClientVault()
+    private async Task LoadClientVault()
     {
         try
         {
