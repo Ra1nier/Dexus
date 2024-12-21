@@ -31,23 +31,23 @@ else
 {
     <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge" Class="d-flex flex-row gap-3">
         <!-- Vault Items -->
-        @if (Items.Any())
+        @if (Vault.Any())
         {
-            <MudDropContainer T="Item" Items="Items" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+            <MudDropContainer T="Item" Items="Vault" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
                 <ChildContent>
                     <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge">
                         <MudGrid>
+                            <MudItem xs="6" Class="d-flex">
+                                <!-- Guardian Zones -->
+                                <MudDropZone T="Item" Identifier="Dummy Drop" Class="rounded mud-background-gray pa-6 ma-8 d-flex flex-wrap gap-2">
+                                    <MudText Typo="Typo.h6" Class="mb-4 w-100">Dummy Drop</MudText>
+                                </MudDropZone>
+                            </MudItem>
                             <MudItem xs="6" Class="d-flex">
                                 <!-- Vault Drop Zone -->
                                 <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-6 ma-8 d-flex flex-wrap gap-2">
                                     <MudText Typo="Typo.h6" Class="mb-4 w-100">Vault</MudText>
                                 </MudDropZone>
-                            </MudItem>
-                            <MudItem xs="6" Class="d-flex">
-                                 <!-- Dummy Drop Zone -->
-                                 <MudDropZone T="Item" Identifier="Dummy Drop" Class="rounded mud-background-gray pa-6 ma-8 d-flex flex-wrap gap-2">
-                                     <MudText Typo="Typo.h6" Class="mb-4 w-100">Dummy Drop</MudText>
-                                 </MudDropZone>
                             </MudItem>
                         </MudGrid>
                     </MudContainer>
@@ -72,7 +72,8 @@ else
 
 @code {
     public static Core core = new Core();
-    private List<Item> Items = new List<Item>();
+    private List<Item> Vault = new List<Item>();
+    private List<Item> Inventories = new List<Item>();
 
     protected override async void OnInitialized()
     {
@@ -82,20 +83,33 @@ else
             Logger.LogDebug("Core started.");
 
             // Fetch vault contents
-            string contents = await GVM.core.GetVaultContents();
-            JsonDocument vaultContents = JsonDocument.Parse(contents);
-            JsonElement itemsArray = vaultContents.RootElement.GetProperty("Response").GetProperty("profileInventory").GetProperty("data").GetProperty("items");
+            string vaultContentsJson = await GVM.core.GetVaultContents();
+            JsonDocument vaultContents = JsonDocument.Parse(vaultContentsJson);
+            JsonElement vaultArray = vaultContents.RootElement.GetProperty("Response").GetProperty("profileInventory").GetProperty("data").GetProperty("items");
 
-            // Populate Items list
-            Items = new List<Item>();
-            foreach (JsonElement itemElement in itemsArray.EnumerateArray())
+            // Populate Vault list
+            Vault = new List<Item>();
+            foreach (JsonElement itemElement in vaultArray.EnumerateArray())
             {
                 Item item = JsonSerializer.Deserialize<Item>(itemElement) ?? new Item();
                 item.Identifier = "Vault";
-                Items.Add(item);
+                Vault.Add(item);
             }
 
-            Logger.LogInformation($"Loaded {Items.Count} items into vault.");
+            Logger.LogInformation($"Loaded {Vault.Count} items into Vault.");
+
+            // Fetch Inventories contents
+            string inventoriesContentsJson = await GVM.core.GetCharactersInventories();
+            Logger.LogCritical(inventoriesContentsJson);
+            JsonDocument inventoriesContents = JsonDocument.Parse(inventoriesContentsJson);
+            JsonElement charactersArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("characterInventories").GetProperty("data");
+
+            // Populate Inventories list
+            Inventories = new List<Item>();
+            foreach (JsonElement characterElement in charactersArray.EnumerateArray())
+            // TODO: add logic for inventories
+
+            Logger.LogInformation($"Loaded {Inventories.Count} items into Inventories.");
         }
         catch (Exception e)
         {
