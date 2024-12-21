@@ -42,4 +42,7 @@ public class Item
 
     [JsonPropertyName("versionNumber")]
     public int? VersionNumber { get; set; }
+
+    [JsonIgnore]
+    public string? Identifier { get; set; }
 }
