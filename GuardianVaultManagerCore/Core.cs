@@ -202,6 +202,25 @@ public class Core
     }
 
     /// <summary>
+    /// Transfers the requested item to either the characterID given or the vault if indicated.
+    /// </summary>
+    /// <param name="itemHash">The item's Hash.</param>
+    /// <param name="itemID">The item's ID.</param>
+    /// <param name="stackSize">The amount to transfer.</param>
+    /// <param name="characterID">The character ID of where either the item resides or is to be transferred.</param>
+    /// <param name="isVaultTransfer">Indicates whether this is a transfer between a character to the vault.</param>
+    /// <returns>True if the operation was completed successfully, false otherwise.</returns>
+    public async Task<bool> TransferItem(long itemHash, string itemID, int stackSize, string characterID, bool isVaultTransfer)
+    {
+        if (this.profile.MembershipType != null)
+        {
+            return await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType.ToString(), itemHash, itemID, stackSize, characterID, isVaultTransfer);
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Compares a DateTime value to the current time to see if the token has expired.
     /// </summary>
     /// <param name="expiry">DateTime value to compare.</param>

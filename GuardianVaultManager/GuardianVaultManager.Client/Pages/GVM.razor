@@ -119,14 +119,42 @@ else
     }
 
     /// <summary>
-    /// Handles transfers of items from one bucket to another.
+    /// Handles transfers of items from one bucket to another and informs the core of the change.
     /// </summary>
     /// <param name="item">Item being transferred</param>
-    private void Transfer(MudItemDropInfo<Item> item)
+    private async void Transfer(MudItemDropInfo<Item> item)
     {
         if (item.Item != null)
         {
-            item.Item.Identifier = item.DropzoneIdentifier;
+            var transfer = item.Item;
+            bool vaultTransfer;
+            string origin;
+
+            // Figure out the type of transfer
+            if (item.DropzoneIdentifier == "Vault") // Character -> Vault
+            {
+                vaultTransfer = true;
+                origin = item.Item.Identifier ?? string.Empty;
+            }
+            else // Vault -> Character
+            {
+                vaultTransfer = false;
+                origin = item.DropzoneIdentifier;
+            }
+
+            // Item Transfer Identification
+            long itemHash = transfer.ItemHash;
+            string itemID = transfer.ItemInstanceId ?? "-1";
+            int stackSize = transfer.Quantity;
+
+            // Initiate the transfer
+            if (await core.TransferItem(itemHash, itemID, stackSize, origin, vaultTransfer))
+            {
+                // Change location to new dropzone
+                item.Item.Identifier = item.DropzoneIdentifier;
+            }
+
+            StateHasChanged();
         }
     }
 
