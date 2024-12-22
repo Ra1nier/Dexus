@@ -90,4 +90,16 @@ public class Item
     /// </summary>
     [JsonIgnore]
     public string? Identifier { get; set; }
+
+    /// <summary>
+    /// Gets or sets the IconPath.
+    /// </summary>
+    [JsonIgnore]
+    public string? IconPath { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Power.
+    /// </summary>
+    [JsonIgnore]
+    public string? Power { get; set; }
 }
