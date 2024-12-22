@@ -160,6 +160,16 @@ public class RequestServer
         }
     }
 
+    /// <summary>
+    /// Pings bungie to request a item transfer to a new location.
+    /// </summary>
+    /// <param name="membershipType">MembershipType of the client.</param>
+    /// <param name="itemHash">The ItemHash of the item to transfer.</param>
+    /// <param name="itemID">The ItemInstanceID of the item to transfer.</param>
+    /// <param name="stackSize">Stack Size of the item.</param>
+    /// <param name="characterID">Character ID of either the origin point to character to transfer to based on vaultTransfer.</param>
+    /// <param name="vaultTransfer">Flag that indicates whether the item is being transferred is Character->Vault.</param>
+    /// <returns>True if bungie returns a successful response, false otherwise.</returns>
     public async Task<bool> ActionItem_Request_TransferItem(string membershipType, long itemHash, string itemID, int stackSize, string characterID, bool vaultTransfer)
     {
         this.logger.LogInformation($"REQUEST: Destiny Item Transfer - {itemID} TO " + (vaultTransfer ? "Vault" : $"Character({characterID})"));
@@ -171,7 +181,7 @@ public class RequestServer
         // Construct request body in JSON format
         var body = new
         {
-            membershipType = this.profile.MembershipType,
+            membershipType = membershipType,
             itemHash = itemHash,
             itemID = itemID,
             stackSize = stackSize,
