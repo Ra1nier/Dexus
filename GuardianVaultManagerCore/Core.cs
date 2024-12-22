@@ -68,6 +68,8 @@ public class Core
         {
             this.logger.LogError("Could not sign the client in. Sign In Failed");
         }
+
+        await this.request.Manifest_Request_GetCurrentManifest();
     }
 
     /// <summary>
@@ -113,6 +115,14 @@ public class Core
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Gets the Destiny 2 manifest from bungie.
+    /// </summary>
+    public async void GetDestiny2Manifest()
+    {
+        await this.request.Manifest_Request_GetCurrentManifest();
     }
 
     /// <summary>
@@ -233,9 +243,7 @@ public class Core
         {
             return true;
         }
-        else
-        {
-            return false;
-        }
+
+        return false;
     }
 }
