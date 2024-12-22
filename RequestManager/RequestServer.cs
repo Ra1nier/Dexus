@@ -7,6 +7,8 @@ namespace RequestManager;
 using ClientProfile;
 using Microsoft.Extensions.Logging;
 using OAuthService;
+using System.Net.Mime;
+using System.Text;
 using System.Text.Json;
 
 /// <summary>
@@ -155,6 +157,58 @@ public class RequestServer
         {
             this.logger.LogError($"REQUEST FAILED: Destiny Profile Content {contentType}={content}, {e.Message}");
             return "Error";
+        }
+    }
+
+    public async Task<bool> ActionItem_Request_TransferItem(string membershipType, long itemHash, string itemID, int stackSize, string characterID, bool vaultTransfer)
+    {
+        this.logger.LogInformation($"REQUEST: Destiny Item Transfer - {itemID} TO " + (vaultTransfer ? "Vault" : $"Character({characterID})"));
+
+        // Construct HTTP request
+        string requestURI = $"https://www.bungie.net/Platform/Destiny2/Actions/Items/TransferItem/";
+        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, requestURI);
+
+        // Construct request body in JSON format
+        var body = new
+        {
+            membershipType = this.profile.MembershipType,
+            itemHash = itemHash,
+            itemID = itemID,
+            stackSize = stackSize,
+            characterID = characterID,
+            vaultTransfer = vaultTransfer,
+        };
+        string jsonBody = JsonSerializer.Serialize(body);
+        request.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+        // Add headers
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Add("X-API-Key", this.auth.API_Key);
+
+        // Send request
+        try
+        {
+            HttpResponseMessage response = await this.client.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                string jsonResponse = await response.Content.ReadAsStringAsync();
+
+                this.logger.LogDebug($"Successful Response: Transfer of {itemID} successful");
+
+                return true;
+            }
+            else
+            {
+                string errorResponse = await response.Content.ReadAsStringAsync();
+                this.logger.LogError($"Error Response: {errorResponse}");
+                return false;
+            }
+        }
+        catch (Exception e)
+        {
+            this.logger.LogError($"REQUEST FAILED: Transfer - {itemID} TO " + (vaultTransfer ? "Vault" : $"Character({characterID})") + ", {e.Message}");
+            return false;
         }
     }
 }
