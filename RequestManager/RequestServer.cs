@@ -7,7 +7,6 @@ namespace RequestManager;
 using ClientProfile;
 using Microsoft.Extensions.Logging;
 using OAuthService;
-using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 
@@ -219,6 +218,74 @@ public class RequestServer
         {
             this.logger.LogError($"REQUEST FAILED: Transfer - {itemID} TO " + (vaultTransfer ? "Vault" : $"Character({characterID})") + ", {e.Message}");
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Get the most current destiny 2 manifest from bungie.
+    /// </summary>
+    /// <returns>Saves the manifest to the Manifest folder located in the Request manager.</returns>
+    public async Task Manifest_Request_GetCurrentManifest()
+    {
+        this.logger.LogInformation($"REQUEST: Destiny Manifest");
+
+        string requestURI = $"http://www.bungie.net/Platform/Destiny/Manifest/";
+        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
+
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Add("X-API-Key", this.auth.API_Key);
+
+        try
+        {
+            HttpResponseMessage response = await this.client.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                string jsonResponse = await response.Content.ReadAsStringAsync();
+                this.logger.LogDebug($"Successful JSON Response: Destiny Manifest");
+
+                var manifest = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
+                var responseObject = (JsonElement)manifest["Response"];
+                var mobileWorldContentPaths = responseObject.GetProperty("mobileWorldContentPaths");
+                string englishContentPath = mobileWorldContentPaths.GetProperty("en").GetString();
+
+                if (string.IsNullOrEmpty(englishContentPath))
+                {
+                    this.logger.LogError($"Error: English content path not found in manifest.");
+                    return;
+                }
+
+                string databaseUrl = $"https://www.bungie.net{englishContentPath}";
+                this.logger.LogInformation($"Database URL: {databaseUrl}");
+
+                // Download the manifest database file
+                HttpResponseMessage manifestResponse = await client.GetAsync(databaseUrl);
+                if (manifestResponse.IsSuccessStatusCode)
+                {
+                    string saveDir = "C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\RequestManager\\Manifest\\";
+                    Directory.CreateDirectory(saveDir);
+                    string savePath = Path.Combine(saveDir, "world_sql_content_en.content");
+
+                    byte[] manifestData = await manifestResponse.Content.ReadAsByteArrayAsync();
+                    await File.WriteAllBytesAsync(savePath, manifestData);
+
+                    this.logger.LogCritical($"Manifest saved successfully to {savePath}");
+                }
+                else
+                {
+                    string errorResponse = await manifestResponse.Content.ReadAsStringAsync();
+                    this.logger.LogError($"Error Response: Failed to download manifest file - {errorResponse}");
+                }
+            }
+            else
+            {
+                string errorResponse = await response.Content.ReadAsStringAsync();
+                this.logger.LogError($"Error Response: Failed to get manifest metadata - {errorResponse}");
+            }
+        }
+        catch (Exception e)
+        {
+            this.logger.LogError($"REQUEST FAILED: Destiny Manifest - {e.Message}");
         }
     }
 }
