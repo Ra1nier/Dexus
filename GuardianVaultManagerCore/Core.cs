@@ -18,6 +18,7 @@ public class Core
     private Profile profile;
     private OAuthServer oauth;
     private RequestServer request;
+    private ManifestServer manifest;
 
     private ILogger logger;
 
@@ -41,6 +42,7 @@ public class Core
         this.oauthProfile = new OAuthProfile();
         this.oauth = new OAuthServer(this.logger, this.oauthProfile);
         this.request = new RequestServer(this.profile, this.oauthProfile, this.logger);
+        this.manifest = new ManifestServer(this.logger);
 
         this.OAuthStatus = false;
     }
@@ -209,6 +211,11 @@ public class Core
     public async Task<string> GetCharactersInventories()
     {
         return await this.request.PlatformDestiny2_Request_Contents("CharacterInventories", true);
+    }
+
+    public async Task GetWeaponPhoto()
+    {
+
     }
 
     /// <summary>
