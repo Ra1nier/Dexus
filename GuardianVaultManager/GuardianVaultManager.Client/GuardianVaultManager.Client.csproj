@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\GuardianVaultManagerCore\GuardianVaultManagerCore.csproj" />
+    <ProjectReference Include="..\..\RequestManager\RequestManager.csproj" />
   </ItemGroup>
 
   <ItemGroup>

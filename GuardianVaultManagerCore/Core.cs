@@ -71,7 +71,7 @@ public class Core
             this.logger.LogError("Could not sign the client in. Sign In Failed");
         }
 
-        await this.request.Manifest_Request_GetCurrentManifest();
+        this.GetDestiny2Manifest();
     }
 
     /// <summary>
@@ -124,7 +124,7 @@ public class Core
     /// </summary>
     public async void GetDestiny2Manifest()
     {
-        await this.request.Manifest_Request_GetCurrentManifest();
+        this.manifest.ManifestPath = await this.request.Manifest_Request_GetCurrentManifest();
     }
 
     /// <summary>
@@ -213,9 +213,14 @@ public class Core
         return await this.request.PlatformDestiny2_Request_Contents("CharacterInventories", true);
     }
 
-    public async Task GetWeaponPhoto()
+    /// <summary>
+    /// Gets the photo of the itemHash provided.
+    /// </summary>
+    /// <param name="itemHash">ItemHash to use in the search.</param>
+    /// <returns>The URL for the photo.</returns>
+    public async Task<WeaponDetails> GetWeaponDetails(long itemHash)
     {
-
+         return await this.manifest.Manifest_Query_WeaponDetails(itemHash);
     }
 
     /// <summary>

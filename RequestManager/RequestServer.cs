@@ -7,6 +7,7 @@ namespace RequestManager;
 using ClientProfile;
 using Microsoft.Extensions.Logging;
 using OAuthService;
+using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
 
@@ -225,7 +226,7 @@ public class RequestServer
     /// Get the most current destiny 2 manifest from bungie.
     /// </summary>
     /// <returns>Saves the manifest to the Manifest folder located in the Request manager.</returns>
-    public async Task Manifest_Request_GetCurrentManifest()
+    public async Task<string> Manifest_Request_GetCurrentManifest()
     {
         this.logger.LogInformation($"REQUEST: Destiny Manifest");
 
@@ -252,40 +253,70 @@ public class RequestServer
                 if (string.IsNullOrEmpty(englishContentPath))
                 {
                     this.logger.LogError($"Error: English content path not found in manifest.");
-                    return;
+                    return string.Empty;
                 }
 
                 string databaseUrl = $"https://www.bungie.net{englishContentPath}";
                 this.logger.LogInformation($"Database URL: {databaseUrl}");
 
                 // Download the manifest database file
-                HttpResponseMessage manifestResponse = await client.GetAsync(databaseUrl);
+                HttpResponseMessage manifestResponse = await this.client.GetAsync(databaseUrl);
                 if (manifestResponse.IsSuccessStatusCode)
                 {
+                    // Save Path for Manifest
                     string saveDir = "C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\RequestManager\\Manifest\\";
                     Directory.CreateDirectory(saveDir);
-                    string savePath = Path.Combine(saveDir, "world_sql_content_en.content");
+                    string savePath = Path.Combine(saveDir, "manifest.zip");
 
+                    // Get and Save Manifest
                     byte[] manifestData = await manifestResponse.Content.ReadAsByteArrayAsync();
                     await File.WriteAllBytesAsync(savePath, manifestData);
 
+                    // Extract Manifest and delete zip
+                    ZipFile.ExtractToDirectory(savePath, saveDir, true);
+                    File.Delete(savePath);
+
+                    // Get path to manifest
+                    string[] extractedFiles = Directory.GetFiles(saveDir);
+                    string contentFilePath = string.Empty;
+                    if (extractedFiles.Length > 0)
+                    {
+                        contentFilePath = extractedFiles[0];
+                        File.Move(contentFilePath, $"{saveDir}manifest.sqlite3");
+
+                        string[] extractedFile = Directory.GetFiles(saveDir);
+
+                        if (extractedFile.Length > 0)
+                        {
+                            contentFilePath = extractedFile[0];
+                        }
+                    }
+                    else
+                    {
+                        this.logger.LogError("Error: No files extracted from the zip archive.");
+                    }
+
                     this.logger.LogCritical($"Manifest saved successfully to {savePath}");
+                    return contentFilePath;
                 }
                 else
                 {
                     string errorResponse = await manifestResponse.Content.ReadAsStringAsync();
                     this.logger.LogError($"Error Response: Failed to download manifest file - {errorResponse}");
+                    return string.Empty;
                 }
             }
             else
             {
                 string errorResponse = await response.Content.ReadAsStringAsync();
                 this.logger.LogError($"Error Response: Failed to get manifest metadata - {errorResponse}");
+                return string.Empty;
             }
         }
         catch (Exception e)
         {
             this.logger.LogError($"REQUEST FAILED: Destiny Manifest - {e.Message}");
+            return string.Empty;
         }
     }
 }
