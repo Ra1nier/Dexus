@@ -218,9 +218,11 @@ public class Core
     /// </summary>
     /// <param name="itemHash">ItemHash to use in the search.</param>
     /// <returns>The URL for the photo.</returns>
-    public async Task<WeaponDetails> GetWeaponDetails(long itemHash)
+    public async Task<ItemDetails> GetWeaponDetails(uint itemHash)
     {
-         return await this.manifest.Manifest_Query_WeaponDetails(itemHash);
+         return await this.manifest.Manifest_Query_ItemDetails(itemHash);
+
+         // return await this.request.PlatformDestiny2_Request_ItemDefinition(itemHash);
     }
 
     /// <summary>
@@ -232,7 +234,7 @@ public class Core
     /// <param name="characterID">The character ID of where either the item resides or is to be transferred.</param>
     /// <param name="isVaultTransfer">Indicates whether this is a transfer between a character to the vault.</param>
     /// <returns>True if the operation was completed successfully, false otherwise.</returns>
-    public async Task<bool> TransferItem(long itemHash, string itemID, int stackSize, string characterID, bool isVaultTransfer)
+    public async Task<bool> TransferItem(uint itemHash, string itemID, int stackSize, string characterID, bool isVaultTransfer)
     {
         if (this.profile.MembershipType != null)
         {
