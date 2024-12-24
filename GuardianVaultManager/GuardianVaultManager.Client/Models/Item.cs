@@ -11,7 +11,7 @@ public class Item
     /// Gets or sets the item hash.
     /// </summary>
     [JsonPropertyName("itemHash")]
-    public long ItemHash { get; set; }
+    public uint ItemHash { get; set; }
 
     /// <summary>
     /// Gets or sets the item instance ID.

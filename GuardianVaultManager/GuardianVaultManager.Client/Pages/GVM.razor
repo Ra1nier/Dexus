@@ -59,9 +59,9 @@ else
                 <ItemRenderer>
                     <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
                         <!-- Image Section -->
-                        <MudCardMedia Image=@ItemDetails[context.ItemHash].IconPath alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
+                        <MudCardMedia Image=@ItemDetails[context.ItemHash].Response.DisplayProperties.IconPath alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
                         <MudCardContent Style="text-align: center; padding: 4px;">
-                            <MudText Typo="Typo.body2" Style="font-size: 10px;">@ItemDetails[context.ItemHash].Name</MudText>
+                            <MudText Typo="Typo.body2" Style="font-size: 10px;">@ItemDetails[context.ItemHash].Response.DisplayProperties.Name</MudText>
                         </MudCardContent>
                     </MudCard>
                 </ItemRenderer>
@@ -86,7 +86,7 @@ else
     private List<Item> Inventories = new List<Item>();
 
     private List<Item> DropzoneBackingStore = new List<Item>();
-    private Dictionary<long, WeaponDetails> ItemDetails = new Dictionary<long, WeaponDetails>();
+    private Dictionary<uint, ItemDetails> ItemDetails = new Dictionary<uint, ItemDetails>();
 
     protected override async void OnInitialized()
     {
@@ -147,7 +147,7 @@ else
             }
 
             // Item Transfer Identification
-            long itemHash = transfer.ItemHash;
+            uint itemHash = transfer.ItemHash;
             string itemID = transfer.ItemInstanceId ?? "-1";
             int stackSize = transfer.Quantity;
 
@@ -277,7 +277,7 @@ else
         Logger.LogInformation("Getting Clients Weapon Information.");
         foreach (Item weapon in weapons)
         {
-            long itemHash = weapon.ItemHash;
+            uint itemHash = weapon.ItemHash;
 
             if (!ItemDetails.TryGetValue(itemHash, out _))
             {
