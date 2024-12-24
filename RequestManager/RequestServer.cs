@@ -268,9 +268,12 @@ public class RequestServer
                     Directory.CreateDirectory(saveDir);
                     string savePath = Path.Combine(saveDir, "manifest.zip");
 
-                    // Get and Save Manifest
-                    byte[] manifestData = await manifestResponse.Content.ReadAsByteArrayAsync();
-                    await File.WriteAllBytesAsync(savePath, manifestData);
+                    // Use a stream to save the manifest
+                    using (Stream manifestStream = await manifestResponse.Content.ReadAsStreamAsync())
+                    using (FileStream fileStream = new FileStream(savePath, FileMode.Create, FileAccess.Write))
+                    {
+                        await manifestStream.CopyToAsync(fileStream);
+                    }
 
                     // Extract Manifest and delete zip
                     ZipFile.ExtractToDirectory(savePath, saveDir, true);
@@ -282,7 +285,7 @@ public class RequestServer
                     if (extractedFiles.Length > 0)
                     {
                         contentFilePath = extractedFiles[0];
-                        File.Move(contentFilePath, $"{saveDir}manifest.sqlite3");
+                        File.Move(contentFilePath, $"{saveDir}manifest.db");
 
                         string[] extractedFile = Directory.GetFiles(saveDir);
 
@@ -317,6 +320,52 @@ public class RequestServer
         {
             this.logger.LogError($"REQUEST FAILED: Destiny Manifest - {e.Message}");
             return string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Sends a request to Bungie for the given content type.
+    /// </summary>
+    /// <returns>The JSON response from bungie.</returns>
+    public async Task<ItemDetails> PlatformDestiny2_Request_ItemDefinition(uint itemHash)
+    {
+        this.logger.LogInformation($"REQUEST: Destiny Item Definition: {itemHash}");
+
+        // Construct HTTP request
+        string requestURI = $"https://www.bungie.net/Platform/Destiny2/Manifest/DestinyInventoryItemDefinition/{itemHash}";
+        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
+
+        // Add headers
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Add("X-API-Key", this.auth.API_Key);
+
+        // Send request
+        try
+        {
+            HttpResponseMessage response = await this.client.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                string jsonResponse = await response.Content.ReadAsStringAsync();
+
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                ItemDetails details = JsonSerializer.Deserialize<ItemDetails>(jsonResponse);
+
+                this.logger.LogDebug($"Successful Response: {details.Response.DisplayProperties.Name}");
+
+                return details;
+            }
+            else
+            {
+                string errorResponse = await response.Content.ReadAsStringAsync();
+                this.logger.LogError($"Error Response: {errorResponse}");
+                return new ItemDetails();
+            }
+        }
+        catch (Exception e)
+        {
+            this.logger.LogError($"REQUEST FAILED: Destiny Item Definition {itemHash}, {e.Message}");
+            return new ItemDetails();
         }
     }
 }
