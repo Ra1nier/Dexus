@@ -7,7 +7,6 @@ namespace RequestManager;
 using Microsoft.Extensions.Logging;
 using Microsoft.Data.Sqlite;
 using System.Text.Json;
-using Dapper;
 using SQLitePCL;
 
 /// <summary>
@@ -50,53 +49,69 @@ public class ManifestServer
     public string ManifestPath { get; set; }
 
     /// <summary>
-    /// Queries the manifest for the associated weapon details.
+    /// Queries the manifest for the associated weapon.
     /// </summary>
-    /// <param name="itemHash">Item to query.</param>
-    /// <returns>A <see cref="Task{WeaponDetails}"/> representing the result of the asynchronous operation.</returns>
-    public async Task<WeaponDetails> Manifest_Query_WeaponDetails(long itemHash)
+    /// <param name="itemHash">Item hash to query.</param>
+    /// <returns>A WeaponDetails class representing the manifest details of the specific weapon.</returns>
+    public async Task<ItemDetails> Manifest_Query_ItemDetails(uint itemHash)
     {
         string connectionString = $"Data Source={this.ManifestPath};";
+        // string connectionString = $"Data Source={"C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\RequestManager\\Manifest\\manifest.db"};";
+
+        // itemHash = 2111182924;
 
         try
         {
             using (var connection = new SqliteConnection(connectionString))
             {
                 await connection.OpenAsync();
-                this.logger.LogDebug("Database connection opened.");
+                this.logger.LogTrace($"QUERY MANIFEST: ItemHash={itemHash}");
 
-                string query = "SELECT json FROM DestinyInventoryItemDefinition WHERE id = @ID;";
+                // Convert itemHash to signed int
+                long signedId = unchecked((int)itemHash);
 
-                int sql3ID = unchecked((int)itemHash);
+                string query = @"
+                    SELECT json
+                    FROM DestinyInventoryItemDefinition
+                    WHERE id = @ID;";
 
-                this.logger.LogTrace($"QUERY MANIFEST: ItemHash={itemHash}, ID={sql3ID}");
-
-                string json = await connection.QueryFirstOrDefaultAsync<string>(query, new { ID = sql3ID });
-
-                if (string.IsNullOrEmpty(json))
+                using (var command = new SqliteCommand(query, connection))
                 {
-                    throw new Exception($"No data found for itemHash: {itemHash}");
+                    // Add parameters for signed and unsigned interpretations
+                    command.Parameters.AddWithValue("@ID", signedId);
+
+                    // Execute the query
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            string json = reader.GetString(0);
+
+                            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                            var itemDetails = JsonSerializer.Deserialize<ItemDetails>(json, options);
+
+                            if (itemDetails == null)
+                            {
+                                throw new Exception($"Failed to deserialize weapon details for itemHash: {itemHash}");
+                            }
+
+                            itemDetails.Response.DisplayProperties.IconPath = $"{this.baseUrl}{itemDetails.Response.DisplayProperties.Icon}";
+
+                            return itemDetails;
+                        }
+                        else
+                        {
+                            this.logger.LogError($"No data found for itemHash={itemHash} with ID={signedId}");
+                            return new ItemDetails();
+                        }
+                    }
                 }
-
-                // Deserialize the JSON into the WeaponDetails class
-                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                var weaponDetails = JsonSerializer.Deserialize<WeaponDetails>(json, options);
-
-                if (weaponDetails == null)
-                {
-                    throw new Exception($"Failed to deserialize weapon details for itemHash: {itemHash}");
-                }
-
-                // Append the base URL to the icon path
-                weaponDetails.IconPath = $"{this.baseUrl}{weaponDetails.IconPath}";
-
-                return weaponDetails;
             }
         }
         catch (Exception ex)
         {
             this.logger.LogError($"Error querying manifest: {ex.Message}");
-            throw;
+            return new ItemDetails();
         }
     }
 }
