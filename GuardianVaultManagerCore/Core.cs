@@ -124,7 +124,7 @@ public class Core
     /// </summary>
     public async void GetDestiny2Manifest()
     {
-        this.manifest.ManifestPath = await this.request.Manifest_Request_GetCurrentManifest();
+        this.manifest.ManifestPath = await this.request.Destiny2Manifest_Request_GetCurrentManifest();
     }
 
     /// <summary>

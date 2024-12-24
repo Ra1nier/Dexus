@@ -59,9 +59,9 @@ else
                 <ItemRenderer>
                     <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
                         <!-- Image Section -->
-                        <MudCardMedia Image=@ItemDetails[context.ItemHash].Response.DisplayProperties.IconPath alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
+                        <MudCardMedia Image=@ItemDetails[context.ItemHash].DisplayProperties.Icon alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
                         <MudCardContent Style="text-align: center; padding: 4px;">
-                            <MudText Typo="Typo.body2" Style="font-size: 10px;">@ItemDetails[context.ItemHash].Response.DisplayProperties.Name</MudText>
+                            <MudText Typo="Typo.body2" Style="font-size: 10px;">@ItemDetails[context.ItemHash].DisplayProperties.Name</MudText>
                         </MudCardContent>
                     </MudCard>
                 </ItemRenderer>

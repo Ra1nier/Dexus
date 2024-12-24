@@ -4,27 +4,6 @@ using System.Text.Json.Serialization;
 
 public class ItemDetails
 {
-    [JsonPropertyName("Response")]
-    public Response Response { get; set; }
-
-    [JsonPropertyName("ErrorCode")]
-    public int ErrorCode { get; set; }
-
-    [JsonPropertyName("ThrottleSeconds")]
-    public int ThrottleSeconds { get; set; }
-
-    [JsonPropertyName("ErrorStatus")]
-    public string ErrorStatus { get; set; }
-
-    [JsonPropertyName("Message")]
-    public string Message { get; set; }
-
-    [JsonPropertyName("MessageData")]
-    public Dictionary<string, string> MessageData { get; set; }
-}
-
-public class Response
-{
     [JsonPropertyName("displayProperties")]
     public DisplayProperties DisplayProperties { get; set; }
 
@@ -111,9 +90,6 @@ public class DisplayProperties
 
     [JsonPropertyName("icon")]
     public string Icon { get; set; }
-
-    [JsonIgnore]
-    public string IconPath { get; set; }
 
     [JsonPropertyName("hasIcon")]
     public bool HasIcon { get; set; }

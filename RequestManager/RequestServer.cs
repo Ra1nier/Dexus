@@ -223,14 +223,14 @@ public class RequestServer
     }
 
     /// <summary>
-    /// Get the most current destiny 2 manifest from bungie.
+    /// Get the most current Destiny 2 manifest from Bungie.
     /// </summary>
-    /// <returns>Saves the manifest to the Manifest folder located in the Request manager.</returns>
-    public async Task<string> Manifest_Request_GetCurrentManifest()
+    /// <returns>The path to the saved manifest.</returns>
+    public async Task<string> Destiny2Manifest_Request_GetCurrentManifest()
     {
-        this.logger.LogInformation($"REQUEST: Destiny Manifest");
+        this.logger.LogInformation("REQUEST: Destiny Manifest");
 
-        string requestURI = $"http://www.bungie.net/Platform/Destiny/Manifest/";
+        string requestURI = "https://www.bungie.net/Platform/Destiny2/Manifest/";
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
 
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
@@ -240,85 +240,84 @@ public class RequestServer
         {
             HttpResponseMessage response = await this.client.SendAsync(request);
 
-            if (response.IsSuccessStatusCode)
-            {
-                string jsonResponse = await response.Content.ReadAsStringAsync();
-                this.logger.LogDebug($"Successful JSON Response: Destiny Manifest");
-
-                var manifest = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonResponse);
-                var responseObject = (JsonElement)manifest["Response"];
-                var mobileWorldContentPaths = responseObject.GetProperty("mobileWorldContentPaths");
-                string englishContentPath = mobileWorldContentPaths.GetProperty("en").GetString();
-
-                if (string.IsNullOrEmpty(englishContentPath))
-                {
-                    this.logger.LogError($"Error: English content path not found in manifest.");
-                    return string.Empty;
-                }
-
-                string databaseUrl = $"https://www.bungie.net{englishContentPath}";
-                this.logger.LogInformation($"Database URL: {databaseUrl}");
-
-                // Download the manifest database file
-                HttpResponseMessage manifestResponse = await this.client.GetAsync(databaseUrl);
-                if (manifestResponse.IsSuccessStatusCode)
-                {
-                    // Save Path for Manifest
-                    string saveDir = "C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\RequestManager\\Manifest\\";
-                    Directory.CreateDirectory(saveDir);
-                    string savePath = Path.Combine(saveDir, "manifest.zip");
-
-                    // Use a stream to save the manifest
-                    using (Stream manifestStream = await manifestResponse.Content.ReadAsStreamAsync())
-                    using (FileStream fileStream = new FileStream(savePath, FileMode.Create, FileAccess.Write))
-                    {
-                        await manifestStream.CopyToAsync(fileStream);
-                    }
-
-                    // Extract Manifest and delete zip
-                    ZipFile.ExtractToDirectory(savePath, saveDir, true);
-                    File.Delete(savePath);
-
-                    // Get path to manifest
-                    string[] extractedFiles = Directory.GetFiles(saveDir);
-                    string contentFilePath = string.Empty;
-                    if (extractedFiles.Length > 0)
-                    {
-                        contentFilePath = extractedFiles[0];
-                        File.Move(contentFilePath, $"{saveDir}manifest.db");
-
-                        string[] extractedFile = Directory.GetFiles(saveDir);
-
-                        if (extractedFile.Length > 0)
-                        {
-                            contentFilePath = extractedFile[0];
-                        }
-                    }
-                    else
-                    {
-                        this.logger.LogError("Error: No files extracted from the zip archive.");
-                    }
-
-                    this.logger.LogCritical($"Manifest saved successfully to {savePath}");
-                    return contentFilePath;
-                }
-                else
-                {
-                    string errorResponse = await manifestResponse.Content.ReadAsStringAsync();
-                    this.logger.LogError($"Error Response: Failed to download manifest file - {errorResponse}");
-                    return string.Empty;
-                }
-            }
-            else
+            if (!response.IsSuccessStatusCode)
             {
                 string errorResponse = await response.Content.ReadAsStringAsync();
-                this.logger.LogError($"Error Response: Failed to get manifest metadata - {errorResponse}");
+                this.logger.LogError("Failed to retrieve manifest dictionary: {ErrorResponse}", errorResponse);
                 return string.Empty;
             }
+
+            // Parse manifest dictionary
+            string manifestDictionaryResponse = await response.Content.ReadAsStringAsync();
+            using JsonDocument manifestDictionaryDocument = JsonDocument.Parse(manifestDictionaryResponse);
+            JsonElement englishManifestPathElement = manifestDictionaryDocument
+                .RootElement
+                .GetProperty("Response")
+                .GetProperty("mobileWorldContentPaths")
+                .GetProperty("en");
+
+            string englishManifestPath = englishManifestPathElement.GetString();
+            if (string.IsNullOrEmpty(englishManifestPath))
+            {
+                this.logger.LogError("Error: English content path not found in manifest.");
+                return string.Empty;
+            }
+
+            string databaseUrl = $"https://www.bungie.net{englishManifestPath}";
+
+            // Request manifest file
+            HttpResponseMessage manifestResponse = await this.client.GetAsync(databaseUrl);
+            if (!manifestResponse.IsSuccessStatusCode)
+            {
+                string errorResponse = await manifestResponse.Content.ReadAsStringAsync();
+                this.logger.LogError("Manifest could not be downloaded: {ErrorResponse}", errorResponse);
+                return string.Empty;
+            }
+
+            // Setup directories and file paths
+            string saveDir = Path.Combine("C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\RequestManager", "Manifest");
+            string zipFilePath = Path.Combine(saveDir, "manifest.zip");
+
+            if (Directory.Exists(saveDir))
+            {
+                Directory.Delete(saveDir, true);
+            }
+            Directory.CreateDirectory(saveDir);
+
+            // Save the downloaded manifest zip file
+            await using (Stream manifestFileStream = await manifestResponse.Content.ReadAsStreamAsync())
+            {
+                await using FileStream fileStream = new FileStream(zipFilePath, FileMode.Create, FileAccess.Write);
+                await manifestFileStream.CopyToAsync(fileStream);
+            }
+
+            // Extract the manifest zip file
+            try
+            {
+                ZipFile.ExtractToDirectory(zipFilePath, saveDir, overwriteFiles: true);
+                File.Delete(zipFilePath);
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError("Error extracting manifest zip file: {ErrorMessage}", ex.Message);
+                return string.Empty;
+            }
+
+            // Find and return the extracted manifest file
+            string[] manifestFiles = Directory.GetFiles(saveDir, "*.content", SearchOption.TopDirectoryOnly);
+            if (manifestFiles.Length == 0)
+            {
+                this.logger.LogError("Error: No manifest database file found after extraction.");
+                return string.Empty;
+            }
+
+            string manifestFilePath = manifestFiles[0];
+            this.logger.LogInformation("Manifest saved successfully: {ManifestFilePath}", manifestFilePath);
+            return manifestFilePath;
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            this.logger.LogError($"REQUEST FAILED: Destiny Manifest - {e.Message}");
+            this.logger.LogError("REQUEST FAILED: Destiny Manifest - {ErrorMessage}", ex.Message);
             return string.Empty;
         }
     }
@@ -351,7 +350,7 @@ public class RequestServer
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                 ItemDetails details = JsonSerializer.Deserialize<ItemDetails>(jsonResponse);
 
-                this.logger.LogDebug($"Successful Response: {details.Response.DisplayProperties.Name}");
+                this.logger.LogDebug($"Successful Response: {details.DisplayProperties.Name}");
 
                 return details;
             }

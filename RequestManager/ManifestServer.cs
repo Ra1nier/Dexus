@@ -56,9 +56,6 @@ public class ManifestServer
     public async Task<ItemDetails> Manifest_Query_ItemDetails(uint itemHash)
     {
         string connectionString = $"Data Source={this.ManifestPath};";
-        // string connectionString = $"Data Source={"C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\RequestManager\\Manifest\\manifest.db"};";
-
-        // itemHash = 2111182924;
 
         try
         {
@@ -68,9 +65,9 @@ public class ManifestServer
                 this.logger.LogTrace($"QUERY MANIFEST: ItemHash={itemHash}");
 
                 // Convert itemHash to signed int
-                long signedId = unchecked((int)itemHash);
+                long id = unchecked((int)itemHash);
 
-                string query = @"
+                string query = $@"
                     SELECT json
                     FROM DestinyInventoryItemDefinition
                     WHERE id = @ID;";
@@ -78,7 +75,7 @@ public class ManifestServer
                 using (var command = new SqliteCommand(query, connection))
                 {
                     // Add parameters for signed and unsigned interpretations
-                    command.Parameters.AddWithValue("@ID", signedId);
+                    command.Parameters.AddWithValue("@ID", id);
 
                     // Execute the query
                     using (var reader = await command.ExecuteReaderAsync())
@@ -87,21 +84,19 @@ public class ManifestServer
                         {
                             string json = reader.GetString(0);
 
-                            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                            var itemDetails = JsonSerializer.Deserialize<ItemDetails>(json, options);
+                            var itemDetails = JsonSerializer.Deserialize<ItemDetails>(json);
 
                             if (itemDetails == null)
                             {
                                 throw new Exception($"Failed to deserialize weapon details for itemHash: {itemHash}");
                             }
 
-                            itemDetails.Response.DisplayProperties.IconPath = $"{this.baseUrl}{itemDetails.Response.DisplayProperties.Icon}";
-
+                            itemDetails.DisplayProperties.Icon = $"{this.baseUrl}{itemDetails.DisplayProperties.Icon}";
                             return itemDetails;
                         }
                         else
                         {
-                            this.logger.LogError($"No data found for itemHash={itemHash} with ID={signedId}");
+                            this.logger.LogError($"No data found for itemHash={itemHash} with ID={id}");
                             return new ItemDetails();
                         }
                     }
