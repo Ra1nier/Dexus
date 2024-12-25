@@ -1,7 +1,7 @@
 ﻿// <copyright file="Character.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
-namespace GuardianVaultManager.Client.Models.Characters;
+namespace GuardianVaultManager.Client.Models;
 
 using System.Text.Json.Serialization;
 
@@ -141,4 +141,154 @@ public class Character
     /// </summary>
     [JsonPropertyName("titleRecordHash")]
     public int? TitleRecordHash { get; set; }
+}
+
+/// <summary>
+/// Represents an emblem color object.
+/// </summary>
+public class EmblemColor
+{
+    /// <summary>
+    /// Gets or sets the Red.
+    /// </summary>
+    [JsonPropertyName("red")]
+    public int? Red { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Green.
+    /// </summary>
+    [JsonPropertyName("green")]
+    public int? Green { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Blue.
+    /// </summary>
+    [JsonPropertyName("blue")]
+    public int? Blue { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Alpha.
+    /// </summary>
+    [JsonPropertyName("alpha")]
+    public int? Alpha { get; set; }
+}
+
+/// <summary>
+/// Represents the level progression of a character.
+/// </summary>
+public class LevelProgression
+{
+    /// <summary>
+    /// Gets or sets the ProgressionHash.
+    /// </summary>
+    [JsonPropertyName("progressionHash")]
+    public int? ProgressionHash { get; set; }
+
+    /// <summary>
+    /// Gets or sets the DailyProgress.
+    /// </summary>
+    [JsonPropertyName("dailyProgress")]
+    public int? DailyProgress { get; set; }
+
+    /// <summary>
+    /// Gets or sets the DailyLimit.
+    /// </summary>
+    [JsonPropertyName("DailyLimit")]
+    public int? DailyLimit { get; set; }
+
+    /// <summary>
+    /// Gets or sets the WeeklyProgress.
+    /// </summary>
+    [JsonPropertyName("weeklyProgress")]
+    public int? WeeklyProgress { get; set; }
+
+    /// <summary>
+    /// Gets or sets the WeeklyLimit.
+    /// </summary>
+    [JsonPropertyName("weeklyLimit")]
+    public int? WeeklyLimit { get; set; }
+
+    /// <summary>
+    /// Gets or sets the CurrentProgress.
+    /// </summary>
+    [JsonPropertyName("currentProgress")]
+    public int? CurrentProgress { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Level.
+    /// </summary>
+    [JsonPropertyName("level")]
+    public int? Level { get; set; }
+
+    /// <summary>
+    /// Gets or sets the LevelCap.
+    /// </summary>
+    [JsonPropertyName("levelCap")]
+    public int? LevelCap { get; set; }
+
+    /// <summary>
+    /// Gets or sets the StepIndex.
+    /// </summary>
+    [JsonPropertyName("stepIndex")]
+    public int? StepIndex { get; set; }
+
+    /// <summary>
+    /// Gets or sets the ProgressToNextLevel.
+    /// </summary>
+    [JsonPropertyName("progressToNextLevel")]
+    public int? ProgressToNextLevel { get; set; }
+
+    /// <summary>
+    /// Gets or sets the NextLevelAt.
+    /// </summary>
+    [JsonPropertyName("nextLevelAt")]
+    public int? NextLevelAt { get; set; }
+}
+
+/// <summary>
+/// Represents a characters stats distributions.
+/// </summary>
+public class Stats
+{
+    /// <summary>
+    /// Gets or sets the Light.
+    /// </summary>
+    [JsonPropertyName("1935470627")]
+    public int? Light { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Mobility.
+    /// </summary>
+    [JsonPropertyName("2996146975")]
+    public int? Mobility { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Resilience.
+    /// </summary>
+    [JsonPropertyName("392767087")]
+    public int? Resilience { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Recovery.
+    /// </summary>
+    [JsonPropertyName("1943323491")]
+    public int? Recovery { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Discipline.
+    /// </summary>
+    [JsonPropertyName("1735777505")]
+    public int? Discipline { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Intellect.
+    /// </summary>
+    [JsonPropertyName("144602215")]
+    public int? Intellect { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Strength.
+    /// </summary>
+    [JsonPropertyName("4244567218")]
+    public int? Strength { get; set; }
 }
