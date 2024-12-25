@@ -62,10 +62,10 @@ public class ManifestServer
             using (var connection = new SqliteConnection(connectionString))
             {
                 await connection.OpenAsync();
-                this.logger.LogTrace($"QUERY MANIFEST: ItemHash={itemHash}");
+                this.logger.LogTrace($"QUERY MANIFEST: DestinyInventoryItemDefinition of ItemHash={itemHash}");
 
                 // Convert itemHash to signed int
-                long id = unchecked((int)itemHash);
+                int id = this.ConvertHashToID(itemHash);
 
                 string query = $@"
                     SELECT json
@@ -74,7 +74,6 @@ public class ManifestServer
 
                 using (var command = new SqliteCommand(query, connection))
                 {
-                    // Add parameters for signed and unsigned interpretations
                     command.Parameters.AddWithValue("@ID", id);
 
                     // Execute the query
@@ -108,5 +107,67 @@ public class ManifestServer
             this.logger.LogError($"Error querying manifest: {ex.Message}");
             return new ItemDetails();
         }
+    }
+
+    /// <summary>
+    /// Gets the character details of the provided characterHash.
+    /// </summary>
+    /// <param name="characterHash">CharacterHash to lookup.</param>
+    /// <returns>A JsonDocument of the character details. An empty JsonDocument is returned if the character could not be found.</returns>
+    public async Task<JsonDocument> Manifest_Query_CharacterDetails(uint characterHash)
+    {
+        string connectionString = $"Data Source={this.ManifestPath};";
+
+        try
+        {
+            using (var connection = new SqliteConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                this.logger.LogTrace($"QUERY MANIFEST: DestinyClassDefinition of CharacterHash={characterHash}");
+
+                int id = this.ConvertHashToID(characterHash);
+
+                string query = $@"
+                    SELECT json
+                    FROM DestinyClassDefinition
+                    WHERE id = @ID;";
+
+                using (var command = new SqliteCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ID", id);
+
+                    // Execute the query
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            string json = reader.GetString(0);
+
+                            return JsonDocument.Parse(json);
+                        }
+                        else
+                        {
+                            this.logger.LogError($"No data found for CharacterHash={characterHash} with ID={id}");
+                            return JsonDocument.Parse("{}");
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError($"Error querying manifest: {ex.Message}");
+            return JsonDocument.Parse("{}");
+        }
+    }
+
+    /// <summary>
+    /// Converts the given unsigned 32-bit Hash into its signed 32-bit int ID counterpart.
+    /// </summary>
+    /// <param name="hash">Hash to convert.</param>
+    /// <returns>The signed 32-bit int ID.</returns>
+    private int ConvertHashToID(uint hash)
+    {
+        return unchecked((int)hash);
     }
 }
