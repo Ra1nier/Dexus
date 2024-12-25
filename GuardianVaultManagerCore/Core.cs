@@ -220,9 +220,7 @@ public class Core
     /// <returns>The URL for the photo.</returns>
     public async Task<ItemDetails> GetWeaponDetails(uint itemHash)
     {
-         return await this.manifest.Manifest_Query_ItemDetails(itemHash);
-
-         // return await this.request.PlatformDestiny2_Request_ItemDefinition(itemHash);
+         return await this.manifest.Manifest_Query_ItemDetails(itemHash); // TODO if item does not exist in manifest use bungie api instead.
     }
 
     /// <summary>

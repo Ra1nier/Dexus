@@ -10,7 +10,8 @@
 @using MudBlazor
 
 @inject NavigationManager Navigation
-@inject ILogger<GVM> Logger;
+@inject ILogger<GVM> Logger
+@inject ISnackbar Snackbar
 
 <PageTitle>Guardian Vault Manager</PageTitle>
 
@@ -68,10 +69,9 @@ else
         }
         else
         {
-            <MudText Typo="Typo.body1">No items found in the vault.</MudText>
+            <div class="loader"></div>
         }
     </MudContainer>
-
 }
 
 @code {
@@ -87,11 +87,69 @@ else
     private List<Item> DropzoneBackingStore = new List<Item>();
     private Dictionary<uint, ItemDetails> ItemDetails = new Dictionary<uint, ItemDetails>();
 
+    /// <summary>
+    ///   First render start the core.
+    /// </summary>
+    /// <param name="firstRender">Indicates whether this is the first render of the webpage.</param>
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            StartCore();
+        }
+    }
+
+    /// <summary>
+    /// When page loads or reloads fetch load all important information.
+    /// </summary>
     protected override async void OnInitialized()
     {
+        StartCore();
+
+        if (core.OAuthStatus)
+        {
+            await LoadClientData();
+
+            // Set initialization complete
+            initializationComplete = true;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Displays a snackbar message to the user.
+    /// </summary>
+    /// <param name="message">Message to send. Should not be long.</param>
+    public void DisplaySnackbar(string message)
+    {
+        Snackbar.Add(message, Severity.Info);
+    }
+
+    /// <summary>
+    /// Displays a snackbar message to the user. Will display message as the severity specified.
+    /// </summary>
+    /// <param name="message">Message to send. Should not be long.</param>
+    /// <param name="mode">Severity to use.</param>
+    public void DisplaySnackbar(string message, Severity mode)
+    {
+        Snackbar.Add(message, mode);
+    }
+
+    /// <summary>
+    /// Starts the GVM core.
+    /// </summary>
+    private void StartCore()
+    {
+        core = new Core();
         core.StartCoreService();
         Logger.LogDebug("Core started.");
+    }
 
+    /// <summary>
+    /// Loads the client data. This includes inventories, vault, and characters.
+    /// </summary>
+    private async Task LoadClientData()
+    {
         // Fetch Characters
         await FetchClientCharacters();
 
@@ -101,11 +159,9 @@ else
         // Load Inventories
         await LoadClientInventories();
 
+        // Load Item Details
         DropzoneBackingStore = Inventories.Concat(Vault).ToList();
         await QueryManifestForDetails(DropzoneBackingStore);
-
-        initializationComplete = true;
-        StateHasChanged();
     }
 
     /// <summary>
