@@ -211,6 +211,11 @@ else
             {
                 // Change location to new dropzone
                 item.Item.Identifier = item.DropzoneIdentifier;
+                DisplaySnackbar($"Successfully transferred {ItemDetails[transfer.ItemHash].DisplayProperties.Name} to {item.DropzoneIdentifier}.", Severity.Success);
+            }
+            else
+            {
+                DisplaySnackbar($"Failed to transfer {ItemDetails[transfer.ItemHash].DisplayProperties.Name} to {item.DropzoneIdentifier}.", Severity.Error);
             }
 
             StateHasChanged();
@@ -286,6 +291,7 @@ else
             }
 
             Logger.LogInformation($"Loaded {Inventories.Count} items into Inventories.");
+            DisplaySnackbar($"Loaded {Inventories.Count} items into Inventories.");
         }
         catch (Exception e)
         {
@@ -315,6 +321,7 @@ else
             }
 
             Logger.LogInformation($"Loaded {Vault.Count} items into Vault.");
+            DisplaySnackbar($"Loaded {Vault.Count} items into Vault.");
         }
         catch (Exception e)
         {
