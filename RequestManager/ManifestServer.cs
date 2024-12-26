@@ -110,6 +110,56 @@ public class ManifestServer
     }
 
     /// <summary>
+    /// Queries the manifest for the associated bucket.
+    /// </summary>
+    /// <param name="bucketHash">Bucket hash of the item.</param>
+    /// <returns>A JsonDocument that contains the definition for the requested bucket. An empty JsonDocument is returned if the bucket could not be found.</returns>
+    public async Task<JsonDocument> Manifest_Query_BucketDefinition(uint bucketHash)
+    {
+        string connectionString = $"Data Source={this.ManifestPath};";
+        try
+        {
+            using (var connection = new SqliteConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                this.logger.LogTrace($"QUERY MANIFEST: DestinyInventoryItemDefinition of ItemHash={bucketHash}");
+
+                int id = this.ConvertHashToID(bucketHash);
+
+                string query = $@"
+                    SELECT json
+                    FROM DestinyInventoryBucketDefinition
+                    WHERE id = @ID;";
+
+                using (var command = new SqliteCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ID", id);
+
+                    // Execute the query
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            string json = reader.GetString(0);
+                            return JsonDocument.Parse(json);
+                        }
+                        else
+                        {
+                            this.logger.LogError($"No data found for itemHash={bucketHash} with ID={id}");
+                            return JsonDocument.Parse("{}");
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError($"Error querying manifest: {ex.Message}");
+            return JsonDocument.Parse("{}");
+        }
+    }
+
+    /// <summary>
     /// Gets the character details of the provided characterHash.
     /// </summary>
     /// <param name="characterHash">CharacterHash to lookup.</param>
