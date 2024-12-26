@@ -8,19 +8,26 @@ using ClientProfile;
 using Microsoft.Extensions.Logging;
 using OAuthService;
 using RequestManager;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Threading;
 
 /// <summary>
 /// Wraps the model of GuardianVaultManager in a single core application manager.
 /// </summary>
 public class Core
 {
+    // Singleton instance of Core
+    private static Core instance = new Core();
+
+    // Core libraries
     private OAuthProfile oauthProfile;
     private Profile profile;
     private OAuthServer oauth;
     private RequestServer request;
     private ManifestServer manifest;
 
+    // Main logger
     private ILogger logger;
 
     /// <summary>
@@ -46,6 +53,26 @@ public class Core
         this.manifest = new ManifestServer(this.logger);
 
         this.OAuthStatus = false;
+        this.StartCoreService();
+    }
+
+    /// <summary>
+    /// Gets the instance of the Core.
+    /// </summary>
+    public static Core Instance
+    {
+        get
+        {
+            lock (instance)
+            {
+                if (instance == null)
+                {
+                    instance = new Core();
+                }
+
+                return instance;
+            }
+        }
     }
 
     /// <summary>
@@ -73,6 +100,8 @@ public class Core
         }
 
         this.GetDestiny2Manifest();
+
+        this.logger.LogDebug("Core started.");
     }
 
     /// <summary>

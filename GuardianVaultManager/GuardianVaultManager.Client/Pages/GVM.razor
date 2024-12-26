@@ -377,29 +377,27 @@ else
     ///   First render start the core.
     /// </summary>
     /// <param name="firstRender">Indicates whether this is the first render of the webpage.</param>
-    protected override void OnAfterRender(bool firstRender)
+    protected async override void OnAfterRender(bool firstRender)
     {
         if (firstRender)
         {
-            // StartCore();
+            if (core.OAuthStatus)
+            {
+                await LoadClientData();
+
+                // Set initialization complete
+                initializationComplete = true;
+                StateHasChanged();
+            }
         }
     }
 
     /// <summary>
     /// When page loads or reloads fetch load all important information.
     /// </summary>
-    protected override async void OnInitialized()
+    protected override void OnInitialized()
     {
-        StartCore();
-
-        if (core.OAuthStatus)
-        {
-            await LoadClientData();
-
-            // Set initialization complete
-            initializationComplete = true;
-            StateHasChanged();
-        }
+        core = Core.Instance;
     }
 
     /// <summary>
@@ -419,16 +417,6 @@ else
     public void DisplaySnackbar(string message, Severity mode)
     {
         Snackbar.Add(message, mode);
-    }
-
-    /// <summary>
-    /// Starts the GVM core.
-    /// </summary>
-    private void StartCore()
-    {
-        core = new Core();
-        core.StartCoreService();
-        Logger.LogDebug("Core started.");
     }
 
     /// <summary>
