@@ -8,6 +8,7 @@ using ClientProfile;
 using Microsoft.Extensions.Logging;
 using OAuthService;
 using RequestManager;
+using System.Text.Json;
 
 /// <summary>
 /// Wraps the model of GuardianVaultManager in a single core application manager.
@@ -214,13 +215,50 @@ public class Core
     }
 
     /// <summary>
+    /// Retrieves the bucket definition of the bucketHash.
+    /// </summary>
+    /// <param name="bucketHash">BucketHash to find.</param>
+    /// <returns>The name of the associated bucket.</returns>
+    public async Task<string> GetBucketDefinition(uint bucketHash)
+    {
+        JsonDocument bucketDefinition = await this.manifest.Manifest_Query_BucketDefinition(bucketHash);
+
+        return bucketDefinition.RootElement.GetProperty("displayProperties").GetProperty("name").GetString() ?? string.Empty;
+    }
+
+    /// <summary>
     /// Gets the photo of the itemHash provided.
     /// </summary>
     /// <param name="itemHash">ItemHash to use in the search.</param>
     /// <returns>The URL for the photo.</returns>
     public async Task<ItemDetails> GetWeaponDetails(uint itemHash)
     {
-         return await this.manifest.Manifest_Query_ItemDetails(itemHash); // TODO if item does not exist in manifest use bungie api instead.
+        ItemDetails details;
+        details = await this.manifest.Manifest_Query_ItemDetails(itemHash);
+
+        if (details.Equals(new ItemDetails()))
+        {
+            details = await this.request.PlatformDestiny2_Request_ItemDefinition(itemHash);
+        }
+
+        if (details.Equals(new ItemDetails()))
+        {
+            this.logger.LogError($"GVM could not find any ItemDetails for the itemHash={itemHash} in both the manifest or from Bungie.");
+        }
+
+        return details;
+    }
+
+    /// <summary>
+    /// Gets the class type of the provided characterHash.
+    /// </summary>
+    /// <param name="characterHash">CharacterHash to use.</param>
+    /// <returns>The name of the character.</returns>
+    public async Task<string> GetCharacterClass(uint characterHash)
+    {
+        JsonDocument characterDetails = await this.manifest.Manifest_Query_CharacterDetails(characterHash);
+
+        return characterDetails.RootElement.GetProperty("displayProperties").GetProperty("name").GetString() ?? string.Empty;
     }
 
     /// <summary>
