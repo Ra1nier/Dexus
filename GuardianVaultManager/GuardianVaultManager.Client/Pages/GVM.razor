@@ -437,7 +437,7 @@ else
             if (await core.TransferItem(itemHash, itemID, stackSize, origin, vaultTransfer))
             {
                 // Change location to new dropzone
-                item.Item.Identifier = item.DropzoneIdentifier;
+                content.SetIdentifier(item.Item, item.DropzoneIdentifier);
                 DisplaySnackbar($"Successfully transferred {content.Details[transfer.ItemHash].DisplayProperties.Name} to {item.DropzoneIdentifier}.", Severity.Success);
             }
             else

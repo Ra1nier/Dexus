@@ -7,6 +7,7 @@ namespace ContentManager;
 using Microsoft.Extensions.Logging;
 using Models;
 using RequestManager;
+using System.Security.Claims;
 using System.Text.Json;
 
 /// <summary>
@@ -204,6 +205,17 @@ public class ContentManager
 
         // Load Bucket Details and Sort
         await this.QueryManifestForBuckets(this.dropzoneBackingStore);
+    }
+
+    /// <summary>
+    /// Sets the identifier of the item.
+    /// </summary>
+    /// <param name="item">Item to set identifier of.</param>
+    /// <param name="identifier">Identifier to set.</param>
+    public void SetIdentifier(Item item, string identifier)
+    {
+        int index = this.dropzoneBackingStore.IndexOf(item);
+        this.dropzoneBackingStore[index].Identifier = identifier;
     }
 
     /// <summary>
