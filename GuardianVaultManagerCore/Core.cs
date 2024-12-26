@@ -4,12 +4,11 @@
 
 namespace GuardianVaultManagerCore;
 
-using ClientProfile;
 using Microsoft.Extensions.Logging;
+using ClientProfile;
 using OAuthService;
 using RequestManager;
 using ContentManager;
-using System.Text.Json;
 
 /// <summary>
 /// Wraps the model of GuardianVaultManager in a single core application manager.
@@ -156,14 +155,6 @@ public class Core
     }
 
     /// <summary>
-    /// Gets the Destiny 2 manifest from bungie.
-    /// </summary>
-    public async void GetDestiny2Manifest()
-    {
-        this.manifest.ManifestPath = await this.request.Destiny2Manifest_Request_GetCurrentManifest();
-    }
-
-    /// <summary>
     /// Handles signing in the user to bungie to retrieve necessary data.
     /// </summary>
     /// <param name="code">Authorization code.</param>
@@ -223,96 +214,11 @@ public class Core
     }
 
     /// <summary>
-    /// Retrieves the clients vault contents from Bungie.
+    /// Gets the Destiny 2 manifest from bungie.
     /// </summary>
-    /// <returns>A string containing the vault JSON.</returns>
-    public async Task<string> GetVaultContents()
+    public async void GetDestiny2Manifest()
     {
-        return await this.request.PlatformDestiny2_Request_Contents("ProfileInventories", true);
-    }
-
-    /// <summary>
-    /// Retrieves the clients vault contents from Bungie.
-    /// </summary>
-    /// <returns>A string containing the vault JSON.</returns>
-    public async Task<string> GetCharacters()
-    {
-        return await this.request.PlatformDestiny2_Request_Contents("Characters", true);
-    }
-
-    /// <summary>
-    /// Retrieves the clients vault contents from Bungie.
-    /// </summary>
-    /// <returns>A string containing the vault JSON.</returns>
-    public async Task<string> GetCharactersInventories()
-    {
-        return await this.request.PlatformDestiny2_Request_Contents("CharacterInventories", true);
-    }
-
-    /// <summary>
-    /// Retrieves the bucket definition of the bucketHash.
-    /// </summary>
-    /// <param name="bucketHash">BucketHash to find.</param>
-    /// <returns>The name of the associated bucket.</returns>
-    public async Task<string> GetBucketDefinition(uint bucketHash)
-    {
-        JsonDocument bucketDefinition = await this.manifest.Manifest_Query_BucketDefinition(bucketHash);
-
-        // Validate if the JSON is empty
-        if (bucketDefinition.RootElement.ValueKind == JsonValueKind.Object &&
-            bucketDefinition.RootElement.TryGetProperty("displayProperties", out JsonElement displayProperties))
-        {
-            // Validate if the "name" property exists in "displayProperties"
-            if (displayProperties.TryGetProperty("name", out JsonElement nameElement))
-            {
-                return nameElement.GetString() ?? string.Empty;
-            }
-            else
-            {
-                this.logger.LogWarning($"Bucket Definition found, but 'name' property is missing for bucketHash={bucketHash}");
-            }
-        }
-        else
-        {
-            this.logger.LogWarning($"Bucket Definition not found or invalid for bucketHash={bucketHash}");
-        }
-
-        return string.Empty;
-    }
-
-    /// <summary>
-    /// Gets the details of the itemHash provided.
-    /// </summary>
-    /// <param name="itemHash">ItemHash to use in the search.</param>
-    /// <returns>The URL for the photo.</returns>
-    public async Task<ItemDetails> GetItemDetails(uint itemHash)
-    {
-        ItemDetails details;
-        details = await this.manifest.Manifest_Query_ItemDetails(itemHash);
-
-        if (details.Equals(new ItemDetails()))
-        {
-            details = await this.request.PlatformDestiny2_Request_ItemDefinition(itemHash);
-        }
-
-        if (details.Equals(new ItemDetails()))
-        {
-            this.logger.LogError($"GVM could not find any ItemDetails for the itemHash={itemHash} in both the manifest or from Bungie.");
-        }
-
-        return details;
-    }
-
-    /// <summary>
-    /// Gets the class type of the provided characterHash.
-    /// </summary>
-    /// <param name="characterHash">CharacterHash to use.</param>
-    /// <returns>The name of the character.</returns>
-    public async Task<string> GetCharacterClass(uint characterHash)
-    {
-        JsonDocument characterDetails = await this.manifest.Manifest_Query_CharacterDetails(characterHash);
-
-        return characterDetails.RootElement.GetProperty("displayProperties").GetProperty("name").GetString() ?? string.Empty;
+        this.manifest.ManifestPath = await this.request.Destiny2Manifest_Request_GetCurrentManifest();
     }
 
     /// <summary>
