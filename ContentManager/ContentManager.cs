@@ -230,7 +230,24 @@ public class ContentManager
                     {
                         // Assign the character ID manually
                         character.CharacterId = characterJson.Name;
-                        // character.Class = await core.GetCharacterClass(character.ClassHash);
+
+                        // character.Class = await this.GetCharacterClass(character.ClassHash); This is causing issues so using switch statement for now
+                        switch (character.ClassType)
+                        {
+                            case 0:
+                                character.Class = "Titan";
+                                break;
+                            case 1:
+                                character.Class = "Hunter";
+                                break;
+                            case 2:
+                                character.Class = "Warlock";
+                                break;
+                            default:
+                                character.Class = "Unknown";
+                                break;
+                        }
+
                         this.Characters.Add(character);
                     }
                 }
@@ -534,5 +551,17 @@ public class ContentManager
         }
 
         return string.Empty;
+    }
+
+    /// <summary>
+    /// Gets the class type of the provided characterHash.
+    /// </summary>
+    /// <param name="characterHash">CharacterHash to use.</param>
+    /// <returns>The name of the character.</returns>
+    private async Task<string> GetCharacterClass(uint characterHash)
+    {
+        JsonDocument characterDetails = await this.manifest.Manifest_Query_CharacterDetails(characterHash);
+
+        return characterDetails.RootElement.GetProperty("displayProperties").GetProperty("name").GetString() ?? string.Empty;
     }
 }
