@@ -29,7 +29,7 @@ public class RequestServer
     /// <param name="profile">Client Profile.</param>
     /// <param name="auth">OAuth Profile.</param>
     /// <param name="logger">logging service.</param>
-    public RequestServer(Profile profile, OAuthProfile auth, ILogger logger)
+    public RequestServer(ILogger logger, Profile profile, OAuthProfile auth)
     {
         this.client = new HttpClient();
         this.profile = profile;
