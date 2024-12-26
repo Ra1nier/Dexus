@@ -62,19 +62,25 @@ public class Character
     /// Gets or sets the RaceHash.
     /// </summary>
     [JsonPropertyName("raceHash")]
-    public long? RaceHash { get; set; }
+    public uint RaceHash { get; set; }
 
     /// <summary>
     /// Gets or sets the genderHash.
     /// </summary>
     [JsonPropertyName("GenderHash")]
-    public long? GenderHash { get; set; }
+    public uint GenderHash { get; set; }
 
     /// <summary>
     /// Gets or sets the ClassHash.
     /// </summary>
     [JsonPropertyName("classHash")]
-    public long? ClassHash { get; set; }
+    public uint ClassHash { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Class.
+    /// </summary>
+    [JsonIgnore]
+    public string? Class { get; set; }
 
     /// <summary>
     /// Gets or sets the RaceType.

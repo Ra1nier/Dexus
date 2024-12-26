@@ -41,7 +41,13 @@ public class Item
     /// Gets or sets the bucket hash.
     /// </summary>
     [JsonPropertyName("bucketHash")]
-    public long BucketHash { get; set; }
+    public uint BucketHash { get; set; }
+
+    /// <summary>
+    /// Gets or sets the bucket.
+    /// </summary>
+    [JsonIgnore]
+    public string? Bucket { get; set; }
 
     /// <summary>
     /// Gets or sets the transfer status.
