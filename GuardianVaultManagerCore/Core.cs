@@ -8,9 +8,8 @@ using ClientProfile;
 using Microsoft.Extensions.Logging;
 using OAuthService;
 using RequestManager;
-using System.Runtime.CompilerServices;
+using ContentManager;
 using System.Text.Json;
-using System.Threading;
 
 /// <summary>
 /// Wraps the model of GuardianVaultManager in a single core application manager.
@@ -26,6 +25,7 @@ public class Core
     private OAuthServer oauth;
     private RequestServer request;
     private ManifestServer manifest;
+    private ContentManager content;
 
     // Main logger
     private ILogger logger;
@@ -49,15 +49,16 @@ public class Core
         this.profile = new Profile();
         this.oauthProfile = new OAuthProfile();
         this.oauth = new OAuthServer(this.logger, this.oauthProfile);
-        this.request = new RequestServer(this.profile, this.oauthProfile, this.logger);
+        this.request = new RequestServer(this.logger, this.profile, this.oauthProfile);
         this.manifest = new ManifestServer(this.logger);
+        this.content = new ContentManager(this.logger, this.request, this.manifest);
 
         this.OAuthStatus = false;
         this.StartCoreService();
     }
 
     /// <summary>
-    /// Gets the instance of the Core.
+    /// Gets the singleton instance of the Core.
     /// </summary>
     public static Core Instance
     {
@@ -74,6 +75,11 @@ public class Core
             }
         }
     }
+
+    /// <summary>
+    /// Gets the ContentManager used in the core.
+    /// </summary>
+    public ContentManager Content => this.content;
 
     /// <summary>
     /// Gets a value indicating whether OAuth has been completed.
@@ -275,11 +281,11 @@ public class Core
     }
 
     /// <summary>
-    /// Gets the photo of the itemHash provided.
+    /// Gets the details of the itemHash provided.
     /// </summary>
     /// <param name="itemHash">ItemHash to use in the search.</param>
     /// <returns>The URL for the photo.</returns>
-    public async Task<ItemDetails> GetWeaponDetails(uint itemHash)
+    public async Task<ItemDetails> GetItemDetails(uint itemHash)
     {
         ItemDetails details;
         details = await this.manifest.Manifest_Query_ItemDetails(itemHash);
