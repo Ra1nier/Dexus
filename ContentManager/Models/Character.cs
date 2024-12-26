@@ -1,7 +1,7 @@
 ﻿// <copyright file="Character.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
-namespace GuardianVaultManager.Client.Models;
+namespace ContentManager.Models;
 
 using System.Text.Json.Serialization;
 

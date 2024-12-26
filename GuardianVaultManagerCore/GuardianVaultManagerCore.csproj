@@ -30,6 +30,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ClientProfile\ClientProfile.csproj" />
+    <ProjectReference Include="..\ContentManager\ContentManager.csproj" />
     <ProjectReference Include="..\OAuthService\OAuthService.csproj" />
     <ProjectReference Include="..\RequestManager\RequestManager.csproj" />
   </ItemGroup>
