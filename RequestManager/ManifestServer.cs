@@ -30,6 +30,7 @@ public class ManifestServer
     /// </summary>
     static ManifestServer()
     {
+        // This is needed I guess for the SQLite provider to work.
         Batteries.Init();
     }
 
