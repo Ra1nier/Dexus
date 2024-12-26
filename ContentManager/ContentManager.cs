@@ -62,6 +62,17 @@ public class ContentManager
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ContentManager"/> class.
+    /// This instance will be NON-FUNCTIONAL. This should only be used for nullable purposes.
+    /// </summary>
+    public ContentManager()
+    {
+        this.logger = null!;
+        this.request = null!;
+        this.manifest = null!;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ContentManager"/> class.
     /// </summary>
     /// <param name="logger">GVM Logger.</param>
     /// <param name="request">GVM request server.</param>
