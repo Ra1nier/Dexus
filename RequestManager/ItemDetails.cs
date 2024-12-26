@@ -144,6 +144,9 @@ public class Inventory
 
     [JsonPropertyName("tierType")]
     public int TierType { get; set; }
+
+    [JsonPropertyName("bucketTypeHash")]
+    public uint BucketTypeHash { get; set; }
 }
 
 public class Stats

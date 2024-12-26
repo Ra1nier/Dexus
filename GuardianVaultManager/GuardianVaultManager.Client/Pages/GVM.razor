@@ -31,41 +31,304 @@
 }
 else
 {
-    <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge" Class="d-flex flex-row gap-3">
+    <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge" Class="d-flex flex-column gap-3">
         @if (initializationComplete)
         {
-            <MudDropContainer T="Item" Items="DropzoneBackingStore" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
-                <ChildContent>
-                    <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
-                        @foreach (var character in Characters)
-                        {
-                            <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
-                                <!-- Label Above Drop Zone -->
-                                <MudText Typo="Typo.h6" Class="mb-1 text-center">@character.CharacterId</MudText>
-                                <!-- Guardian Drop Zone -->
-                                <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
+            <!-- Column Labels -->
+            <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
+                @foreach (var character in Characters)
+                {
+                    <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
+                        <MudText Typo="Typo.h6" Class="mb-1 text-center">@character.Class</MudText>
+                    </MudItem>
+                }
+                <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
+                    <MudText Typo="Typo.h6" Class="mb-1 text-center">Vault</MudText>
+                </MudItem>
+            </MudGrid>
+
+            <!-- Kinetic Weapons Section -->
+            <MudPaper Class="d-flex flex-column gap-2">
+                <MudDropContainer T="Item" Items="KineticWeapons" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                    <ChildContent>
+                        <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
+                            @foreach (var character in Characters)
+                            {
+                                <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
+                                    <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
+                                    </MudDropZone>
+                                </MudItem>
+                            }
+                            <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
+                                <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;">
                                 </MudDropZone>
                             </MudItem>
-                        }
-                        <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
-                            <!-- Label Above Drop Zone -->
-                            <MudText Typo="Typo.h6" Class="mb-1 text-center">Vault</MudText>
-                            <!-- Vault Drop Zone -->
-                            <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;">
-                            </MudDropZone>
-                        </MudItem>
-                    </MudGrid>
-                </ChildContent>
-                <ItemRenderer>
-                    <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
-                        <!-- Image Section -->
-                        <MudCardMedia Image=@ItemDetails[context.ItemHash].DisplayProperties.Icon alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
-                        <MudCardContent Style="text-align: center; padding: 4px;">
-                            <MudText Typo="Typo.body2" Style="font-size: 10px;">@ItemDetails[context.ItemHash].DisplayProperties.Name</MudText>
-                        </MudCardContent>
-                    </MudCard>
-                </ItemRenderer>
-            </MudDropContainer>
+                        </MudGrid>
+                    </ChildContent>
+                    <ItemRenderer>
+                        <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
+                            <MudCardMedia Image=@ItemDetails[context.ItemHash].DisplayProperties.Icon alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
+                            <MudCardContent Style="text-align: center; padding: 4px;">
+                                <MudText Typo="Typo.body2" Style="font-size: 10px;">@ItemDetails[context.ItemHash].DisplayProperties.Name</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </ItemRenderer>
+                </MudDropContainer>
+            </MudPaper>
+
+            <!-- Energy Weapons Section -->
+            <MudPaper Class="d-flex flex-column gap-2">
+                <MudDropContainer T="Item" Items="EnergyWeapons" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                    <ChildContent>
+                        <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
+                            @foreach (var character in Characters)
+                            {
+                                <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
+                                    <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
+                                    </MudDropZone>
+                                </MudItem>
+                            }
+                            <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
+                                <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;">
+                                </MudDropZone>
+                            </MudItem>
+                        </MudGrid>
+                    </ChildContent>
+                    <ItemRenderer>
+                        <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
+                            <MudCardMedia Image=@ItemDetails[context.ItemHash].DisplayProperties.Icon alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
+                            <MudCardContent Style="text-align: center; padding: 4px;">
+                                <MudText Typo="Typo.body2" Style="font-size: 10px;">@ItemDetails[context.ItemHash].DisplayProperties.Name</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </ItemRenderer>
+                </MudDropContainer>
+            </MudPaper>
+
+            <!-- Power Weapons Section -->
+            <MudPaper Class="d-flex flex-column gap-2">
+                <MudDropContainer T="Item" Items="PowerWeapons" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                    <ChildContent>
+                        <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
+                            @foreach (var character in Characters)
+                            {
+                                <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
+                                    <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
+                                    </MudDropZone>
+                                </MudItem>
+                            }
+                            <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
+                                <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;">
+                                </MudDropZone>
+                            </MudItem>
+                        </MudGrid>
+                    </ChildContent>
+                    <ItemRenderer>
+                        <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
+                            <MudCardMedia Image=@ItemDetails[context.ItemHash].DisplayProperties.Icon alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
+                            <MudCardContent Style="text-align: center; padding: 4px;">
+                                <MudText Typo="Typo.body2" Style="font-size: 10px;">@ItemDetails[context.ItemHash].DisplayProperties.Name</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </ItemRenderer>
+                </MudDropContainer>
+            </MudPaper>
+
+            <!-- Helmets Section -->
+            <MudPaper Class="d-flex flex-column gap-2">
+                <MudDropContainer T="Item" Items="Helmets" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                    <ChildContent>
+                        <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
+                            @foreach (var character in Characters)
+                            {
+                                <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
+                                    <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
+                                    </MudDropZone>
+                                </MudItem>
+                            }
+                            <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
+                                <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;">
+                                </MudDropZone>
+                            </MudItem>
+                        </MudGrid>
+                    </ChildContent>
+                    <ItemRenderer>
+                        <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
+                            <MudCardMedia Image=@ItemDetails[context.ItemHash].DisplayProperties.Icon alt="Armor" Style="width: 100%; height: 100%; object-fit: cover;" />
+                            <MudCardContent Style="text-align: center; padding: 4px;">
+                                <MudText Typo="Typo.body2" Style="font-size: 10px;">@ItemDetails[context.ItemHash].DisplayProperties.Name</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </ItemRenderer>
+                </MudDropContainer>
+            </MudPaper>
+
+            <!-- Gauntlets Section -->
+            <MudPaper Class="d-flex flex-column gap-2">
+                <MudDropContainer T="Item" Items="Gauntlets" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                    <ChildContent>
+                        <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
+                            @foreach (var character in Characters)
+                            {
+                                <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
+                                    <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
+                                    </MudDropZone>
+                                </MudItem>
+                            }
+                            <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
+                                <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;">
+                                </MudDropZone>
+                            </MudItem>
+                        </MudGrid>
+                    </ChildContent>
+                    <ItemRenderer>
+                        <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
+                            <MudCardMedia Image=@ItemDetails[context.ItemHash].DisplayProperties.Icon alt="Armor" Style="width: 100%; height: 100%; object-fit: cover;" />
+                            <MudCardContent Style="text-align: center; padding: 4px;">
+                                <MudText Typo="Typo.body2" Style="font-size: 10px;">@ItemDetails[context.ItemHash].DisplayProperties.Name</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </ItemRenderer>
+                </MudDropContainer>
+            </MudPaper>
+
+            <!-- Chests Section -->
+            <MudPaper Class="d-flex flex-column gap-2">
+                <MudDropContainer T="Item" Items="Chests" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                    <ChildContent>
+                        <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
+                            @foreach (var character in Characters)
+                            {
+                                <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
+                                    <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
+                                    </MudDropZone>
+                                </MudItem>
+                            }
+                            <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
+                                <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;">
+                                </MudDropZone>
+                            </MudItem>
+                        </MudGrid>
+                    </ChildContent>
+                    <ItemRenderer>
+                        <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
+                            <MudCardMedia Image=@ItemDetails[context.ItemHash].DisplayProperties.Icon alt="Armor" Style="width: 100%; height: 100%; object-fit: cover;" />
+                            <MudCardContent Style="text-align: center; padding: 4px;">
+                                <MudText Typo="Typo.body2" Style="font-size: 10px;">@ItemDetails[context.ItemHash].DisplayProperties.Name</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </ItemRenderer>
+                </MudDropContainer>
+            </MudPaper>
+
+            <!-- Legs Section -->
+            <MudPaper Class="d-flex flex-column gap-2">
+                <MudDropContainer T="Item" Items="Legs" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                    <ChildContent>
+                        <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
+                            @foreach (var character in Characters)
+                            {
+                                <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
+                                    <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
+                                    </MudDropZone>
+                                </MudItem>
+                            }
+                            <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
+                                <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;">
+                                </MudDropZone>
+                            </MudItem>
+                        </MudGrid>
+                    </ChildContent>
+                    <ItemRenderer>
+                        <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
+                            <MudCardMedia Image=@ItemDetails[context.ItemHash].DisplayProperties.Icon alt="Armor" Style="width: 100%; height: 100%; object-fit: cover;" />
+                            <MudCardContent Style="text-align: center; padding: 4px;">
+                                <MudText Typo="Typo.body2" Style="font-size: 10px;">@ItemDetails[context.ItemHash].DisplayProperties.Name</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </ItemRenderer>
+                </MudDropContainer>
+            </MudPaper>
+
+            <!-- Class Items Section -->
+            <MudPaper Class="d-flex flex-column gap-2">
+                <MudDropContainer T="Item" Items="Skirts" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                    <ChildContent>
+                        <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
+                            @foreach (var character in Characters)
+                            {
+                                <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
+                                    <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
+                                    </MudDropZone>
+                                </MudItem>
+                            }
+                            <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
+                                <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;">
+                                </MudDropZone>
+                            </MudItem>
+                        </MudGrid>
+                    </ChildContent>
+                    <ItemRenderer>
+                        <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
+                            <MudCardMedia Image=@ItemDetails[context.ItemHash].DisplayProperties.Icon alt="Armor" Style="width: 100%; height: 100%; object-fit: cover;" />
+                            <MudCardContent Style="text-align: center; padding: 4px;">
+                                <MudText Typo="Typo.body2" Style="font-size: 10px;">@ItemDetails[context.ItemHash].DisplayProperties.Name</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </ItemRenderer>
+                </MudDropContainer>
+            </MudPaper>
+
+            <!-- Accessories Section -->
+            <MudPaper Class="d-flex flex-column gap-2">
+                <MudDropContainer T="Item" Items="Accessories" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                    <ChildContent>
+                        <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
+                            @foreach (var character in Characters)
+                            {
+                                <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
+                                    <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
+                                    </MudDropZone>
+                                </MudItem>
+                            }
+                            <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
+                                <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;">
+                                </MudDropZone>
+                            </MudItem>
+                        </MudGrid>
+                    </ChildContent>
+                    <ItemRenderer>
+                        <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
+                            <MudCardMedia Image=@ItemDetails[context.ItemHash].DisplayProperties.Icon alt="Armor" Style="width: 100%; height: 100%; object-fit: cover;" />
+                            <MudCardContent Style="text-align: center; padding: 4px;">
+                                <MudText Typo="Typo.body2" Style="font-size: 10px;">@ItemDetails[context.ItemHash].DisplayProperties.Name</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </ItemRenderer>
+                </MudDropContainer>
+            </MudPaper>
+
+            <!-- Consumables Section -->
+            <MudPaper Class="d-flex flex-column gap-2">
+                <MudDropContainer T="Item" Items="Consumables" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                    <ChildContent>
+                        <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
+                            <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
+                                <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;">
+                                </MudDropZone>
+                            </MudItem>
+                        </MudGrid>
+                    </ChildContent>
+                    <ItemRenderer>
+                        <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
+                            <MudCardMedia Image=@ItemDetails[context.ItemHash].DisplayProperties.Icon alt="Armor" Style="width: 100%; height: 100%; object-fit: cover;" />
+                            <MudCardContent Style="text-align: center; padding: 4px;">
+                                <MudText Typo="Typo.body2" Style="font-size: 10px;">@ItemDetails[context.ItemHash].DisplayProperties.Name</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    </ItemRenderer>
+                </MudDropContainer>
+            </MudPaper>
         }
         else
         {
@@ -81,9 +344,32 @@ else
 
     // Client specific objects
     private List<Character> Characters = new List<Character>();
-    private List<Item> Vault = new List<Item>();
-    private List<Item> Inventories = new List<Item>();
 
+    // Sub Components for each character
+    private List<Item> Weapons = new List<Item>();
+    private List<Item> KineticWeapons = new List<Item>();
+    private List<Item> EnergyWeapons = new List<Item>();
+    private List<Item> PowerWeapons = new List<Item>();
+
+    private List<Item> Armor = new List<Item>();
+    private List<Item> Helmets = new List<Item>();
+    private List<Item> Gauntlets = new List<Item>();
+    private List<Item> Chests = new List<Item>();
+    private List<Item> Legs = new List<Item>();
+    private List<Item> Skirts = new List<Item>();
+
+    private List<Item> Accessories = new List<Item>();
+    private List<Item> Postmaster = new List<Item>();
+    private List<Item> Engrams = new List<Item>();
+    private List<Item> Quests = new List<Item>();
+
+    // Non Specific Sub Components
+    private List<Item> ClientComponents = new List<Item>();
+
+    private List<Item> Consumables = new List<Item>();
+    private List<Item> Extras = new List<Item>();
+
+    // Complete Components
     private List<Item> DropzoneBackingStore = new List<Item>();
     private Dictionary<uint, ItemDetails> ItemDetails = new Dictionary<uint, ItemDetails>();
 
@@ -95,7 +381,7 @@ else
     {
         if (firstRender)
         {
-            StartCore();
+            // StartCore();
         }
     }
 
@@ -160,8 +446,10 @@ else
         await LoadClientInventories();
 
         // Load Item Details
-        DropzoneBackingStore = Inventories.Concat(Vault).ToList();
         await QueryManifestForDetails(DropzoneBackingStore);
+
+        // Load Bucket Details and Sort
+        await QueryManifestForBuckets(DropzoneBackingStore);
     }
 
     /// <summary>
@@ -246,6 +534,7 @@ else
                     {
                         // Assign the character ID manually
                         character.CharacterId = characterJson.Name;
+                        // character.Class = await core.GetCharacterClass(character.ClassHash);
                         Characters.Add(character);
                     }
                 }
@@ -253,6 +542,11 @@ else
                 {
                     Logger.LogWarning($"Character details for ID {characterJson.Name} are null.");
                 }
+            }
+
+            if (Characters.Count == 0)
+            {
+                DisplaySnackbar($"GVM Could not load you Guardians.", Severity.Error);
             }
         }
         catch (Exception e)
@@ -274,7 +568,7 @@ else
             JsonElement charactersArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("characterInventories").GetProperty("data");
 
             // Populate Inventories list
-            Inventories = new List<Item>();
+            int itemsLoaded = 0;
             foreach (Character character in Characters)
             {
                 if (character.CharacterId != null)
@@ -285,13 +579,23 @@ else
                     {
                         Item item = JsonSerializer.Deserialize<Item>(itemJson) ?? new Item();
                         item.Identifier = character.CharacterId;
-                        Inventories.Add(item);
+                        DropzoneBackingStore.Add(item);
+
+                        itemsLoaded++;
                     }
                 }
             }
 
-            Logger.LogInformation($"Loaded {Inventories.Count} items into Inventories.");
-            DisplaySnackbar($"Loaded {Inventories.Count} items into Inventories.");
+            Logger.LogInformation($"Loaded {itemsLoaded} items into Inventories.");
+
+            if (itemsLoaded != 0)
+            {
+                DisplaySnackbar($"Loaded {itemsLoaded} items into Inventories.");
+            }
+            else
+            {
+                DisplaySnackbar($"Could not load your Inventories. Try reloading the page.", Severity.Warning);
+            }
         }
         catch (Exception e)
         {
@@ -312,16 +616,26 @@ else
             JsonElement vaultArray = vaultContents.RootElement.GetProperty("Response").GetProperty("profileInventory").GetProperty("data").GetProperty("items");
 
             // Populate Vault list
-            Vault = new List<Item>();
+            int itemsLoaded = 0;
             foreach (JsonElement itemElement in vaultArray.EnumerateArray())
             {
                 Item item = JsonSerializer.Deserialize<Item>(itemElement) ?? new Item();
                 item.Identifier = "Vault";
-                Vault.Add(item);
+                DropzoneBackingStore.Add(item);
+
+                itemsLoaded++;
             }
 
-            Logger.LogInformation($"Loaded {Vault.Count} items into Vault.");
-            DisplaySnackbar($"Loaded {Vault.Count} items into Vault.");
+            Logger.LogInformation($"Loaded {itemsLoaded} items into Vault.");
+
+            if (itemsLoaded != 0)
+            {
+                DisplaySnackbar($"Loaded {itemsLoaded} items into Vault.");
+            }
+            else
+            {
+                DisplaySnackbar($"Could not load your Vault. Try reloading the page.", Severity.Warning);
+            }
         }
         catch (Exception e)
         {
@@ -332,20 +646,142 @@ else
     /// <summary>
     /// Creates a dictionary for the clients weapons.
     /// </summary>
-    /// <param name="weapons">List of the clients weapons.</param>
-    /// <returns></returns>
-    private async Task QueryManifestForDetails(List<Item> weapons)
+    /// <param name="items">List of the clients weapons.</param>
+    private async Task QueryManifestForDetails(List<Item> items)
     {
         Logger.LogInformation("Getting Clients Weapon Information.");
-        foreach (Item weapon in weapons)
+        foreach (Item item in items)
         {
-            uint itemHash = weapon.ItemHash;
+            uint itemHash = item.ItemHash;
 
             if (!ItemDetails.TryGetValue(itemHash, out _))
             {
-                var weaponDetails = await core.GetWeaponDetails(itemHash);
+                var itemDetails = await core.GetWeaponDetails(itemHash);
 
-                ItemDetails.Add(itemHash, weaponDetails);
+                if (itemDetails.Equals(new ItemDetails()))
+                {
+                    DisplaySnackbar("GVM is unable to define an item.");
+                }
+
+                ItemDetails.Add(itemHash, itemDetails);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Assigns each item in the given list into their buckets.
+    /// </summary>
+    /// <param name="items">List to assign buckets to.</param>
+    private async Task QueryManifestForBuckets(List<Item> items)
+    {
+        Logger.LogInformation("Getting Bucket Information.");
+        foreach (Item item in items)
+        {
+            uint hash = item.ItemHash;
+            if (ItemDetails.ContainsKey(hash))
+            {
+                var itemDetails = ItemDetails[hash];
+                item.Bucket = await core.GetBucketDefinition(itemDetails.Inventory.BucketTypeHash);
+                SortIntoSubComponent(item);
+            }
+            else
+            {
+                Logger.LogWarning($"Bucket not found for item: {item.ItemHash}, BucketHash: {item.BucketHash}");
+            }
+        }
+
+        // Combine appropriate Lists (TODO May not be needed)
+        Weapons.AddRange(KineticWeapons);
+        Weapons.AddRange(EnergyWeapons);
+        Weapons.AddRange(PowerWeapons);
+
+        Armor.AddRange(Helmets);
+        Armor.AddRange(Gauntlets);
+        Armor.AddRange(Chests);
+        Armor.AddRange(Legs);
+        Armor.AddRange(Skirts);
+
+        ClientComponents.AddRange(Consumables);
+        ClientComponents.AddRange(Extras);
+    }
+
+    /// <summary>
+    /// Sorts everything in the list to the appropriate sub categories.
+    /// </summary>
+    /// <param name="item">Item to sort into components.</param>
+    private void SortIntoSubComponent(Item item)
+    {
+        // Sort Items into buckets
+        if (!string.IsNullOrEmpty(item.Bucket))
+        {
+            switch (item.Bucket)
+            {
+                case "Kinetic Weapons":
+                    KineticWeapons.Add(item);
+                    break;
+                case "Energy Weapons":
+                    EnergyWeapons.Add(item);
+                    break;
+                case "Power Weapons":
+                    PowerWeapons.Add(item);
+                    break;
+
+                case "Helmet":
+                    Helmets.Add(item);
+                    break;
+                case "Gauntlets":
+                    Gauntlets.Add(item);
+                    break;
+                case "Chest Armor":
+                    Chests.Add(item);
+                    break;
+                case "Leg Armor":
+                    Legs.Add(item);
+                    break;
+                case "Class Armor":
+                    Skirts.Add(item);
+                    break;
+
+                case "Lost Items":
+                    Postmaster.Add(item);
+                    break;
+
+                case "Ghost":
+                case "Ships":
+                case "Vehicle":
+                case "Emblems":
+                case "Accessories":
+                    Accessories.Add(item);
+                    break;
+
+                case "Engrams":
+                    Engrams.Add(item);
+                    break;
+
+                case "Strange Coin":
+                case "Glimmer":
+                case "Legendary Shards":
+                case "Silver":
+                case "Bright Dust":
+                case "Wrapped Items":
+                case "Materials":
+                case "Synthweave Bolt":
+                case "Synthweave Strap":
+                case "Synthweave Plate":
+                case "Synthweave Template":
+                case "Consumables":
+                    Consumables.Add(item);
+                    break;
+
+                case "Messages":
+                case "Special Orders":
+                case "Quests":
+                    Quests.Add(item);
+                    break;
+
+                default:
+                    Extras.Add(item);
+                    break;
             }
         }
     }

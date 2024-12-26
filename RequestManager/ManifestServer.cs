@@ -122,7 +122,7 @@ public class ManifestServer
             using (var connection = new SqliteConnection(connectionString))
             {
                 await connection.OpenAsync();
-                this.logger.LogTrace($"QUERY MANIFEST: DestinyInventoryItemDefinition of ItemHash={bucketHash}");
+                this.logger.LogTrace($"QUERY MANIFEST: DestinyInventoryBucketDefinition of BucketHash={bucketHash}");
 
                 int id = this.ConvertHashToID(bucketHash);
 

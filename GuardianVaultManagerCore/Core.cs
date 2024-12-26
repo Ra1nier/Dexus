@@ -223,7 +223,26 @@ public class Core
     {
         JsonDocument bucketDefinition = await this.manifest.Manifest_Query_BucketDefinition(bucketHash);
 
-        return bucketDefinition.RootElement.GetProperty("displayProperties").GetProperty("name").GetString() ?? string.Empty;
+        // Validate if the JSON is empty
+        if (bucketDefinition.RootElement.ValueKind == JsonValueKind.Object &&
+            bucketDefinition.RootElement.TryGetProperty("displayProperties", out JsonElement displayProperties))
+        {
+            // Validate if the "name" property exists in "displayProperties"
+            if (displayProperties.TryGetProperty("name", out JsonElement nameElement))
+            {
+                return nameElement.GetString() ?? string.Empty;
+            }
+            else
+            {
+                this.logger.LogWarning($"Bucket Definition found, but 'name' property is missing for bucketHash={bucketHash}");
+            }
+        }
+        else
+        {
+            this.logger.LogWarning($"Bucket Definition not found or invalid for bucketHash={bucketHash}");
+        }
+
+        return string.Empty;
     }
 
     /// <summary>
