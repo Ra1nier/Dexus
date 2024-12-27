@@ -1,4 +1,8 @@
-﻿namespace GuardianVaultManager.Client.Models;
+﻿// <copyright file="Item.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
+
+namespace ContentManager.Models;
 
 using System.Text.Json.Serialization;
 
