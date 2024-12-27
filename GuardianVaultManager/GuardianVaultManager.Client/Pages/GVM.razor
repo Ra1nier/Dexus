@@ -311,7 +311,7 @@ else
 
             <!-- Consumables Section -->
             <MudPaper Class="d-flex flex-column gap-2">
-                <MudDropContainer T="Item" Items="content.ClientComponents.Values" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                <MudDropContainer T="Item" Items="content.ClientComponents" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
                     <ChildContent>
                         <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
                             <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">

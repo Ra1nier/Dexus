@@ -51,10 +51,10 @@ public class ContentManager
     private Dictionary<string, Item> quests = new Dictionary<string, Item>();
 
     // Non Specific Sub Components
-    private Dictionary<string, Item> clientComponents = new Dictionary<string, Item>();
+    private List<Item> clientComponents = new List<Item>();
 
-    private Dictionary<string, Item> consumables = new Dictionary<string, Item>();
-    private Dictionary<string, Item> extras = new Dictionary<string, Item>();
+    private List<Item> consumables = new List<Item>();
+    private List<Item> extras = new List<Item>();
 
     // Complete Components
     private List<Item> dropzoneBackingStore = new List<Item>();
@@ -162,17 +162,17 @@ public class ContentManager
     /// <summary>
     /// Gets the ClientComponents List.
     /// </summary>
-    public Dictionary<string, Item> ClientComponents { get => this.clientComponents; }
+    public List<Item> ClientComponents { get => this.clientComponents; }
 
     /// <summary>
     /// Gets the consumables List.
     /// </summary>
-    public Dictionary<string, Item> Consumables { get => this.consumables; }
+    public List<Item> Consumables { get => this.consumables; }
 
     /// <summary>
     /// Gets the Extras List.
     /// </summary>
-    public Dictionary<string, Item> Extras { get => this.extras; }
+    public List<Item> Extras { get => this.extras; }
 
     /// <summary>
     /// Gets the DropzoneBackingStore List.
@@ -428,8 +428,8 @@ public class ContentManager
         this.armor = this.armor.Intersect(this.legs).ToDictionary();
         this.armor = this.armor.Intersect(this.skirts).ToDictionary();
 
-        this.clientComponents = this.clientComponents.Intersect(this.consumables).ToDictionary();
-        this.clientComponents = this.clientComponents.Intersect(this.extras).ToDictionary();
+        this.clientComponents = this.clientComponents.Intersect(this.consumables).ToList();
+        this.clientComponents = this.clientComponents.Intersect(this.extras).ToList();
     }
 
     /// <summary>
@@ -485,6 +485,12 @@ public class ContentManager
                     this.engrams.TryAdd(item.ItemInstanceId ?? "-1", item);
                     break;
 
+                case "Messages":
+                case "Special Orders":
+                case "Quests":
+                    this.quests.TryAdd(item.ItemInstanceId ?? "-1", item);
+                    break;
+
                 case "Strange Coin":
                 case "Glimmer":
                 case "Legendary Shards":
@@ -497,17 +503,11 @@ public class ContentManager
                 case "Synthweave Plate":
                 case "Synthweave Template":
                 case "Consumables":
-                    this.consumables.TryAdd(item.ItemInstanceId ?? "-1", item);
-                    break;
-
-                case "Messages":
-                case "Special Orders":
-                case "Quests":
-                    this.quests.TryAdd(item.ItemInstanceId ?? "-1", item);
+                    this.consumables.Add(item);
                     break;
 
                 default:
-                    this.extras.TryAdd(item.ItemInstanceId ?? "-1", item);
+                    this.extras.Add(item);
                     break;
             }
         }
