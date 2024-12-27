@@ -37,7 +37,7 @@ else
         {
             <!-- Column Labels -->
             <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
-                @foreach (var character in content.Characters)
+                @foreach (var character in content.Characters.Values)
                 {
                     <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
                         <MudText Typo="Typo.h6" Class="mb-1 text-center">@character.Class</MudText>
@@ -50,10 +50,10 @@ else
 
             <!-- Kinetic Weapons Section -->
             <MudPaper Class="d-flex flex-column gap-2">
-                <MudDropContainer T="Item" Items="content.KineticWeapons" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                <MudDropContainer T="Item" Items="content.KineticWeapons.Values" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
                     <ChildContent>
                         <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
-                            @foreach (var character in content.Characters)
+                            @foreach (var character in content.Characters.Values)
                             {
                                 <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
                                     <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
@@ -79,10 +79,10 @@ else
 
             <!-- Energy Weapons Section -->
             <MudPaper Class="d-flex flex-column gap-2">
-                <MudDropContainer T="Item" Items="content.EnergyWeapons" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                <MudDropContainer T="Item" Items="content.EnergyWeapons.Values" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
                     <ChildContent>
                         <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
-                            @foreach (var character in content.Characters)
+                            @foreach (var character in content.Characters.Values)
                             {
                                 <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
                                     <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
@@ -108,10 +108,10 @@ else
 
             <!-- Power Weapons Section -->
             <MudPaper Class="d-flex flex-column gap-2">
-                <MudDropContainer T="Item" Items="content.PowerWeapons" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                <MudDropContainer T="Item" Items="content.PowerWeapons.Values" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
                     <ChildContent>
                         <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
-                            @foreach (var character in content.Characters)
+                            @foreach (var character in content.Characters.Values)
                             {
                                 <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
                                     <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
@@ -137,10 +137,10 @@ else
 
             <!-- Helmets Section -->
             <MudPaper Class="d-flex flex-column gap-2">
-                <MudDropContainer T="Item" Items="content.Helmets" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                <MudDropContainer T="Item" Items="content.Helmets.Values" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
                     <ChildContent>
                         <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
-                            @foreach (var character in content.Characters)
+                            @foreach (var character in content.Characters.Values)
                             {
                                 <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
                                     <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
@@ -166,10 +166,10 @@ else
 
             <!-- Gauntlets Section -->
             <MudPaper Class="d-flex flex-column gap-2">
-                <MudDropContainer T="Item" Items="content.Gauntlets" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                <MudDropContainer T="Item" Items="content.Gauntlets.Values" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
                     <ChildContent>
                         <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
-                            @foreach (var character in content.Characters)
+                            @foreach (var character in content.Characters.Values)
                             {
                                 <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
                                     <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
@@ -195,10 +195,10 @@ else
 
             <!-- Chests Section -->
             <MudPaper Class="d-flex flex-column gap-2">
-                <MudDropContainer T="Item" Items="content.Chests" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                <MudDropContainer T="Item" Items="content.Chests.Values" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
                     <ChildContent>
                         <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
-                            @foreach (var character in content.Characters)
+                            @foreach (var character in content.Characters.Values)
                             {
                                 <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
                                     <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
@@ -224,10 +224,10 @@ else
 
             <!-- Legs Section -->
             <MudPaper Class="d-flex flex-column gap-2">
-                <MudDropContainer T="Item" Items="content.Legs" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                <MudDropContainer T="Item" Items="content.Legs.Values" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
                     <ChildContent>
                         <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
-                            @foreach (var character in content.Characters)
+                            @foreach (var character in content.Characters.Values)
                             {
                                 <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
                                     <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
@@ -253,10 +253,10 @@ else
 
             <!-- Class Items Section -->
             <MudPaper Class="d-flex flex-column gap-2">
-                <MudDropContainer T="Item" Items="content.Skirts" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                <MudDropContainer T="Item" Items="content.Skirts.Values" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
                     <ChildContent>
                         <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
-                            @foreach (var character in content.Characters)
+                            @foreach (var character in content.Characters.Values)
                             {
                                 <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
                                     <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
@@ -282,10 +282,10 @@ else
 
             <!-- Accessories Section -->
             <MudPaper Class="d-flex flex-column gap-2">
-                <MudDropContainer T="Item" Items="content.Accessories" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                <MudDropContainer T="Item" Items="content.Accessories.Values" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
                     <ChildContent>
                         <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
-                            @foreach (var character in content.Characters)
+                            @foreach (var character in content.Characters.Values)
                             {
                                 <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
                                     <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
@@ -311,7 +311,7 @@ else
 
             <!-- Consumables Section -->
             <MudPaper Class="d-flex flex-column gap-2">
-                <MudDropContainer T="Item" Items="content.Consumables" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+                <MudDropContainer T="Item" Items="content.ClientComponents.Values" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
                     <ChildContent>
                         <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
                             <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
@@ -354,7 +354,7 @@ else
         {
             if (core.OAuthStatus)
             {
-                await content.InitaliseClientContent();
+                await content.InitializeClientContent();
 
                 // Set initialization complete
                 initializationComplete = true;
@@ -392,7 +392,7 @@ else
     }
 
     /// <summary>
-    /// Starts the Sign In process at Bungie
+    /// Starts the Sign In process at Bungie.
     /// </summary>
     private void HandleSignIn()
     {

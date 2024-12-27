@@ -7,7 +7,6 @@ namespace ContentManager;
 using Microsoft.Extensions.Logging;
 using Models;
 using RequestManager;
-using System.Security.Claims;
 using System.Text.Json;
 
 /// <summary>
@@ -31,31 +30,31 @@ public class ContentManager
     private ManifestServer manifest;
 
     // Client specific objects
-    private List<Character> characters = new List<Character>();
+    private Dictionary<string, Character> characters = new Dictionary<string, Character>();
 
     // Sub Components for each character
-    private List<Item> weapons = new List<Item>();
-    private List<Item> kineticWeapons = new List<Item>();
-    private List<Item> energyWeapons = new List<Item>();
-    private List<Item> powerWeapons = new List<Item>();
+    private Dictionary<string, Item> weapons = new Dictionary<string, Item>();
+    private Dictionary<string, Item> kineticWeapons = new Dictionary<string, Item>();
+    private Dictionary<string, Item> energyWeapons = new Dictionary<string, Item>();
+    private Dictionary<string, Item> powerWeapons = new Dictionary<string, Item>();
 
-    private List<Item> armor = new List<Item>();
-    private List<Item> helmets = new List<Item>();
-    private List<Item> gauntlets = new List<Item>();
-    private List<Item> chests = new List<Item>();
-    private List<Item> legs = new List<Item>();
-    private List<Item> skirts = new List<Item>();
+    private Dictionary<string, Item> armor = new Dictionary<string, Item>();
+    private Dictionary<string, Item> helmets = new Dictionary<string, Item>();
+    private Dictionary<string, Item> gauntlets = new Dictionary<string, Item>();
+    private Dictionary<string, Item> chests = new Dictionary<string, Item>();
+    private Dictionary<string, Item> legs = new Dictionary<string, Item>();
+    private Dictionary<string, Item> skirts = new Dictionary<string, Item>();
 
-    private List<Item> accessories = new List<Item>();
-    private List<Item> postmaster = new List<Item>();
-    private List<Item> engrams = new List<Item>();
-    private List<Item> quests = new List<Item>();
+    private Dictionary<string, Item> accessories = new Dictionary<string, Item>();
+    private Dictionary<string, Item> postmaster = new Dictionary<string, Item>();
+    private Dictionary<string, Item> engrams = new Dictionary<string, Item>();
+    private Dictionary<string, Item> quests = new Dictionary<string, Item>();
 
     // Non Specific Sub Components
-    private List<Item> clientComponents = new List<Item>();
+    private Dictionary<string, Item> clientComponents = new Dictionary<string, Item>();
 
-    private List<Item> consumables = new List<Item>();
-    private List<Item> extras = new List<Item>();
+    private Dictionary<string, Item> consumables = new Dictionary<string, Item>();
+    private Dictionary<string, Item> extras = new Dictionary<string, Item>();
 
     // Complete Components
     private List<Item> dropzoneBackingStore = new List<Item>();
@@ -88,92 +87,92 @@ public class ContentManager
     /// <summary>
     /// Gets the Characters List.
     /// </summary>
-    public List<Character> Characters { get => this.characters; }
+    public Dictionary<string, Character> Characters { get => this.characters; }
 
     /// <summary>
     /// Gets the Weapons List.
     /// </summary>
-    public List<Item> Weapons { get => this.weapons; }
+    public Dictionary<string, Item> Weapons { get => this.weapons; }
 
     /// <summary>
     /// Gets the KineticWeapons List.
     /// </summary>
-    public List<Item> KineticWeapons { get => this.kineticWeapons; }
+    public Dictionary<string, Item> KineticWeapons { get => this.kineticWeapons; }
 
     /// <summary>
     /// Gets the EnergyWeapons List.
     /// </summary>
-    public List<Item> EnergyWeapons { get => this.energyWeapons; }
+    public Dictionary<string, Item> EnergyWeapons { get => this.energyWeapons; }
 
     /// <summary>
     /// Gets the PowerWeapons List.
     /// </summary>
-    public List<Item> PowerWeapons { get => this.powerWeapons; }
+    public Dictionary<string, Item> PowerWeapons { get => this.powerWeapons; }
 
     /// <summary>
     /// Gets the Armor List.
     /// </summary>
-    public List<Item> Armor { get => this.armor; }
+    public Dictionary<string, Item> Armor { get => this.armor; }
 
     /// <summary>
     /// Gets the Helmets List.
     /// </summary>
-    public List<Item> Helmets { get => this.helmets; }
+    public Dictionary<string, Item> Helmets { get => this.helmets; }
 
     /// <summary>
     /// Gets the Gauntlets List.
     /// </summary>
-    public List<Item> Gauntlets { get => this.gauntlets; }
+    public Dictionary<string, Item> Gauntlets { get => this.gauntlets; }
 
     /// <summary>
     /// Gets the Chests List.
     /// </summary>
-    public List<Item> Chests { get => this.chests; }
+    public Dictionary<string, Item> Chests { get => this.chests; }
 
     /// <summary>
     /// Gets the Legs List.
     /// </summary>
-    public List<Item> Legs { get => this.legs; }
+    public Dictionary<string, Item> Legs { get => this.legs; }
 
     /// <summary>
     /// Gets the Skirts List.
     /// </summary>
-    public List<Item> Skirts { get => this.skirts; }
+    public Dictionary<string, Item> Skirts { get => this.skirts; }
 
     /// <summary>
     /// Gets the Accessories List.
     /// </summary>
-    public List<Item> Accessories { get => this.accessories; }
+    public Dictionary<string, Item> Accessories { get => this.accessories; }
 
     /// <summary>
     /// Gets the Postmaster List.
     /// </summary>
-    public List<Item> Postmaster { get => this.postmaster; }
+    public Dictionary<string, Item> Postmaster { get => this.postmaster; }
 
     /// <summary>
     /// Gets the Engrams List.
     /// </summary>
-    public List<Item> Engrams { get => this.engrams; }
+    public Dictionary<string, Item> Engrams { get => this.engrams; }
 
     /// <summary>
     /// Gets the Quests List.
     /// </summary>
-    public List<Item> Quests { get => this.quests; }
+    public Dictionary<string, Item> Quests { get => this.quests; }
 
     /// <summary>
     /// Gets the ClientComponents List.
     /// </summary>
-    public List<Item> ClientComponents { get => this.clientComponents; }
+    public Dictionary<string, Item> ClientComponents { get => this.clientComponents; }
 
     /// <summary>
     /// Gets the consumables List.
     /// </summary>
-    public List<Item> Consumables { get => this.consumables; }
+    public Dictionary<string, Item> Consumables { get => this.consumables; }
 
     /// <summary>
     /// Gets the Extras List.
     /// </summary>
-    public List<Item> Extras { get => this.extras; }
+    public Dictionary<string, Item> Extras { get => this.extras; }
 
     /// <summary>
     /// Gets the DropzoneBackingStore List.
@@ -189,7 +188,7 @@ public class ContentManager
     /// Gets the clients content.
     /// </summary>
     /// <returns>A Task representing the function.</returns>
-    public async Task InitaliseClientContent()
+    public async Task InitializeClientContent()
     {
         // Fetch Characters
         await this.FetchClientCharacters();
@@ -260,7 +259,7 @@ public class ContentManager
                                 break;
                         }
 
-                        this.Characters.Add(character);
+                        this.characters.Add(character.CharacterId ?? "-1", character);
                     }
                 }
                 else
@@ -294,7 +293,7 @@ public class ContentManager
 
             // Populate Inventories list
             int itemsLoaded = 0;
-            foreach (Character character in this.characters)
+            foreach (Character character in this.characters.Values)
             {
                 if (character.CharacterId != null)
                 {
@@ -303,7 +302,7 @@ public class ContentManager
                     foreach (JsonElement itemJson in characterInventory.EnumerateArray())
                     {
                         Item item = JsonSerializer.Deserialize<Item>(itemJson) ?? new Item();
-                        item.Identifier = character.CharacterId;
+                        item.Identifier = character.CharacterId.ToString();
                         this.dropzoneBackingStore.Add(item);
 
                         itemsLoaded++;
@@ -402,32 +401,35 @@ public class ContentManager
         this.logger.LogInformation("Getting Bucket Information.");
         foreach (Item item in items)
         {
-            uint hash = item.ItemHash;
-            if (this.itemDetails.ContainsKey(hash))
+            if (string.IsNullOrEmpty(item.Bucket))
             {
-                var itemDetails = this.itemDetails[hash];
-                item.Bucket = await this.GetBucketDefinition(itemDetails.Inventory.BucketTypeHash);
-                this.SortIntoSubComponent(item);
-            }
-            else
-            {
-                this.logger.LogWarning($"Bucket not found for item: {item.ItemHash}, BucketHash: {item.BucketHash}");
+                uint hash = item.ItemHash;
+                if (this.itemDetails.ContainsKey(hash))
+                {
+                    var itemDetails = this.itemDetails[hash];
+
+                    item.Bucket = await this.GetBucketDefinition(itemDetails.Inventory.BucketTypeHash);
+                    this.SortIntoSubComponent(item);
+                }
+                else
+                {
+                    this.logger.LogWarning($"Bucket not found for item: {item.ItemHash}, BucketHash: {item.BucketHash}");
+                }
             }
         }
 
-        // Combine appropriate Lists (TODO May not be needed)
-        this.weapons.AddRange(this.kineticWeapons);
-        this.weapons.AddRange(this.energyWeapons);
-        this.weapons.AddRange(this.powerWeapons);
+        this.weapons = this.weapons.Intersect(this.kineticWeapons).ToDictionary();
+        this.weapons = this.weapons.Intersect(this.energyWeapons).ToDictionary();
+        this.weapons = this.weapons.Intersect(this.powerWeapons).ToDictionary();
 
-        this.armor.AddRange(this.helmets);
-        this.armor.AddRange(this.gauntlets);
-        this.armor.AddRange(this.chests);
-        this.armor.AddRange(this.legs);
-        this.armor.AddRange(this.skirts);
+        this.armor = this.armor.Intersect(this.helmets).ToDictionary();
+        this.armor = this.armor.Intersect(this.gauntlets).ToDictionary();
+        this.armor = this.armor.Intersect(this.chests).ToDictionary();
+        this.armor = this.armor.Intersect(this.legs).ToDictionary();
+        this.armor = this.armor.Intersect(this.skirts).ToDictionary();
 
-        this.clientComponents.AddRange(this.consumables);
-        this.clientComponents.AddRange(this.extras);
+        this.clientComponents = this.clientComponents.Intersect(this.consumables).ToDictionary();
+        this.clientComponents = this.clientComponents.Intersect(this.extras).ToDictionary();
     }
 
     /// <summary>
@@ -442,33 +444,33 @@ public class ContentManager
             switch (item.Bucket)
             {
                 case "Kinetic Weapons":
-                    this.kineticWeapons.Add(item);
+                    this.kineticWeapons.TryAdd(item.ItemInstanceId ?? "-1", item);
                     break;
                 case "Energy Weapons":
-                    this.energyWeapons.Add(item);
+                    this.energyWeapons.TryAdd(item.ItemInstanceId ?? "-1", item);
                     break;
                 case "Power Weapons":
-                    this.powerWeapons.Add(item);
+                    this.powerWeapons.TryAdd(item.ItemInstanceId ?? "-1", item);
                     break;
 
                 case "Helmet":
-                    this.helmets.Add(item);
+                    this.helmets.TryAdd(item.ItemInstanceId ?? "-1", item);
                     break;
                 case "Gauntlets":
-                    this.gauntlets.Add(item);
+                    this.gauntlets.TryAdd(item.ItemInstanceId ?? "-1", item);
                     break;
                 case "Chest Armor":
-                    this.chests.Add(item);
+                    this.chests.TryAdd(item.ItemInstanceId ?? "-1", item);
                     break;
                 case "Leg Armor":
-                    this.legs.Add(item);
+                    this.legs.TryAdd(item.ItemInstanceId ?? "-1", item);
                     break;
                 case "Class Armor":
-                    this.skirts.Add(item);
+                    this.skirts.TryAdd(item.ItemInstanceId ?? "-1", item);
                     break;
 
                 case "Lost Items":
-                    this.postmaster.Add(item);
+                    this.postmaster.TryAdd(item.ItemInstanceId ?? "-1", item);
                     break;
 
                 case "Ghost":
@@ -476,11 +478,11 @@ public class ContentManager
                 case "Vehicle":
                 case "Emblems":
                 case "Accessories":
-                    this.accessories.Add(item);
+                    this.accessories.TryAdd(item.ItemInstanceId ?? "-1", item);
                     break;
 
                 case "Engrams":
-                    this.engrams.Add(item);
+                    this.engrams.TryAdd(item.ItemInstanceId ?? "-1", item);
                     break;
 
                 case "Strange Coin":
@@ -495,17 +497,17 @@ public class ContentManager
                 case "Synthweave Plate":
                 case "Synthweave Template":
                 case "Consumables":
-                    this.consumables.Add(item);
+                    this.consumables.TryAdd(item.ItemInstanceId ?? "-1", item);
                     break;
 
                 case "Messages":
                 case "Special Orders":
                 case "Quests":
-                    this.quests.Add(item);
+                    this.quests.TryAdd(item.ItemInstanceId ?? "-1", item);
                     break;
 
                 default:
-                    this.extras.Add(item);
+                    this.extras.TryAdd(item.ItemInstanceId ?? "-1", item);
                     break;
             }
         }
