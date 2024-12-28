@@ -275,7 +275,7 @@ public class RequestServer
             }
 
             // Setup directories and file paths
-            string saveDir = Path.Combine("C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\RequestManager", "Manifest");
+            string saveDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "RequestManager", "Manifest");
             string zipFilePath = Path.Combine(saveDir, "manifest.zip");
 
             if (Directory.Exists(saveDir))

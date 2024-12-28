@@ -4,8 +4,6 @@
 
 namespace ClientProfile;
 
-using System.Reflection.Metadata.Ecma335;
-using System.Text;
 using System.Text.Json;
 
 /// <summary>
@@ -16,10 +14,10 @@ public class Profile
     /// <summary>
     /// Path to store files related to user tokens.
     /// </summary>
-    private readonly string dataFolderPath = "C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\ClientProfile\\data\\"; // FIXME: Obviously cant be hard coded
-    private readonly string userTokenFileLocation = "C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\ClientProfile\\data\\UserTokens.json"; // FIXME: Obviously cant be hard coded like this.
-    private readonly string destinyMembershipsFileLocation = "C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\ClientProfile\\data\\DestinyMemberships.csv"; // FIXME: Obviously cant be hard coded like this and should probably be in JSON.
-    private readonly string expiryDatesFileLocation = "C:\\Users\\maxbr\\source\\repos\\Ra1nier\\GuardianVaultManager\\ClientProfile\\data\\ExpiryDates.json"; // FIXME: Obviously cant be hard coded like this and should probably be in JSON.
+    private string dataFolderPath;
+    private string userTokenFileLocation;
+    private string destinyMembershipsFileLocation;
+    private string expiryDatesFileLocation;
 
     /// <summary>
     /// Stores all user tokens.
@@ -32,6 +30,12 @@ public class Profile
     public Profile()
     {
         this.tokens = new Tokens();
+
+        // Make user paths
+        this.dataFolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ClientProfile", "data");
+        this.userTokenFileLocation = Path.Combine(this.dataFolderPath, "UserTokens.json");
+        this.destinyMembershipsFileLocation = Path.Combine(this.dataFolderPath, "DestinyMemberships.json");
+        this.expiryDatesFileLocation = Path.Combine(this.dataFolderPath, "ExpiryDates.json");
     }
 
     /// <summary>
@@ -171,7 +175,9 @@ public class Profile
     {
         try
         {
-            File.WriteAllText(this.destinyMembershipsFileLocation, $"{destinyMembershipID},{membershipType}");
+            string jsonString = $"{{\"MembershipID\":\"{destinyMembershipID:O}\",\"MembershipType\":\"{membershipType:O}\"}}";
+
+            File.WriteAllText(this.destinyMembershipsFileLocation, jsonString);
 
             return true;
         }
@@ -210,12 +216,10 @@ public class Profile
     {
         try
         {
-            string membershipsFile = File.ReadAllText(destinyIDPath);
+            JsonDocument membershipsFile = JsonDocument.Parse(File.ReadAllText(destinyIDPath));
 
-            string[] memberships = membershipsFile.Split(',');
-
-            this.DestinyMembershipID = memberships[0];
-            this.MembershipType = memberships[1];
+            this.DestinyMembershipID = membershipsFile.RootElement.GetProperty("MembershipID").GetString();
+            this.MembershipType = membershipsFile.RootElement.GetProperty("MembershipType").GetString();
         }
         catch (Exception e)
         {
