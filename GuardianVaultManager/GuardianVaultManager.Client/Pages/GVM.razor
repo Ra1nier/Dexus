@@ -405,44 +405,58 @@ else
     }
 
     /// <summary>
-    /// Handles transfers of items from one bucket to another and informs the core of the change.
+    /// Handles transfers of items between buckets and informs the core of the change.
+    /// Supports Vault to Character, Character to Vault, and Character to Character transfers.
     /// </summary>
-    /// <param name="item">Item being transferred</param>
+    /// <param name="item">Item being transferred.</param>
     private async void Transfer(MudItemDropInfo<Item> item)
     {
         if (item.Item != null)
         {
             var transfer = item.Item;
-            bool vaultTransfer;
-            string origin;
 
-            // Figure out the type of transfer
-            if (item.DropzoneIdentifier == "Vault") // Character -> Vault
-            {
-                vaultTransfer = true;
-                origin = item.Item.Identifier ?? string.Empty;
-            }
-            else // Vault -> Character
-            {
-                vaultTransfer = false;
-                origin = item.DropzoneIdentifier;
-            }
+            // Item bucket Identification
+            string origin = transfer.Identifier ?? string.Empty;
+            string destination = item.DropzoneIdentifier;
 
             // Item Transfer Identification
             uint itemHash = transfer.ItemHash;
             string itemID = transfer.ItemInstanceId ?? "-1";
             int stackSize = transfer.Quantity;
 
-            // Initiate the transfer
-            if (await core.TransferItem(itemHash, itemID, stackSize, origin, vaultTransfer))
+            // Determine the origin and destination of the transfer
+            bool transferSuccess = false;
+            if (destination == "Vault") // Character -> Vault
             {
-                // Change location to new dropzone
-                content.SetIdentifier(item.Item, item.DropzoneIdentifier);
-                DisplaySnackbar($"Successfully transferred {content.Details[transfer.ItemHash].DisplayProperties.Name} to {item.DropzoneIdentifier}.", Severity.Success);
+                // Transfer to Vault
+                transferSuccess = await core.TransferItem(itemHash, itemID, stackSize, origin, true);
+            }
+            else if (origin == "Vault") // Vault -> Character
+            {
+                // Transfer to Character
+                transferSuccess = await core.TransferItem(itemHash, itemID, stackSize, destination, false);
+            }
+            else // Character -> Character
+            {
+                // Transfer to Vault then to the Character
+                bool firstTransfer = await core.TransferItem(itemHash, itemID, stackSize, origin, true);
+                bool secondTransfer = await core.TransferItem(itemHash, itemID, stackSize, destination, false);
+
+                if (firstTransfer && secondTransfer)
+                {
+                    transferSuccess = true;
+                }
+            }
+
+            if (transferSuccess)
+            {
+                // Update the item's location
+                content.SetIdentifier(transfer, destination);
+                DisplaySnackbar($"Successfully transferred {content.Details[transfer.ItemHash].DisplayProperties.Name} to {destination}.", Severity.Success);
             }
             else
             {
-                DisplaySnackbar($"Failed to transfer {content.Details[transfer.ItemHash].DisplayProperties.Name} to {item.DropzoneIdentifier}.", Severity.Error);
+                DisplaySnackbar($"Unable to transfer {content.Details[transfer.ItemHash].DisplayProperties.Name} from {origin} to {destination}.", Severity.Error);
             }
 
             StateHasChanged();
