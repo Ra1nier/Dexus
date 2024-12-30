@@ -386,7 +386,6 @@ public class ContentManager
                 // {
                 //    DisplaySnackbar("GVM is unable to define an item.");
                 // }
-
                 this.itemDetails.Add(itemHash, itemDetails);
             }
         }
@@ -404,7 +403,7 @@ public class ContentManager
             if (string.IsNullOrEmpty(item.Bucket))
             {
                 uint hash = item.ItemHash;
-                if (this.itemDetails.ContainsKey(hash))
+                if (string.IsNullOrEmpty(item.Bucket))
                 {
                     var itemDetails = this.itemDetails[hash];
 

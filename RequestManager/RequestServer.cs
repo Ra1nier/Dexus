@@ -79,7 +79,7 @@ public class RequestServer
 
                         if (isCrossSavePrimary || crossSaveOverride != 0)
                         {
-                            membershipId = profile.GetProperty("membershipId").GetString();
+                            membershipId = profile.GetProperty("membershipId").GetString() ?? string.Empty;
                             this.logger.LogDebug($"Primary Membership ID found: {membershipId}");
 
                             result[1] = crossSaveOverride.ToString();
@@ -170,7 +170,7 @@ public class RequestServer
     /// <param name="characterID">Character ID of either the origin point to character to transfer to based on vaultTransfer.</param>
     /// <param name="vaultTransfer">Flag that indicates whether the item is being transferred is Character->Vault.</param>
     /// <returns>True if bungie returns a successful response, false otherwise.</returns>
-    public async Task<bool> ActionItem_Request_TransferItem(string membershipType, long itemHash, string itemID, int stackSize, string characterID, bool vaultTransfer)
+    public async Task<bool> ActionItem_Request_TransferItem(string membershipType, uint itemHash, string itemID, int stackSize, string characterID, bool vaultTransfer)
     {
         this.logger.LogInformation($"REQUEST: Destiny Item Transfer - {itemID} TO " + (vaultTransfer ? "Vault" : $"Character({characterID})"));
 
@@ -186,7 +186,7 @@ public class RequestServer
             itemID = itemID,
             stackSize = stackSize,
             characterID = characterID,
-            vaultTransfer = vaultTransfer,
+            transferToVault = vaultTransfer,
         };
         string jsonBody = JsonSerializer.Serialize(body);
         request.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
@@ -217,7 +217,7 @@ public class RequestServer
         }
         catch (Exception e)
         {
-            this.logger.LogError($"REQUEST FAILED: Transfer - {itemID} TO " + (vaultTransfer ? "Vault" : $"Character({characterID})") + ", {e.Message}");
+            this.logger.LogError($"REQUEST FAILED: Transfer - {itemID} TO " + (vaultTransfer ? "Vault" : $"Character({characterID})") + $", {e.Message}");
             return false;
         }
     }
@@ -256,7 +256,7 @@ public class RequestServer
                 .GetProperty("mobileWorldContentPaths")
                 .GetProperty("en");
 
-            string englishManifestPath = englishManifestPathElement.GetString();
+            string englishManifestPath = englishManifestPathElement.GetString() ?? string.Empty;
             if (string.IsNullOrEmpty(englishManifestPath))
             {
                 this.logger.LogError("Error: English content path not found in manifest.");
@@ -282,6 +282,7 @@ public class RequestServer
             {
                 Directory.Delete(saveDir, true);
             }
+
             Directory.CreateDirectory(saveDir);
 
             // Save the downloaded manifest zip file
@@ -325,6 +326,7 @@ public class RequestServer
     /// <summary>
     /// Sends a request to Bungie for the given content type.
     /// </summary>
+    /// <param name="itemHash">The ItemHash of the item to look up.</param>
     /// <returns>The JSON response from bungie.</returns>
     public async Task<ItemDetails> PlatformDestiny2_Request_ItemDefinition(uint itemHash)
     {
@@ -348,7 +350,7 @@ public class RequestServer
                 string jsonResponse = await response.Content.ReadAsStringAsync();
 
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                ItemDetails details = JsonSerializer.Deserialize<ItemDetails>(jsonResponse);
+                ItemDetails details = JsonSerializer.Deserialize<ItemDetails>(jsonResponse) ?? new ItemDetails();
 
                 this.logger.LogDebug($"Successful Response: {details.DisplayProperties.Name}");
 

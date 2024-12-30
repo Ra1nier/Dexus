@@ -81,6 +81,11 @@ public class Core
     public ContentManager Content => this.content;
 
     /// <summary>
+    /// Gets the OAuthProfile used in the core.
+    /// </summary>
+    public OAuthProfile OAuthProfile => this.oauthProfile;
+
+    /// <summary>
     /// Gets a value indicating whether OAuth has been completed.
     /// </summary>
     public bool OAuthStatus
@@ -88,11 +93,6 @@ public class Core
         get;
         private set;
     }
-
-    /// <summary>
-    /// Gets the OAuthProfile used in the core.
-    /// </summary>
-    public OAuthProfile OAuthProfile => this.oauthProfile;
 
     /// <summary>
     /// Starts the GuardianVaultManagerCore.
