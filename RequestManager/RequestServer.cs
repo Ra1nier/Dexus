@@ -238,6 +238,16 @@ public class RequestServer
 
         try
         {
+            // Setup directories and file paths
+            string saveDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "RequestManager", "Manifest");
+            string zipFilePath = Path.Combine(saveDir, "manifest.zip");
+
+            if (!Directory.Exists(saveDir))
+            {
+                Directory.CreateDirectory(saveDir);
+            }
+
+            // Send Request
             HttpResponseMessage response = await this.client.SendAsync(request);
 
             if (!response.IsSuccessStatusCode)
@@ -265,43 +275,40 @@ public class RequestServer
 
             string databaseUrl = $"https://www.bungie.net{englishManifestPath}";
 
-            // Request manifest file
-            HttpResponseMessage manifestResponse = await this.client.GetAsync(databaseUrl);
-            if (!manifestResponse.IsSuccessStatusCode)
+            // If Manifest file does not exist, download and extract it. Else check for updates and download if necessary.
+            string[] manifestFile = Directory.GetFiles(saveDir, "*.content", SearchOption.TopDirectoryOnly);
+            if (manifestFile.Length == 0)
             {
-                string errorResponse = await manifestResponse.Content.ReadAsStringAsync();
-                this.logger.LogError("Manifest could not be downloaded: {ErrorResponse}", errorResponse);
-                return string.Empty;
+                if (await this.DownloadFileAndExtract(databaseUrl, saveDir, zipFilePath))
+                {
+                    this.logger.LogInformation("Manifest downloaded successfully");
+                }
+                else
+                {
+                    this.logger.LogError("Manifest could not be downloaded.");
+                }
             }
-
-            // Setup directories and file paths
-            string saveDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "RequestManager", "Manifest");
-            string zipFilePath = Path.Combine(saveDir, "manifest.zip");
-
-            if (Directory.Exists(saveDir))
+            else
             {
-                Directory.Delete(saveDir, true);
-            }
+                string downloadedManifestHash = manifestFile[0].Split('_').Last().Split('.').First();
+                string currentManifestHash = englishManifestPath.Split('/').Last().Split('_').Last().Split('.').First();
 
-            Directory.CreateDirectory(saveDir);
-
-            // Save the downloaded manifest zip file
-            await using (Stream manifestFileStream = await manifestResponse.Content.ReadAsStreamAsync())
-            {
-                await using FileStream fileStream = new FileStream(zipFilePath, FileMode.Create, FileAccess.Write);
-                await manifestFileStream.CopyToAsync(fileStream);
-            }
-
-            // Extract the manifest zip file
-            try
-            {
-                ZipFile.ExtractToDirectory(zipFilePath, saveDir, overwriteFiles: true);
-                File.Delete(zipFilePath);
-            }
-            catch (Exception ex)
-            {
-                this.logger.LogError("Error extracting manifest zip file: {ErrorMessage}", ex.Message);
-                return string.Empty;
+                if (downloadedManifestHash != currentManifestHash)
+                {
+                    File.Delete(manifestFile[0]);
+                    if (await this.DownloadFileAndExtract(databaseUrl, saveDir, zipFilePath))
+                    {
+                        this.logger.LogInformation("Manifest downloaded successfully");
+                    }
+                    else
+                    {
+                        this.logger.LogError("Manifest could not be downloaded.");
+                    }
+                }
+                else
+                {
+                    this.logger.LogInformation("Manifest is up to date.");
+                }
             }
 
             // Find and return the extracted manifest file
@@ -313,12 +320,12 @@ public class RequestServer
             }
 
             string manifestFilePath = manifestFiles[0];
-            this.logger.LogInformation("Manifest saved successfully: {ManifestFilePath}", manifestFilePath);
+            this.logger.LogInformation($"Manifest saved successfully: {manifestFilePath}");
             return manifestFilePath;
         }
-        catch (Exception ex)
+        catch (Exception e)
         {
-            this.logger.LogError("REQUEST FAILED: Destiny Manifest - {ErrorMessage}", ex.Message);
+            this.logger.LogError($"REQUEST FAILED: Destiny Manifest - {e.Message}");
             return string.Empty;
         }
     }
@@ -367,6 +374,81 @@ public class RequestServer
         {
             this.logger.LogError($"REQUEST FAILED: Destiny Item Definition {itemHash}, {e.Message}");
             return new ItemDetails();
+        }
+    }
+
+    /// <summary>
+    /// Gets the file from the provied URL.
+    /// </summary>
+    /// <param name="url">URL to download file from.</param>
+    /// <param name="filePath">File path to save the file to.</param>
+    /// <returns>True if the operation was done successfully. False otherwise.</returns>
+    private async Task<bool> DownloadFile(string url, string filePath)
+    {
+        try
+        {
+            // Request manifest file
+            HttpResponseMessage manifestResponse = await this.client.GetAsync(filePath);
+            if (!manifestResponse.IsSuccessStatusCode)
+            {
+                string errorResponse = await manifestResponse.Content.ReadAsStringAsync();
+                this.logger.LogError("Manifest could not be downloaded: {ErrorResponse}", errorResponse);
+                return false;
+            }
+
+            // Save the downloaded manifest zip file
+            await using (Stream manifestFileStream = await manifestResponse.Content.ReadAsStreamAsync())
+            {
+                await using FileStream fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
+                await manifestFileStream.CopyToAsync(fileStream);
+            }
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            this.logger.LogError($"File could not be downloaded: {e.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets the file from the provied URL and extracts it to the provided file path.
+    /// </summary>
+    /// <param name="url">URL to download file from.</param>
+    /// <param name="filePath">File path to save the file to.</param>
+    /// <param name="zipFilePath">File path to extract the contents to.</param>
+    /// <returns>True if the operation was done successfully. False otherwise.</returns>
+    private async Task<bool> DownloadFileAndExtract(string url, string filePath, string zipFilePath)
+    {
+        try
+        {
+            // Request manifest file
+            HttpResponseMessage manifestResponse = await this.client.GetAsync(url);
+            if (!manifestResponse.IsSuccessStatusCode)
+            {
+                string errorResponse = await manifestResponse.Content.ReadAsStringAsync();
+                this.logger.LogError("Manifest could not be downloaded: {ErrorResponse}", errorResponse);
+                return false;
+            }
+
+            // Save the downloaded manifest zip file
+            await using (Stream manifestFileStream = await manifestResponse.Content.ReadAsStreamAsync())
+            {
+                await using FileStream fileStream = new FileStream(zipFilePath, FileMode.Create, FileAccess.Write);
+                await manifestFileStream.CopyToAsync(fileStream);
+            }
+
+            // Extract the manifest zip file
+            ZipFile.ExtractToDirectory(zipFilePath, filePath, overwriteFiles: true);
+            File.Delete(zipFilePath);
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            this.logger.LogError($"File could not be downloaded: {e.Message}");
+            return false;
         }
     }
 }
