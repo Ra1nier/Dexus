@@ -401,20 +401,24 @@ public class ContentManager
         this.logger.LogInformation("Getting Bucket Information.");
         foreach (Item item in items)
         {
+            uint hash = item.ItemHash;
             if (string.IsNullOrEmpty(item.Bucket))
             {
-                uint hash = item.ItemHash;
-                if (string.IsNullOrEmpty(item.Bucket))
+                if (item.Identifier == "Vault")
                 {
                     var itemDetails = this.itemDetails[hash];
-
-                    item.Bucket = await this.GetBucketDefinition(item.BucketHash);
-                    this.SortIntoSubComponent(item);
+                    item.Bucket = await this.GetBucketDefinition(itemDetails.Inventory.BucketTypeHash);
                 }
                 else
                 {
-                    this.logger.LogWarning($"Bucket not found for item: {item.ItemHash}, BucketHash: {item.BucketHash}");
+                    item.Bucket = await this.GetBucketDefinition(item.BucketHash);
                 }
+
+                this.SortIntoSubComponent(item);
+            }
+            else
+            {
+                this.logger.LogWarning($"Bucket not found for item: {item.ItemHash}, BucketHash: {item.BucketHash}");
             }
         }
 
