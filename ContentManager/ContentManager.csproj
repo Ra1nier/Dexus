@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\GuardianServices\GuardianServices.csproj" />
     <ProjectReference Include="..\RequestManager\RequestManager.csproj" />
   </ItemGroup>
 

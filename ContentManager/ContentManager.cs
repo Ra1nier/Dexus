@@ -4,6 +4,7 @@
 
 namespace ContentManager;
 
+using GuardianServices;
 using Microsoft.Extensions.Logging;
 using Models;
 using RequestManager;
@@ -14,6 +15,11 @@ using System.Text.Json;
 /// </summary>
 public class ContentManager
 {
+    /// <summary>
+    /// Base bungie URL.
+    /// </summary>
+    private readonly string baseUrl = "https://www.bungie.net";
+
     /// <summary>
     /// Logger for GVM.
     /// </summary>
@@ -28,6 +34,11 @@ public class ContentManager
     /// Manifest Server for GVM.
     /// </summary>
     private ManifestServer manifest;
+
+    /// <summary>
+    /// Snackbar Service for GVM.
+    /// </summary>
+    private SnackbarService snackbar;
 
     // Client specific objects
     private Dictionary<string, Character> characters = new Dictionary<string, Character>();
@@ -69,6 +80,7 @@ public class ContentManager
         this.logger = null!;
         this.request = null!;
         this.manifest = null!;
+        this.snackbar = null!;
     }
 
     /// <summary>
@@ -77,11 +89,13 @@ public class ContentManager
     /// <param name="logger">GVM Logger.</param>
     /// <param name="request">GVM request server.</param>
     /// <param name="manifest">GVM manifest server.</param>
-    public ContentManager(ILogger logger, RequestServer request, ManifestServer manifest)
+    /// <param name="snackbar">GVM snackbar provider.</param>
+    public ContentManager(ILogger logger, RequestServer request, ManifestServer manifest, SnackbarService snackbar)
     {
         this.logger = logger;
         this.request = request;
         this.manifest = manifest;
+        this.snackbar = snackbar;
     }
 
     /// <summary>
@@ -185,28 +199,6 @@ public class ContentManager
     public Dictionary<uint, ItemDetails> Details { get => this.itemDetails; }
 
     /// <summary>
-    /// Gets the clients content.
-    /// </summary>
-    /// <returns>A Task representing the function.</returns>
-    public async Task InitializeClientContent()
-    {
-        // Fetch Characters
-        await this.FetchClientCharacters();
-
-        // Load Vault
-        await this.LoadClientVault();
-
-        // Load Inventories
-        await this.LoadClientInventories();
-
-        // Load Item Details
-        await this.QueryManifestForDetails(this.dropzoneBackingStore);
-
-        // Load Bucket Details and Sort
-        await this.QueryManifestForBuckets(this.dropzoneBackingStore);
-    }
-
-    /// <summary>
     /// Sets the identifier of the item.
     /// </summary>
     /// <param name="item">Item to set identifier of.</param>
@@ -220,7 +212,8 @@ public class ContentManager
     /// <summary>
     /// Gets clients character information from bungie.
     /// </summary>
-    private async Task FetchClientCharacters()
+    /// <returns>Task representing the operation.</returns>
+    public async Task FetchClientCharacters()
     {
         try
         {
@@ -259,6 +252,9 @@ public class ContentManager
                                 break;
                         }
 
+                        character.EmblemPath = this.baseUrl + character.EmblemPath;
+                        character.EmblemBackgroundPath = this.baseUrl + character.EmblemBackgroundPath;
+
                         this.characters.Add(character.CharacterId ?? "-1", character);
                     }
                 }
@@ -268,10 +264,10 @@ public class ContentManager
                 }
             }
 
-            // if (Characters.Count == 0)
-            // {
-            //    GVM.DisplaySnackbar($"GVM Could not load you Guardians.", Severity.Error);
-            // }
+            if (this.Characters.Count == 0)
+            {
+                this.snackbar.AddMessage($"GVM Could not load your Guardians.", "Error");
+            }
         }
         catch (Exception e)
         {
@@ -282,7 +278,8 @@ public class ContentManager
     /// <summary>
     /// Creates the clients character inventory contents from bungie.
     /// </summary>
-    private async Task LoadClientInventories()
+    /// <returns>Task representing the operation.</returns>
+    public async Task LoadClientInventories()
     {
         try
         {
@@ -312,14 +309,14 @@ public class ContentManager
 
             this.logger.LogInformation($"Loaded {itemsLoaded} items into Inventories.");
 
-            // if (itemsLoaded != 0)
-            // {
-            //    DisplaySnackbar($"Loaded {itemsLoaded} items into Inventories.");
-            // }
-            // else
-            // {
-            //    DisplaySnackbar($"Could not load your Inventories. Try reloading the page.", Severity.Warning);
-            // }
+            if (itemsLoaded != 0)
+            {
+                this.snackbar.AddMessage($"Loaded {itemsLoaded} items into Inventories.", "success");
+            }
+            else
+            {
+                this.snackbar.AddMessage($"Could not load your Inventories. Try reloading the page.", "Warning");
+            }
         }
         catch (Exception e)
         {
@@ -330,7 +327,8 @@ public class ContentManager
     /// <summary>
     /// Creates the clients vault contents from bungie.
     /// </summary>
-    private async Task LoadClientVault()
+    /// <returns>Task representing the operation.</returns>
+    public async Task LoadClientVault()
     {
         try
         {
@@ -352,14 +350,14 @@ public class ContentManager
 
             this.logger.LogInformation($"Loaded {itemsLoaded} items into Vault.");
 
-            // if (itemsLoaded != 0)
-            // {
-            //    DisplaySnackbar($"Loaded {itemsLoaded} items into Vault.");
-            // }
-            // else
-            // {
-            //    DisplaySnackbar($"Could not load your Vault. Try reloading the page.", Severity.Warning);
-            // }
+            if (itemsLoaded != 0)
+            {
+                this.snackbar.AddMessage($"Loaded {itemsLoaded} items into Vault.", "success");
+            }
+            else
+            {
+                this.snackbar.AddMessage($"Could not load your Vault. Try reloading the page.", "Warning");
+            }
         }
         catch (Exception e)
         {
@@ -371,7 +369,8 @@ public class ContentManager
     /// Creates a dictionary for the clients weapons.
     /// </summary>
     /// <param name="items">List of the clients weapons.</param>
-    private async Task QueryManifestForDetails(List<Item> items)
+    /// <returns>Task representing the operation.</returns>
+    public async Task QueryManifestForDetails(List<Item> items)
     {
         this.logger.LogInformation("Getting Clients Weapon Information.");
         foreach (Item item in items)
@@ -382,10 +381,11 @@ public class ContentManager
             {
                 var itemDetails = await this.GetItemDetails(itemHash);
 
-                // if (itemDetails.Equals(new ItemDetails()))
-                // {
-                //    DisplaySnackbar("GVM is unable to define an item.");
-                // }
+                if (itemDetails.Equals(new ItemDetails()))
+                {
+                    this.snackbar.AddMessage("GVM is unable to define an item.", "warning");
+                }
+
                 this.itemDetails.Add(itemHash, itemDetails);
             }
         }
@@ -395,7 +395,8 @@ public class ContentManager
     /// Assigns each item in the given list into their buckets.
     /// </summary>
     /// <param name="items">List to assign buckets to.</param>
-    private async Task QueryManifestForBuckets(List<Item> items)
+    /// <returns>Task representing the operation.</returns>
+    public async Task QueryManifestForBuckets(List<Item> items)
     {
         this.logger.LogInformation("Getting Bucket Information.");
         foreach (Item item in items)
@@ -407,7 +408,7 @@ public class ContentManager
                 {
                     var itemDetails = this.itemDetails[hash];
 
-                    item.Bucket = await this.GetBucketDefinition(itemDetails.Inventory.BucketTypeHash);
+                    item.Bucket = await this.GetBucketDefinition(item.BucketHash);
                     this.SortIntoSubComponent(item);
                 }
                 else
