@@ -9,6 +9,7 @@ using ClientProfile;
 using OAuthService;
 using RequestManager;
 using ContentManager;
+using GuardianServices;
 
 /// <summary>
 /// Wraps the model of GuardianVaultManager in a single core application manager.
@@ -25,6 +26,8 @@ public class Core
     private RequestServer request;
     private ManifestServer manifest;
     private ContentManager content;
+    private SnackbarService snackbar;
+    private LoadingbarService loadingbars;
 
     // Main logger
     private ILogger logger;
@@ -48,11 +51,16 @@ public class Core
         this.profile = new Profile();
         this.oauthProfile = new OAuthProfile();
         this.oauth = new OAuthServer(this.logger, this.oauthProfile);
+        this.snackbar = new SnackbarService();
+        this.loadingbars = new LoadingbarService();
         this.request = new RequestServer(this.logger, this.profile, this.oauthProfile);
         this.manifest = new ManifestServer(this.logger);
-        this.content = new ContentManager(this.logger, this.request, this.manifest);
+        this.content = new ContentManager(this.logger, this.request, this.manifest, this.snackbar);
 
+        // Setting Local Values
         this.OAuthStatus = false;
+        this.loadingbars.GenerateLoadingbar("Main");
+
         this.StartCoreService();
     }
 
@@ -93,6 +101,18 @@ public class Core
         get;
         private set;
     }
+
+    // Servies
+
+    /// <summary>
+    /// Gets the snackbar service.
+    /// </summary>
+    public SnackbarService Snackbar => this.snackbar;
+
+    /// <summary>
+    /// Gets the loadingbar service.
+    /// </summary>
+    public LoadingbarService Loadingbars => this.loadingbars;
 
     /// <summary>
     /// Starts the GuardianVaultManagerCore.
@@ -219,6 +239,38 @@ public class Core
     public async void GetDestiny2Manifest()
     {
         this.manifest.ManifestPath = await this.request.Destiny2Manifest_Request_GetCurrentManifest();
+    }
+
+    /// <summary>
+    /// Gets the clients content.
+    /// </summary>
+    /// <returns>A Task representing the function.</returns>
+    public async Task InitializeClientContent()
+    {
+        // Fetch Characters
+        this.loadingbars.SetProgressText("main", "Fetching Characters");
+        await this.content.FetchClientCharacters();
+        this.loadingbars.SetBufferValue("main", 20);
+
+        // Load Vault
+        this.loadingbars.SetProgressText("main", "Fetching Vault");
+        await this.content.LoadClientVault();
+        this.loadingbars.SetBufferValue("main", 60);
+
+        // Load Inventories
+        this.loadingbars.SetProgressText("main", "Fetching Inventory");
+        await this.content.LoadClientInventories();
+        this.loadingbars.SetBufferValue("main", 100);
+
+        // Load Item Details
+        this.loadingbars.SetProgressText("main", "Loading Your Items");
+        await this.content.QueryManifestForDetails(this.content.DropzoneBackingStore);
+        this.loadingbars.SetProgressValue("main", 50);
+
+        // Load Bucket Details and Sort
+        this.loadingbars.SetProgressText("main", "Finishing Up");
+        await this.content.QueryManifestForBuckets(this.content.DropzoneBackingStore);
+        this.loadingbars.SetProgressValue("main", 100);
     }
 
     /// <summary>
