@@ -1,0 +1,113 @@
+﻿@using MudBlazor
+@using RequestManager
+@using ContentManager.Models
+@using GuardianVaultManagerCore
+@using ContentManager
+
+<MudPaper Class="d-flex flex-column gap-2">
+    <MudDropContainer T="Item" Items="Items" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+        <ChildContent>
+            <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
+                @foreach (var character in Characters)
+                {
+                    <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
+                        <MudDropZone T="Item" Identifier="@character.CharacterId" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
+                        </MudDropZone>
+                    </MudItem>
+                }
+                <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
+                    <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;">
+                    </MudDropZone>
+                </MudItem>
+            </MudGrid>
+        </ChildContent>
+        <ItemRenderer>
+            <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
+                <MudCardMedia Image="@Details[context.ItemHash].DisplayProperties.Icon" alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
+                <MudCardContent Style="text-align: center; padding: 4px;">
+                    <MudText Typo="Typo.body2" Style="font-size: 10px;">@Details[context.ItemHash].DisplayProperties.Name</MudText>
+                </MudCardContent>
+            </MudCard>
+        </ItemRenderer>
+    </MudDropContainer>
+</MudPaper>
+
+@code {
+    [Parameter] public required IEnumerable<Item> Items { get; set; }
+    [Parameter] public required IEnumerable<Character> Characters { get; set; }
+    [Parameter] public required IDictionary<uint, ItemDetails> Details { get; set; }
+    [Parameter] public required Core Core { get; set; }
+    [Parameter] public required ContentManager Content { get; set; }
+
+    /// <summary>
+    /// Handles transfers of items between buckets and informs the core of the change.
+    /// Supports Vault to Character, Character to Vault, and Character to Character transfers.
+    /// </summary>
+    /// <param name="item">Item being transferred.</param>
+    private async void Transfer(MudItemDropInfo<Item> item)
+    {
+        if (item.Item != null)
+        {
+            var transfer = item.Item;
+
+            // Item bucket Identification
+            string origin = transfer.Identifier ?? string.Empty;
+            string destination = item.DropzoneIdentifier;
+
+            // Item Transfer Identification
+            uint itemHash = transfer.ItemHash;
+            string itemID = transfer.ItemInstanceId ?? "-1";
+            int stackSize = transfer.Quantity;
+
+            // Determine the origin and destination of the transfer
+            bool transferSuccess = false;
+            if (destination == "Vault") // Character -> Vault
+            {
+                // Transfer to Vault
+                transferSuccess = await Core.TransferItem(itemHash, itemID, stackSize, origin, true);
+            }
+            else if (origin == "Vault") // Vault -> Character
+            {
+                // Transfer to Character
+                transferSuccess = await Core.TransferItem(itemHash, itemID, stackSize, destination, false);
+            }
+            else // Character -> Character
+            {
+                // Transfer to Vault then to the Character
+                bool firstTransfer = await Core.TransferItem(itemHash, itemID, stackSize, origin, true);
+                bool secondTransfer = false;
+                if (firstTransfer)
+                    secondTransfer = await Core.TransferItem(itemHash, itemID, stackSize, destination, false);
+
+                if (firstTransfer && secondTransfer)
+                {
+                    transferSuccess = true;
+                }
+                else if (!secondTransfer) // If the second transfer failed return the item to the origin.
+                {
+                    bool returnSuccesful = await Core.TransferItem(itemHash, itemID, stackSize, origin, false);
+
+                    if (!returnSuccesful)
+                    {
+                        Content.SetIdentifier(transfer, "Vault");
+                        Core.Snackbar.AddMessage($"Transfer failed. {Content.Details[transfer.ItemHash].DisplayProperties.Name} " +
+                            "has ended up in the Vault as GVM was unable to return it.", "Warning");
+                    }
+                }
+            }
+
+            if (transferSuccess)
+            {
+                // Update the item's location
+                Content.SetIdentifier(transfer, destination);
+                Core.Snackbar.AddMessage($"Successfully transferred {Content.Details[transfer.ItemHash].DisplayProperties.Name} to {destination}.", "Success");
+            }
+            else
+            {
+                Core.Snackbar.AddMessage($"Unable to transfer {Content.Details[transfer.ItemHash].DisplayProperties.Name} from {origin} to {destination}.", "Error");
+            }
+
+            StateHasChanged();
+        }
+    }
+}
