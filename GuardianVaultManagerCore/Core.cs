@@ -32,6 +32,9 @@ public class Core
     // Main logger
     private ILogger logger;
 
+    // Local Values
+    private int oAuthStatus = 2;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="Core"/> class.
     /// </summary>
@@ -58,7 +61,6 @@ public class Core
         this.content = new ContentManager(this.logger, this.request, this.manifest, this.snackbar);
 
         // Setting Local Values
-        this.OAuthStatus = false;
         this.loadingbars.GenerateLoadingbar("Main");
 
         this.StartCoreService();
@@ -94,12 +96,26 @@ public class Core
     public OAuthProfile OAuthProfile => this.oauthProfile;
 
     /// <summary>
-    /// Gets a value indicating whether OAuth has been completed.
+    /// Gets a value indicating whether OAuth has been completed. 0 = Fully Completed, 1 = Refresh Needed, 2 = AOuth Not Completed.
     /// </summary>
-    public bool OAuthStatus
+    public int OAuthStatus
     {
-        get;
-        private set;
+        get
+        {
+            return this.oAuthStatus;
+        }
+
+        private set
+        {
+            if (value < 0 || value > 2)
+            {
+                this.oAuthStatus = 2;
+            }
+            else
+            {
+                this.oAuthStatus = value;
+            }
+        }
     }
 
     // Servies
@@ -138,7 +154,7 @@ public class Core
         // Create the client profile and assign client OAuth status.
         if (this.profile.Create() && this.profile.LoadDestinyID())
         {
-            this.OAuthStatus = true;
+            this.OAuthStatus = 0;
 
             return await this.ConfirmOAuthStatus();
         }
@@ -195,7 +211,7 @@ public class Core
         if (tokensStored && destinyIDStored)
         {
             this.logger.LogDebug("Profile has been successfully created.");
-            this.OAuthStatus = true;
+            this.OAuthStatus = 0;
         }
         else
         {
@@ -272,18 +288,19 @@ public class Core
     /// Checks and confirms whether the user's access and refresh token are still valid. If not, it will refresh the access token.
     /// </summary>
     /// <returns>True if the access token can be used. False otherwise.</returns>
-    private async Task<bool> ConfirmOAuthStatus()
+    public async Task<bool> ConfirmOAuthStatus()
     {
         // Check if the refresh token is expired and if so start the OAuth process
         if (this.CheckExpiry(this.profile.RefreshTokenExpireDate))
         {
-            this.OAuthStatus = false;
+            this.OAuthStatus = 2;
             return false;
         }
 
         // Check if access token is expired and if so refresh the user tokens
         if (this.CheckExpiry(this.profile.AccessTokenExpireDate))
         {
+            this.OAuthStatus = 1;
             return await this.RefreshAccessToken();
         }
 
@@ -296,8 +313,6 @@ public class Core
     /// <returns>True if the Refresh was successful. False otherwise.</returns>
     private async Task<bool> RefreshAccessToken()
     {
-        this.OAuthStatus = false;
-
         string tokens = await this.oauth.RefreshAccessToken(this.profile.RefreshToken);
         if (tokens != "Error" && this.profile.StoreUserTokens(tokens))
         {
@@ -305,7 +320,7 @@ public class Core
 
             if (this.profile.Create() && this.profile.LoadDestinyID())
             {
-                this.OAuthStatus = true;
+                this.OAuthStatus = 0;
                 return true;
             }
         }

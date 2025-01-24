@@ -107,7 +107,7 @@
                 Core.Snackbar.AddMessage($"Unable to transfer {Content.Details[transfer.ItemHash].DisplayProperties.Name} from {origin} to {destination}.", "Error");
             }
 
-            StateHasChanged();
+            this.StateHasChanged();
         }
     }
 }
