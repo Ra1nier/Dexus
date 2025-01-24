@@ -140,35 +140,7 @@ public class Core
         {
             this.OAuthStatus = true;
 
-            // Check if the refresh token is expired and if so start the OAuth process
-            if (this.CheckExpiry(this.profile.RefreshTokenExpireDate))
-            {
-                this.OAuthStatus = false;
-                return false;
-            }
-
-            // Check if access token is expired and if so refresh the user tokens
-            if (this.CheckExpiry(this.profile.AccessTokenExpireDate))
-            {
-                this.OAuthStatus = false;
-
-                string tokens = await this.oauth.RefreshAccessToken(this.profile.RefreshToken);
-                if (tokens != "Error" && this.profile.StoreUserTokens(tokens))
-                {
-                    this.logger.LogInformation("Refreshed User Tokens.");
-
-                    if (this.profile.Create() && this.profile.LoadDestinyID())
-                    {
-                        this.OAuthStatus = true;
-                    }
-                }
-                else
-                {
-                    this.logger.LogCritical("Unable to Refresh User Tokens.");
-                }
-            }
-
-            return true;
+            return await this.ConfirmOAuthStatus();
         }
 
         return false;
@@ -284,9 +256,62 @@ public class Core
     /// <returns>True if the operation was completed successfully, false otherwise.</returns>
     public async Task<bool> TransferItem(uint itemHash, string itemID, int stackSize, string characterID, bool isVaultTransfer)
     {
-        if (this.profile.MembershipType != null)
+        if (await this.ConfirmOAuthStatus())
         {
-            return await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType.ToString(), itemHash, itemID, stackSize, characterID, isVaultTransfer);
+            // Transfer the item.
+            if (this.profile.MembershipType != null)
+            {
+                return await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType.ToString(), itemHash, itemID, stackSize, characterID, isVaultTransfer);
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks and confirms whether the user's access and refresh token are still valid. If not, it will refresh the access token.
+    /// </summary>
+    /// <returns>True if the access token can be used. False otherwise.</returns>
+    private async Task<bool> ConfirmOAuthStatus()
+    {
+        // Check if the refresh token is expired and if so start the OAuth process
+        if (this.CheckExpiry(this.profile.RefreshTokenExpireDate))
+        {
+            this.OAuthStatus = false;
+            return false;
+        }
+
+        // Check if access token is expired and if so refresh the user tokens
+        if (this.CheckExpiry(this.profile.AccessTokenExpireDate))
+        {
+            return await this.RefreshAccessToken();
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Refreshes the Users Access token.
+    /// </summary>
+    /// <returns>True if the Refresh was successful. False otherwise.</returns>
+    private async Task<bool> RefreshAccessToken()
+    {
+        this.OAuthStatus = false;
+
+        string tokens = await this.oauth.RefreshAccessToken(this.profile.RefreshToken);
+        if (tokens != "Error" && this.profile.StoreUserTokens(tokens))
+        {
+            this.logger.LogInformation("Refreshed User Tokens.");
+
+            if (this.profile.Create() && this.profile.LoadDestinyID())
+            {
+                this.OAuthStatus = true;
+                return true;
+            }
+        }
+        else
+        {
+            this.logger.LogCritical("Unable to Refresh User Tokens.");
         }
 
         return false;
