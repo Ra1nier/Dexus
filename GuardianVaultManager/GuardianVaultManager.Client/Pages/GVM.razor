@@ -217,11 +217,12 @@ else
     /// <summary>
     /// When page loads or reloads fetch load all important information.
     /// </summary>
-    protected override void OnInitialized()
+    protected async override void OnInitialized()
     {
         core = Core.Instance;
         content = core.Content;
 
+        await core.ConfirmOAuthStatus();
         SnackbarProvider();
     }
 
@@ -229,7 +230,7 @@ else
     /// Displays a snackbar message to the user.
     /// </summary>
     /// <param name="message">Message to send. Should not be long.</param>
-    public void DisplaySnackbar(string message)
+    private void DisplaySnackbar(string message)
     {
         Snackbar.Add(message, Severity.Info);
     }
@@ -239,7 +240,7 @@ else
     /// </summary>
     /// <param name="message">Message to send. Should not be long.</param>
     /// <param name="mode">Severity to use.</param>
-    public void DisplaySnackbar(string message, Severity mode)
+    private void DisplaySnackbar(string message, Severity mode)
     {
         Snackbar.Add(message, mode);
     }
@@ -247,7 +248,7 @@ else
     /// <summary>
     /// Starts the snackbar provider to display messages to the user.
     /// </summary>
-    public void SnackbarProvider()
+    private void SnackbarProvider()
     {
         new Thread(async () =>
         {
