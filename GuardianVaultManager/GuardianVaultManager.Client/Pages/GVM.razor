@@ -38,12 +38,27 @@ else
     {
         <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge" Class="d-flex flex-column gap-3">
             <!--Guardian Manager-->
-            <MudPaper Height="200px" Style="overflow:hidden; position:relative;">
-                <MudTabs Outlined="true" MinimumTabWidth="20px">
-                    <MudTabPanel Icon="@Icons.Material.Filled.Build" />
-                    <MudTabPanel Text="Api" Icon="@Icons.Material.Filled.Api" />
-                    <MudTabPanel Icon="@Icons.Material.Filled.Settings" />
-                </MudTabs>
+            <MudPaper Style="overflow:hidden; position:relative;">
+                <MudExpansionPanel Text="Manager Settings" MaxHeight="150">
+                    <MudTabs Outlined="true" MinimumTabWidth="20px">
+                        <MudTabPanel Icon="@Icons.Material.Filled.Build">
+                            <!--Show Characters-->
+                            @foreach (var character in content.Characters.Values)
+                            {
+                                string characterClass = character.Class ?? string.Empty;
+                                string label = $"Show {characterClass}";
+                                <MudCheckBox @bind-Value=@viewSettings[characterClass] Label=@label Color="Color.Primary"></MudCheckBox>
+                            }
+                            <MudCheckBox @bind-Value=@viewSettings["Show Vault"] Label="Show Vault" Color="Color.Primary"></MudCheckBox>
+                        </MudTabPanel>
+                        <MudTabPanel Text="Api" Icon="@Icons.Material.Filled.Api">
+
+                        </MudTabPanel>
+                        <MudTabPanel Icon="@Icons.Material.Filled.Settings">
+
+                        </MudTabPanel>
+                    </MudTabs>
+                </MudExpansionPanel>
             </MudPaper>
 
             <!-- Column Labels -->

@@ -28,6 +28,7 @@ public class Core
     private ContentManager content;
     private SnackbarService snackbar;
     private LoadingbarService loadingbars;
+    private SettingsService settings;
 
     // Main logger
     private ILogger logger;
@@ -56,6 +57,7 @@ public class Core
         this.oauth = new OAuthServer(this.logger, this.oauthProfile);
         this.snackbar = new SnackbarService();
         this.loadingbars = new LoadingbarService();
+        this.settings = new SettingsService();
         this.request = new RequestServer(this.logger, this.profile, this.oauthProfile);
         this.manifest = new ManifestServer(this.logger);
         this.content = new ContentManager(this.logger, this.request, this.manifest, this.snackbar);
@@ -129,6 +131,11 @@ public class Core
     /// Gets the loadingbar service.
     /// </summary>
     public LoadingbarService Loadingbars => this.loadingbars;
+
+    /// <summary>
+    /// Gets the settings service.
+    /// </summary>
+    public SettingsService Settings => this.settings;
 
     /// <summary>
     /// Starts the GuardianVaultManagerCore.

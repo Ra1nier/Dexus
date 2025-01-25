@@ -77,7 +77,7 @@ public class SnackbarService
 }
 
 /// <summary>
-/// Contains the logic for the loading bar service.
+/// Contains the logic for the loading bar service. NOT FUNCTIONAL YET.
 /// </summary>
 public class LoadingbarService
 {
@@ -279,5 +279,73 @@ public class LoadingbarService
             get => this.progressText;
             set => this.progressText = value;
         }
+    }
+}
+
+/// <summary>
+/// Contains the logic for the settings service.
+/// </summary>
+public class SettingsService
+{
+    private Dictionary<int, bool> viewSettings = new Dictionary<int, bool>();
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SettingsService"/> class.
+    /// </summary>
+    public SettingsService() { }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SettingsService"/> class. The settings are initialized with the given names as true.
+    /// </summary>
+    /// <param name="initalSettings">Initail settings to add.</param>
+    public SettingsService(string[] initalSettings)
+    {
+        foreach (string setting in initalSettings)
+        {
+            this.SetSetting(setting, true);
+        }
+    }
+
+    /// <summary>
+    /// Sets the setting to the corrosponding value. If the setting does not exist, it will be created.
+    /// </summary>
+    /// <param name="setting">Name of the setting.</param>
+    /// <param name="value">Value of the setting.</param>
+    public void SetSetting(string setting, bool value)
+    {
+        int settingHash = setting.GetHashCode();
+        if (this.viewSettings.ContainsKey(settingHash))
+        {
+            this.viewSettings[settingHash] = value;
+        }
+        else
+        {
+            this.viewSettings.Add(settingHash, value);
+        }
+    }
+
+    /// <summary>
+    /// Removes the selected setting.
+    /// </summary>
+    /// <param name="setting">Setting to remove.</param>
+    public void RemoveSetting(string setting)
+    {
+        int settingHash = setting.GetHashCode();
+        if (this.viewSettings.ContainsKey(settingHash))
+        {
+            this.viewSettings.Remove(settingHash);
+        }
+    }
+
+    /// <summary>
+    /// Returns the value of the setting.
+    /// </summary>
+    /// <param name="setting">Setting to check.</param>
+    /// <returns>The boolean state of the setting.</returns>
+    public bool Check(string setting)
+    {
+        int settingHash = setting.GetHashCode();
+        this.viewSettings.TryGetValue(settingHash, out bool value);
+        return value;
     }
 }
