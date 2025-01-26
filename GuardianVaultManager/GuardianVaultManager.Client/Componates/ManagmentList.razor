@@ -3,6 +3,7 @@
 @using ContentManager.Models
 @using GuardianVaultManagerCore
 @using ContentManager
+@using GuardianServices;
 
 <MudPaper Class="d-flex flex-column gap-2">
     <MudDropContainer T="Item" Items="Items" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
@@ -25,7 +26,10 @@
             <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
                 <MudCardMedia Image="@Details[context.ItemHash].DisplayProperties.Icon" alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
                 <MudCardContent Style="text-align: center; padding: 4px;">
-                    <MudText Typo="Typo.body2" Style="font-size: 10px;">@Details[context.ItemHash].DisplayProperties.Name</MudText>
+                    @if (Settings.Check("Weapon-Names"))
+                    {
+                        <MudText Typo="Typo.body2" Style="font-size: 10px;">@Details[context.ItemHash].DisplayProperties.Name</MudText>
+                    }
                 </MudCardContent>
             </MudCard>
         </ItemRenderer>
@@ -38,6 +42,7 @@
     [Parameter] public required IDictionary<uint, ItemDetails> Details { get; set; }
     [Parameter] public required Core Core { get; set; }
     [Parameter] public required ContentManager Content { get; set; }
+    [Parameter] public required SettingsService Settings { get; set; }
 
     /// <summary>
     /// Handles transfers of items between buckets and informs the core of the change.

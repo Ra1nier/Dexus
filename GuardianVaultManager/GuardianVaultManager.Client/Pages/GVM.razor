@@ -41,21 +41,8 @@ else
             <MudPaper Style="overflow:hidden; position:relative;">
                 <MudExpansionPanel Text="Manager Settings" MaxHeight="150">
                     <MudTabs Outlined="true" MinimumTabWidth="20px">
-                        <MudTabPanel Icon="@Icons.Material.Filled.Build">
-                            <!--Show Characters-->
-                            @foreach (var character in content.Characters.Values)
-                            {
-                                string characterClass = character.Class ?? string.Empty;
-                                string label = $"Show {characterClass}";
-                                <MudCheckBox @bind-Value=@viewSettings[characterClass] Label=@label Color="Color.Primary"></MudCheckBox>
-                            }
-                            <MudCheckBox @bind-Value=@viewSettings["Show Vault"] Label="Show Vault" Color="Color.Primary"></MudCheckBox>
-                        </MudTabPanel>
-                        <MudTabPanel Text="Api" Icon="@Icons.Material.Filled.Api">
-
-                        </MudTabPanel>
                         <MudTabPanel Icon="@Icons.Material.Filled.Settings">
-
+                            <MudSwitch T=bool ValueChanged="SwitchFlipped" Label="Success" Color="Color.Success" Name="Weapon-Name" />
                         </MudTabPanel>
                     </MudTabs>
                 </MudExpansionPanel>
@@ -104,34 +91,34 @@ else
             </MudPaper>
 
             <!-- Kinetic Weapons Section-->
-            <ManagmentList Items="content.KineticWeapons.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content/>
+            <ManagmentList Items="content.KineticWeapons.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings/>
 
             <!-- Energy Weapons Section -->
-            <ManagmentList Items="content.EnergyWeapons.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content />
+            <ManagmentList Items="content.EnergyWeapons.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings />
 
             <!-- Power Weapons Section -->
-            <ManagmentList Items="content.PowerWeapons.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content />
+            <ManagmentList Items="content.PowerWeapons.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings />
 
             <!-- Helmets Section -->
-            <ManagmentList Items="content.Helmets.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content />
+            <ManagmentList Items="content.Helmets.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings />
 
             <!-- Gauntlets Section -->
-            <ManagmentList Items="content.Gauntlets.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content />
+            <ManagmentList Items="content.Gauntlets.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings />
 
             <!-- Chests Section -->
-            <ManagmentList Items="content.Chests.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content />
+            <ManagmentList Items="content.Chests.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings />
 
             <!-- Legs Section -->
-            <ManagmentList Items="content.Legs.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content />
+            <ManagmentList Items="content.Legs.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings />
 
             <!-- Class Items Section -->
-            <ManagmentList Items="content.Skirts.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content />
+            <ManagmentList Items="content.Skirts.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings />
 
             <!-- Accessories Section -->
-            <ManagmentList Items="content.Accessories.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content />
+            <ManagmentList Items="content.Accessories.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings />
 
             <!-- Consumables Section -->
-            <ManagmentList Items="content.Consumables" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content />
+            <ManagmentList Items="content.Consumables" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings />
         </MudContainer>
     }
     else
@@ -209,6 +196,9 @@ else
     public static ContentManager content = new ContentManager();
     private bool initializationComplete = false;
 
+    // UI Objects
+    private bool switchState = false;
+
     /// <summary>
     ///   First render start the core.
     /// </summary>
@@ -224,6 +214,8 @@ else
             }
 
             await core.InitializeClientContent();
+            InitializeSettings();
+
             initializationComplete = true;
             StateHasChanged();
         }
@@ -239,6 +231,17 @@ else
 
         await core.ConfirmOAuthStatus();
         SnackbarProvider();
+    }
+
+    /// <summary>
+    /// Initializes the startup settings for the application.
+    /// </summary>
+    private void InitializeSettings()
+    {
+        core.Settings.SetSettings(new Dictionary<string, bool>
+        {
+            { "Weapon-Names", false },
+        }, false);
     }
 
     /// <summary>
@@ -277,6 +280,12 @@ else
                 }
             }
         }).Start();
+    }
+
+    private void SwitchFlipped(bool newValue)
+    {
+        string switchName = (string)(MudSwitch<bool>.ValueChanged).Name;
+        core.Settings.SetSetting(, newValue, true);
     }
 
     /// <summary>

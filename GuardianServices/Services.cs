@@ -2,6 +2,9 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
+using System.Numerics;
+using System.Text.Json;
+
 namespace GuardianServices;
 
 /// <summary>
@@ -287,23 +290,40 @@ public class LoadingbarService
 /// </summary>
 public class SettingsService
 {
-    private Dictionary<int, bool> viewSettings = new Dictionary<int, bool>();
+    // File Paths
+    private readonly string dataFolderPath;
+    private readonly string settingsPath;
+
+    // Contains all of the settings.
+    private Dictionary<int, bool> settings = new Dictionary<int, bool>();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsService"/> class.
     /// </summary>
-    public SettingsService() { }
+    public SettingsService()
+    {
+        this.dataFolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Services", "settings");
+        this.settingsPath = Path.Combine(this.dataFolderPath, "UserSettings.json");
+
+        this.LoadSettings();
+    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsService"/> class. The settings are initialized with the given names as true.
     /// </summary>
-    /// <param name="initalSettings">Initail settings to add.</param>
+    /// <param name="initalSettings">Inital settings to add.</param>
     public SettingsService(string[] initalSettings)
+        : this()
     {
         foreach (string setting in initalSettings)
         {
-            this.SetSetting(setting, true);
+            this.SetSetting(setting, true, false);
         }
+    }
+
+    public KeyValuePair<int, bool> GetSetting(string setting)
+    {
+        
     }
 
     /// <summary>
@@ -311,16 +331,31 @@ public class SettingsService
     /// </summary>
     /// <param name="setting">Name of the setting.</param>
     /// <param name="value">Value of the setting.</param>
-    public void SetSetting(string setting, bool value)
+    /// <param name="overwrite">If true the value of the setting will be overwritten if the setting exists already.</param>
+    public void SetSetting(string setting, bool value, bool overwrite)
     {
+        setting = setting.ToUpper();
         int settingHash = setting.GetHashCode();
-        if (this.viewSettings.ContainsKey(settingHash))
+        if (this.settings.ContainsKey(settingHash) && overwrite)
         {
-            this.viewSettings[settingHash] = value;
+            this.settings[settingHash] = value;
         }
         else
         {
-            this.viewSettings.Add(settingHash, value);
+            this.settings.Add(settingHash, value);
+        }
+    }
+
+    /// <summary>
+    /// Sets the setting to the corrosponding value. If the setting does not exist, it will be created.
+    /// </summary>
+    /// <param name="settingsList">Dictionary of the settings to change or add.</param>
+    /// <param name="overwrite">If true the value of the setting will be overwritten if the setting exists already.</param>
+    public void SetSettings(Dictionary<string, bool> settingsList, bool overwrite)
+    {
+        foreach (KeyValuePair<string, bool> setting in settingsList)
+        {
+            this.SetSetting(setting.Key, setting.Value, overwrite);
         }
     }
 
@@ -330,10 +365,11 @@ public class SettingsService
     /// <param name="setting">Setting to remove.</param>
     public void RemoveSetting(string setting)
     {
+        setting = setting.ToUpper();
         int settingHash = setting.GetHashCode();
-        if (this.viewSettings.ContainsKey(settingHash))
+        if (this.settings.ContainsKey(settingHash))
         {
-            this.viewSettings.Remove(settingHash);
+            this.settings.Remove(settingHash);
         }
     }
 
@@ -344,8 +380,57 @@ public class SettingsService
     /// <returns>The boolean state of the setting.</returns>
     public bool Check(string setting)
     {
+        setting = setting.ToUpper();
         int settingHash = setting.GetHashCode();
-        this.viewSettings.TryGetValue(settingHash, out bool value);
+        this.settings.TryGetValue(settingHash, out bool value);
         return value;
+    }
+
+    /// <summary>
+    /// Saves the user settings to a json file.
+    /// </summary>
+    /// <returns>True if completed successfully. False Otherwise.</returns>
+    public bool SaveSettings()
+    {
+        try
+        {
+            if (!Directory.Exists(this.dataFolderPath))
+            {
+                Directory.CreateDirectory(this.dataFolderPath);
+            }
+
+            string json = JsonSerializer.Serialize(this.settings);
+            File.WriteAllText(this.settingsPath, json);
+            return true;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Could not save user settings: {e.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Loads the user settings from a json file.
+    /// </summary>
+    /// <returns>True if completed successfully. False Otherwise.</returns>
+    private bool LoadSettings()
+    {
+        try
+        {
+            if (!File.Exists(this.settingsPath))
+            {
+                return false;
+            }
+
+            string json = File.ReadAllText(this.settingsPath);
+            this.settings = JsonSerializer.Deserialize<Dictionary<int, bool>>(json) ?? new Dictionary<int, bool>();
+            return true;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Could not load user settings: {e.Message}");
+            return false;
+        }
     }
 }
