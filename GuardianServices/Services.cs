@@ -37,14 +37,15 @@ public class SnackbarService
     {
         if (this.severity.Count > 0 && this.messages.Count > 0)
         {
-            message = this.messages.Count > 0 ? this.messages.Dequeue() : string.Empty;
-            severity = this.severity.Count > 0 ? this.severity.Dequeue() : string.Empty;
+            message = this.messages.Dequeue();
+            severity = this.severity.Dequeue();
 
             return true;
         }
 
         message = string.Empty;
         severity = string.Empty;
+
         return false;
     }
 
