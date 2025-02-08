@@ -276,7 +276,54 @@ public class ContentManager
     }
 
     /// <summary>
-    /// Creates the clients character inventory contents from bungie.
+    /// Creates the clients character equipment from Bungie.
+    /// </summary>
+    /// <returns>Task representing the operation.</returns>
+    public async Task LoadClientEquipment()
+    {
+        try
+        {
+            // Fetch Inventories contents
+            string equipmentContentsJson = await this.request.PlatformDestiny2_Request_Contents("CharacterEquipment", true);
+            this.logger.LogCritical($"Loaded: {equipmentContentsJson}");
+
+            JsonDocument equipmentContents = JsonDocument.Parse(equipmentContentsJson);
+            JsonElement equipmentArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("characterEquipment").GetProperty("data");
+
+            // Populate Inventories list
+            int itemsLoaded = 0;
+            foreach (Character character in this.characters.Values)
+            {
+                if (character.CharacterId != null)
+                {
+                    JsonElement characterInventory = equipmentArray.GetProperty(character.CharacterId).GetProperty("items");
+
+                    foreach (JsonElement itemJson in characterInventory.EnumerateArray())
+                    {
+                        Item item = JsonSerializer.Deserialize<Item>(itemJson) ?? new Item();
+                        item.Identifier = $"{character.CharacterId}Equipped";
+                        this.dropzoneBackingStore.Add(item);
+
+                        itemsLoaded++;
+                    }
+                }
+            }
+
+            this.logger.LogInformation($"Loaded {itemsLoaded} items from Equipment.");
+
+            if (itemsLoaded == 0)
+            {
+                this.snackbar.AddMessage($"Could not load your equipment. Try reloading the page.", "Warning");
+            }
+        }
+        catch (Exception e)
+        {
+            this.logger.LogError($"GVM was unable to retrieve the client's equipment: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Creates the clients character inventory contents from Bungie.
     /// </summary>
     /// <returns>Task representing the operation.</returns>
     public async Task LoadClientInventories()
@@ -286,7 +333,7 @@ public class ContentManager
             // Fetch Inventories contents
             string inventoriesContentsJson = await this.request.PlatformDestiny2_Request_Contents("CharacterInventories", true);
             JsonDocument inventoriesContents = JsonDocument.Parse(inventoriesContentsJson);
-            JsonElement charactersArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("characterInventories").GetProperty("data");
+            JsonElement inventoriesArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("characterInventories").GetProperty("data");
 
             // Populate Inventories list
             int itemsLoaded = 0;
@@ -294,12 +341,12 @@ public class ContentManager
             {
                 if (character.CharacterId != null)
                 {
-                    JsonElement characterInventory = charactersArray.GetProperty(character.CharacterId).GetProperty("items");
+                    JsonElement characterInventory = inventoriesArray.GetProperty(character.CharacterId).GetProperty("items");
 
                     foreach (JsonElement itemJson in characterInventory.EnumerateArray())
                     {
                         Item item = JsonSerializer.Deserialize<Item>(itemJson) ?? new Item();
-                        item.Identifier = character.CharacterId.ToString();
+                        item.Identifier = character.CharacterId;
                         this.dropzoneBackingStore.Add(item);
 
                         itemsLoaded++;

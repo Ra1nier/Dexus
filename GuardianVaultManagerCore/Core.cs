@@ -252,6 +252,8 @@ public class Core
         await this.content.LoadClientVault();
         this.loadingbars.SetBufferValue("main", 60);
 
+        await this.content.LoadClientEquipment();
+
         // Load Inventories
         this.loadingbars.SetProgressText("main", "Fetching Inventory");
         await this.content.LoadClientInventories();
