@@ -11,10 +11,12 @@
             <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
                 @foreach (var character in Characters)
                 {
-                    <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
-                        @{string inHand = character.CharacterId + "InHand";}
-                        <MudDropZone T="Item" Identifier="@inHand" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 20%;"></MudDropZone>
-                        <MudDropZone T="Item" Identifier="@character.CharacterId" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 80%;"></MudDropZone>
+                    <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-row">
+                        @{
+                            string equipped = character.CharacterId + "Equipped";
+                        }
+                        <MudDropZone T="Item" Identifier="@equipped" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 25%;"></MudDropZone>
+                        <MudDropZone T="Item" Identifier="@character.CharacterId" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 75%;"></MudDropZone>
                     </MudItem>
                 }
                 <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
@@ -60,14 +62,15 @@
             string origin = transfer.Identifier ?? string.Empty;
             string destination = item.DropzoneIdentifier;
 
-            // Item Transfer Identification
-            uint itemHash = transfer.ItemHash;
-            string itemID = transfer.ItemInstanceId ?? "-1";
-            int stackSize = transfer.Quantity;
-
-            // Determine the origin and destination of the transfer
-            bool transferSuccess = this.TransferItem(destination);
-
+            bool transferSuccess = false;
+            if (origin.Contains("Equipped"))
+            {
+                transferSuccess = await this.TransferEquipped(transfer, origin, destination);
+            }
+            else
+            {
+                transferSuccess = await this.TransferItem(transfer, origin, destination);
+            }
 
             if (transferSuccess)
             {
@@ -77,15 +80,24 @@
             }
             else
             {
-                Core.Snackbar.AddMessage($"Unable to transfer {Content.Details[transfer.ItemHash].DisplayProperties.Name} from {origin} to {destination}.", "Error");
+                Core.Snackbar.AddMessage($"Unable to transfer {Content.Details[transfer.ItemHash].DisplayProperties.Name} to {destination}.", "Error");
             }
 
             this.StateHasChanged();
         }
     }
 
-    private async bool TransferItem(string destination)
+    /// <summary>
+    /// Handles the transfer of an item between buckets.
+    /// </summary>
+    /// <param name="transfer">Item to transfer.</param>
+    /// <param name="origin">Origin of the transfer.</param>
+    /// <param name="destination">Destination of the transfer.</param>
+    /// <returns></returns>
+    private async Task<bool> TransferItem(Item transfer, string origin, string destination)
     {
+        this.GenerateTransferData(transfer, out uint itemHash, out string itemID, out int stackSize);
+
         if (destination == "Vault") // Character -> Vault
         {
             // Transfer to Vault
@@ -122,6 +134,75 @@
 
                 return true;
             }
+
+            return false;
         }
+    }
+
+    /// <summary>
+    /// Handles the transfer of an equipped item between buckets. The item will be replaced by a random item from the character's inventory.
+    /// </summary>
+    /// <param name="transfer">Item to transfer.</param>
+    /// <param name="origin">Origin of the transfer.</param>
+    /// <param name="destination">Destination of the transfer.</param>
+    /// <returns></returns>
+    private async Task<bool> TransferEquipped(Item transfer, string origin, string destination)
+    {
+        this.GenerateTransferData(transfer, out uint itemHash, out string itemID, out int stackSize);
+
+        if (destination == "Vault") // Character -> Vault
+        {
+            // Transfer to Vault
+            return await Core.TransferItem(itemHash, itemID, stackSize, origin, true);
+        }
+        else if (origin == "Vault") // Vault -> Character
+        {
+            // Transfer to Character
+            return await Core.TransferItem(itemHash, itemID, stackSize, destination, false);
+        }
+        else // Character -> Character
+        {
+            // Transfer to Vault then to the Character
+            bool firstTransfer = await Core.TransferItem(itemHash, itemID, stackSize, origin, true);
+            bool secondTransfer = false;
+            if (firstTransfer)
+                secondTransfer = await Core.TransferItem(itemHash, itemID, stackSize, destination, false);
+
+            if (firstTransfer && secondTransfer)
+            {
+                return true;
+            }
+            else if (!secondTransfer) // If the second transfer failed return the item to the origin.
+            {
+                bool returnSuccesful = await Core.TransferItem(itemHash, itemID, stackSize, origin, false);
+
+                if (!returnSuccesful)
+                {
+                    Content.SetIdentifier(transfer, "Vault");
+                    Core.Snackbar.AddMessage($"Transfer failed. {Content.Details[transfer.ItemHash].DisplayProperties.Name} " +
+                        "has ended up in the Vault as GVM was unable to return it.", "Warning");
+                    return false;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Generates the data required for a transfer.
+    /// </summary>
+    /// <param name="transfer">Item to extract data for.</param>
+    /// <param name="itemHash">The item hash of the item.</param>
+    /// <param name="itemID">The item ID of the item.</param>
+    /// <param name="stackSize">The item stack size of the item.</param>
+    /// <returns></returns>
+    private void GenerateTransferData(Item transfer, out uint itemHash, out string itemID, out int stackSize)
+    {
+        itemHash = transfer.ItemHash;
+        itemID = transfer.ItemInstanceId ?? "-1";
+        stackSize = transfer.Quantity;
     }
 }
