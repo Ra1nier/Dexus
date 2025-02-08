@@ -2,10 +2,10 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
+namespace GuardianServices;
+
 using System.Numerics;
 using System.Text.Json;
-
-namespace GuardianServices;
 
 /// <summary>
 /// Contains the logic for the snackbar service.
@@ -321,11 +321,6 @@ public class SettingsService
         }
     }
 
-    public KeyValuePair<int, bool> GetSetting(string setting)
-    {
-        
-    }
-
     /// <summary>
     /// Sets the setting to the corrosponding value. If the setting does not exist, it will be created.
     /// </summary>
@@ -336,9 +331,12 @@ public class SettingsService
     {
         setting = setting.ToUpper();
         int settingHash = setting.GetHashCode();
-        if (this.settings.ContainsKey(settingHash) && overwrite)
+        if (this.settings.ContainsKey(settingHash))
         {
-            this.settings[settingHash] = value;
+            if (overwrite)
+            {
+                this.settings[settingHash] = value;
+            }
         }
         else
         {
@@ -374,16 +372,19 @@ public class SettingsService
     }
 
     /// <summary>
-    /// Returns the value of the setting.
+    /// Returns the value of the setting. WARNING: If the setting does not exist, it will return false.
     /// </summary>
     /// <param name="setting">Setting to check.</param>
     /// <returns>The boolean state of the setting.</returns>
     public bool Check(string setting)
     {
         setting = setting.ToUpper();
-        int settingHash = setting.GetHashCode();
-        this.settings.TryGetValue(settingHash, out bool value);
-        return value;
+        if (this.settings.TryGetValue(setting.GetHashCode(), out bool value))
+        {
+            return value;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -411,6 +412,27 @@ public class SettingsService
     }
 
     /// <summary>
+    /// Sets the setting to the corrosponding value. If the setting does not exist, it will be created.
+    /// </summary>
+    /// <param name="setting">Name of the setting.</param>
+    /// <param name="value">Value of the setting.</param>
+    /// <param name="overwrite">If true the value of the setting will be overwritten if the setting exists already.</param>
+    private void SetSetting(int settingHash, bool value, bool overwrite)
+    {
+        if (this.settings.ContainsKey(settingHash))
+        {
+            if (overwrite)
+            {
+                this.settings[settingHash] = value;
+            }
+        }
+        else
+        {
+            this.settings.Add(settingHash, value);
+        }
+    }
+
+    /// <summary>
     /// Loads the user settings from a json file.
     /// </summary>
     /// <returns>True if completed successfully. False Otherwise.</returns>
@@ -424,7 +446,13 @@ public class SettingsService
             }
 
             string json = File.ReadAllText(this.settingsPath);
-            this.settings = JsonSerializer.Deserialize<Dictionary<int, bool>>(json) ?? new Dictionary<int, bool>();
+            Dictionary<int, bool> loadedSettings = JsonSerializer.Deserialize<Dictionary<int, bool>>(json) ?? new Dictionary<int, bool>();
+
+            foreach (KeyValuePair<int, bool> setting in loadedSettings)
+            {
+                this.SetSetting(setting.Key, setting.Value, true);
+            }
+
             return true;
         }
         catch (Exception e)

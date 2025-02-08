@@ -11,14 +11,18 @@
 @using MudBlazor
 @using GuardianVaultManager.Client.Componates
 
+@inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
 @inject ILogger<GVM> Logger
 @inject ISnackbar Snackbar
+
+<!--<NavigationLock ConfirmExternalNavigation="true" OnBeforeInternalNavigation="OnApplicationExit" />-->
 
 <PageTitle>Guardian Vault Manager</PageTitle>
 
 @if (core.OAuthStatus == 2)
 {
+    <!--Sign In Page-->
     <MudContainer Class="justify-center d-flex flex-column align-items-center justify-content-center min-vh-100 bg-dark">
         <MudCard Class="text-center" Elevation="10" Style="max-width: 400px;">
             <MudCardContent>
@@ -36,13 +40,15 @@ else
     <!--Main Content-->
     @if (initializationComplete)
     {
+        <!--Main Vault Manager-->
         <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge" Class="d-flex flex-column gap-3">
-            <!--Guardian Manager-->
+            <!--Guardian Manager Settings-->
             <MudPaper Style="overflow:hidden; position:relative;">
                 <MudExpansionPanel Text="Manager Settings" MaxHeight="150">
                     <MudTabs Outlined="true" MinimumTabWidth="20px">
                         <MudTabPanel Icon="@Icons.Material.Filled.Settings">
-                            <MudSwitch T=bool ValueChanged="SwitchFlipped" Label="Success" Color="Color.Success" Name="Weapon-Name" />
+                            @{string name = "Weapon-Names";}
+                            <MudSwitch T=bool Value="GetSettingValue(name)" ValueChanged="(bool newValue) => SetSettingValue(name, newValue)" Label="Success" Color="Color.Success" />
                         </MudTabPanel>
                     </MudTabs>
                 </MudExpansionPanel>
@@ -123,6 +129,7 @@ else
     }
     else
     {
+        <!--Vault loading Page-->
         <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge" Class="d-flex flex-column gap-3 justify-center">
             <div class="loader"></div>
             <MudProgressLinear Color="Color.Error" Buffer="true" Value="@core.Loadingbars.GetProgressValue("Main")" BufferValue="@core.Loadingbars.GetBufferValue("Main")" Class="my-7">
@@ -134,59 +141,6 @@ else
                 }
             </MudProgressLinear>
         </MudContainer>
-
-        <style>
-            .loader {
-            width: 90px;
-            height: 14px;
-            box-shadow: 0 3px 0 #fff;
-            position: relative;
-            clip-path: inset(-40px 0 -5px)
-            }
-
-            .loader:before {
-            content: "";
-            position: absolute;
-            inset: auto calc(50% - 17px) 0;
-            height: 50px;
-            --g: no-repeat linear-gradient(#ccc 0 0);
-            background: var(--g),var(--g),var(--g),var(--g);
-            background-size: 16px 14px;
-            animation: l7-1 2s infinite linear, l7-2 2s infinite linear;
-            }
-
-            @@keyframes l7-1 {
-            0%, 100% {
-            background-position: 0 -50px,100% -50px
-            }
-
-            17.5% {
-            background-position: 0 100%,100% -50px,0 -50px,100% -50px
-            }
-
-            35% {
-            background-position: 0 100%,100% 100%,0 -50px,100% -50px
-            }
-
-            52.5% {
-            background-position: 0 100%,100% 100%,0 calc(100% - 16px),100% -50px
-            }
-
-            70%, 98% {
-            background-position: 0 100%,100% 100%,0 calc(100% - 16px),100% calc(100% - 16px)
-            }
-            }
-
-            @@keyframes l7-2 {
-            0%, 70% {
-            transform: translate(0)
-            }
-
-            100% {
-            transform: translate(200%)
-            }
-            }
-        </style>
     }
 }
 
@@ -196,11 +150,8 @@ else
     public static ContentManager content = new ContentManager();
     private bool initializationComplete = false;
 
-    // UI Objects
-    private bool switchState = false;
-
     /// <summary>
-    ///   First render start the core.
+    /// Handles the first render of the webpage. 
     /// </summary>
     /// <param name="firstRender">Indicates whether this is the first render of the webpage.</param>
     protected async override void OnAfterRender(bool firstRender)
@@ -245,25 +196,6 @@ else
     }
 
     /// <summary>
-    /// Displays a snackbar message to the user.
-    /// </summary>
-    /// <param name="message">Message to send. Should not be long.</param>
-    private void DisplaySnackbar(string message)
-    {
-        Snackbar.Add(message, Severity.Info);
-    }
-
-    /// <summary>
-    /// Displays a snackbar message to the user. Will display message as the severity specified.
-    /// </summary>
-    /// <param name="message">Message to send. Should not be long.</param>
-    /// <param name="mode">Severity to use.</param>
-    private void DisplaySnackbar(string message, Severity mode)
-    {
-        Snackbar.Add(message, mode);
-    }
-
-    /// <summary>
     /// Starts the snackbar provider to display messages to the user.
     /// </summary>
     private void SnackbarProvider()
@@ -276,16 +208,37 @@ else
                 while (core.Snackbar.NextMessage(out string message, out string severity))
                 {
                     Severity mode = (Severity)Enum.Parse(typeof(Severity), severity);
-                    DisplaySnackbar(message, mode);
+                    Snackbar.Add(message, mode);
                 }
             }
         }).Start();
     }
 
-    private void SwitchFlipped(bool newValue)
+    /// <summary>
+    /// Returns the value of the setting.
+    /// </summary>
+    /// <param name="setting">Setting to get value of.</param>
+    /// <returns>The Value of the setting.</returns>
+    private bool GetSettingValue(string setting)
     {
-        string switchName = (string)(MudSwitch<bool>.ValueChanged).Name;
-        core.Settings.SetSetting(, newValue, true);
+        return core.Settings.Check(setting);
+    }
+
+    /// <summary>
+    /// Returns the value of the setting.
+    /// </summary>
+    /// <param name="setting">Setting to get value of.</param>
+    /// <param name="newValue">Value to set setting to.</param>
+    /// <returns>The Value of the setting.</returns>
+    private void SetSettingValue(string setting, bool newValue)
+    {
+        core.Settings.SetSetting(setting, newValue, true);
+        StateHasChanged();
+    }
+
+    private void RefreshManagmentLists()
+    {
+
     }
 
     /// <summary>
@@ -300,4 +253,14 @@ else
             Navigation.NavigateTo(core.OAuthProfile.ConstructAuthorizationURL().ToString(), true);
         }
     }
+
+    /// <summary>
+    /// Handles final actions before the page is closed.
+    /// </summary>
+    // [JSInvokable]
+    // private void OnApplicationExit()
+    // {
+    //     core.Settings.SaveSettings();
+    //     Logger.LogError("Application Closed. Settings Saved");
+    // }
 }
