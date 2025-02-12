@@ -1,7 +1,7 @@
 # Guardian Vault Manager
 
 Guardian Vault Manager (GVM) is a tool designed to help Destiny 2 players manage their in-game items efficiently. Similar to Destiny Item Manager (DIM), GVM offers a user-friendly interface to organize, transfer, and track your Destiny 2 inventory. This is really just a personal
-project to help me learn C#, .NET Core and Blazor.
+project to help me learn C#, .NET and Blazor.
 
 ## Features
 
@@ -15,7 +15,7 @@ project to help me learn C#, .NET Core and Blazor.
 ### Prerequisites
 
 - .NET Core 9.0 or later
-- Visual Studio or any C# IDE *For now as I don't want to make a webserver (I'm lazy and broke), I am attempting to implement MUAI for a desktop application later on.*
+- Visual Studio or any C# IDE. *Temp solution for now as I don't want to make a webserver (I'm lazy and broke), I am attempting to implement MUAI for a desktop application later on.*
 - Your own Bungie.net application/API key. You can get one by registering a new application on the [Bungie Developer Portal](https://www.bungie.net/en/Application). You have to do this as I don't have a secure way
 of including my own API key in the project.
 
@@ -36,5 +36,8 @@ of including my own API key in the project.
 
 ### Notes
 
-- This project as i have said is really just a personal project so i don't really expect people use it. If you do decide to use it for any reason (Why? when DIM exists), I would love feedback as to how I can be a better
+- This project as I have said is really just a personal project so I don't really expect people use it. If you do decide to use it for any reason (Why? when DIM exists), I would love feedback as to how I can be a better
 developer as this is a learning exercise for me. I am still learning and would love to improve my skills.
+
+## WARNING
+ - I am not a front end developer. I am not a good front end designer. Even though I am using MudBlazor for all of the front end, the GUI still looks terrible. Use DIM if you want a better GUI.
