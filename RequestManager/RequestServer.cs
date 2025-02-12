@@ -202,8 +202,6 @@ public class RequestServer
 
             if (response.IsSuccessStatusCode)
             {
-                string jsonResponse = await response.Content.ReadAsStringAsync();
-
                 this.logger.LogDebug($"Successful Response: Transfer of {itemID} successful");
 
                 return true;
@@ -218,6 +216,60 @@ public class RequestServer
         catch (Exception e)
         {
             this.logger.LogError($"REQUEST FAILED: Transfer - {itemID} TO " + (vaultTransfer ? "Vault" : $"Character({characterID})") + $", {e.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Pings bungie to request a item be equipped on a character.
+    /// </summary>
+    /// <param name="membershipType">MembershipType of the client.</param>
+    /// <param name="itemID">The ItemInstanceID of the item to transfer.</param>
+    /// <param name="characterID">Character ID of either the origin point to character to transfer to based on vaultTransfer.</param>
+    /// <returns>True if bungie returns a successful response, false otherwise.</returns>
+    public async Task<bool> ActionItem_Request_EquipItem(string membershipType, string itemID, string characterID)
+    {
+        this.logger.LogInformation($"REQUEST: Equip Item - {itemID}, FOR Character - {characterID}");
+
+        // Construct HTTP request
+        string requestURI = $"https://www.bungie.net/Platform/Destiny2/Actions/Items/EquipItem/";
+        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, requestURI);
+
+        // Construct request body in JSON format
+        var body = new
+        {
+            membershipType = membershipType,
+            itemID = itemID,
+            characterID = characterID,
+        };
+        string jsonBody = JsonSerializer.Serialize(body);
+        request.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+        // Add headers
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Add("X-API-Key", this.auth.API_Key);
+
+        // Send request
+        try
+        {
+            HttpResponseMessage response = await this.client.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                this.logger.LogDebug($"Successful Response: Equip of {itemID} successful");
+
+                return true;
+            }
+            else
+            {
+                string errorResponse = await response.Content.ReadAsStringAsync();
+                this.logger.LogError($"Error Response: {errorResponse}");
+                return false;
+            }
+        }
+        catch (Exception e)
+        {
+            this.logger.LogError($"REQUEST FAILED: Equip Item - {itemID}, FOR Character - {characterID}: {e.Message}");
             return false;
         }
     }

@@ -286,7 +286,27 @@ public class Core
             // Transfer the item.
             if (this.profile.MembershipType != null)
             {
-                return await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType.ToString(), itemHash, itemID, stackSize, characterID, isVaultTransfer);
+                return await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID, stackSize, characterID, isVaultTransfer);
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Equips the item to the character.
+    /// </summary>
+    /// <param name="itemID">Item to be equipped. Must be in the characters bucket.</param>
+    /// <param name="characterID">Character the item is to be equipped to.</param>
+    /// <returns>True if the operation was completed successfully, false otherwise.</returns>
+    public async Task<bool> EquipItem(string itemID, string characterID)
+    {
+        if (await this.ConfirmOAuthStatus())
+        {
+            // Equip the item.
+            if (this.profile.MembershipType != null)
+            {
+                return await this.request.ActionItem_Request_EquipItem(this.profile.MembershipType, itemID, characterID);
             }
         }
 
