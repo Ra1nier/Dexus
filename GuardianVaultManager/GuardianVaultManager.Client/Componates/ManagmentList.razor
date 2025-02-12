@@ -9,14 +9,14 @@
     <MudDropContainer T="Item" Items="Items" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
         <ChildContent>
             <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
-                @foreach (var character in Characters)
+                @foreach (var character in Core.Content.Characters)
                 {
                     <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-row">
                         @{
-                            string equipped = character.CharacterId + "Equipped";
+                            string equipped = character.Value.CharacterId + "Equipped";
                         }
                         <MudDropZone T="Item" Identifier="@equipped" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 90%; width: 25%;"></MudDropZone>
-                        <MudDropZone T="Item" Identifier="@character.CharacterId" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 90%; width: 75%;"></MudDropZone>
+                        <MudDropZone T="Item" Identifier="@character.Value.CharacterId" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 90%; width: 75%;"></MudDropZone>
                     </MudItem>
                 }
                 <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
@@ -27,11 +27,11 @@
         </ChildContent>
         <ItemRenderer>
             <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
-                <MudCardMedia Image="@Details[context.ItemHash].DisplayProperties.Icon" alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
-                @if (Settings.Check("Weapon-Names"))
+                <MudCardMedia Image="@Core.Content.Details[context.ItemHash].DisplayProperties.Icon" alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
+                @if (Core.Settings.Check("Weapon-Names"))
                 {
                     <MudCardContent Style="text-align: center; padding: 4px;">
-                        <MudText Typo="Typo.body2" Style="font-size: 10px;">@Details[context.ItemHash].DisplayProperties.Name</MudText>
+                        <MudText Typo="Typo.body2" Style="font-size: 10px;">@Core.Content.Details[context.ItemHash].DisplayProperties.Name</MudText>
                     </MudCardContent>
                 }
             </MudCard>
@@ -41,11 +41,7 @@
 
 @code {
     [Parameter] public required IEnumerable<Item> Items { get; set; }
-    [Parameter] public required IEnumerable<Character> Characters { get; set; }
-    [Parameter] public required IDictionary<uint, ItemDetails> Details { get; set; }
     [Parameter] public required Core Core { get; set; }
-    [Parameter] public required ContentManager Content { get; set; }
-    [Parameter] public required SettingsService Settings { get; set; }
 
     string transferStatusMessage = string.Empty;
 
@@ -74,18 +70,18 @@
                 transferSuccess = await this.TransferItem(transfer, origin, destination);
             }
 
-            string charcterName = Characters.FirstOrDefault(x => x.CharacterId == destination)?.Class ?? destination;
+            string charcterName = Core.Content.Characters.FirstOrDefault(x => x.Value.CharacterId == destination).Value.Class ?? destination;
 
             if (transferSuccess)
             {
                 // Update the item's location
-                Content.SetIdentifier(transfer, destination);
-                Core.Snackbar.AddMessage($"Successfully transferred {Content.Details[transfer.ItemHash].DisplayProperties.Name} to {charcterName}.", "Success");
+                Core.Content.SetIdentifier(transfer, destination);
+                Core.Snackbar.AddMessage($"Successfully transferred {Core.Content.Details[transfer.ItemHash].DisplayProperties.Name} to {charcterName}.", "Success");
             }
             else
             {
                 string details = transferStatusMessage.Equals(string.Empty) ? string.Empty : $": {transferStatusMessage}";
-                Core.Snackbar.AddMessage($"Unable to transfer {Content.Details[transfer.ItemHash].DisplayProperties.Name} to {charcterName}{details}", "Error");
+                Core.Snackbar.AddMessage($"Unable to transfer {Core.Content.Details[transfer.ItemHash].DisplayProperties.Name} to {charcterName}{details}", "Error");
                 transferStatusMessage = string.Empty;
             }
 
@@ -132,8 +128,8 @@
 
                 if (!returnSuccesful)
                 {
-                    Content.SetIdentifier(transfer, "Vault");
-                    Core.Snackbar.AddMessage($"Transfer failed. {Content.Details[transfer.ItemHash].DisplayProperties.Name} " +
+                    Core.Content.SetIdentifier(transfer, "Vault");
+                    Core.Snackbar.AddMessage($"Transfer failed. {Core.Content.Details[transfer.ItemHash].DisplayProperties.Name} " +
                         "has ended up in the Vault as GVM was unable to return it.", "Warning");
                     transferStatusMessage = "Second transfer of item failed.";
                     return false;
