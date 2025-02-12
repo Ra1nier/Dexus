@@ -1,0 +1,65 @@
+﻿@using MudBlazor
+@using RequestManager
+@using ContentManager.Models
+@using GuardianVaultManagerCore
+@using ContentManager
+@using GuardianServices;
+
+@if (Sorted)
+{
+    <MudPaper Class="d-flex flex-column gap-2">
+        <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
+            @foreach (var character in Core.Content.Characters.Values)
+            {
+                <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
+                    <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
+                        @foreach (var item in Core.Content.Postmaster.Where(i => i.Value.Identifier == character.CharacterId))
+                        {
+                            <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
+                                <MudCardMedia Image=@Core.Content.Details[item.Value.ItemHash].DisplayProperties.Icon alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
+                                @if (Core.Settings.Check("Weapon-Names"))
+                                {
+                                    <MudCardContent Style="text-align: center; padding: 4px;">
+                                        <MudText Typo="Typo.body2" Style="font-size: 10px;">@Core.Content.Details[item.Value.ItemHash].DisplayProperties.Name</MudText>
+                                    </MudCardContent>
+                                }
+                            </MudCard>
+                        }
+                    </MudDropZone>
+                </MudItem>
+            }
+
+            <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
+                <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;">
+                </MudDropZone>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+}
+else
+{
+    <MudPaper Class="d-flex flex-column gap-2">
+        <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
+            <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex">
+                @foreach (var item in Items)
+                {
+                    <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
+                        <MudCardMedia Image=@Core.Content.Details[item.ItemHash].DisplayProperties.Icon alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
+                        @if (Core.Settings.Check("Weapon-Names"))
+                        {
+                            <MudCardContent Style="text-align: center; padding: 4px;">
+                                <MudText Typo="Typo.body2" Style="font-size: 10px;">@Core.Content.Details[item.ItemHash].DisplayProperties.Name</MudText>
+                            </MudCardContent>
+                        }
+                    </MudCard>
+                }
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+}
+
+@code {
+    [Parameter] public required IEnumerable<Item> Items { get; set; }
+    [Parameter] public required Core Core { get; set; }
+    [Parameter] public required bool Sorted { get; set; }
+}
