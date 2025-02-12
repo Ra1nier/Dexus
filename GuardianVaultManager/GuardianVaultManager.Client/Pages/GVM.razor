@@ -73,61 +73,37 @@ else
             </MudGrid>
 
             <!-- Postmaster Section -->
-            <MudPaper Class="d-flex flex-column gap-2">
-                <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
-                    @foreach (var character in content.Characters.Values)
-                    {
-                        <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
-                            <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
-                                @foreach (var item in content.Postmaster.Where(i => i.Value.Identifier == character.CharacterId))
-                                {
-                                    <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
-                                        <MudCardMedia Image=@content.Details[item.Value.ItemHash].DisplayProperties.Icon alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
-                                        <MudCardContent Style="text-align: center; padding: 4px;">
-                                            <MudText Typo="Typo.body2" Style="font-size: 10px;">@content.Details[item.Value.ItemHash].DisplayProperties.Name</MudText>
-                                        </MudCardContent>
-                                    </MudCard>
-                                }
-                            </MudDropZone>
-                        </MudItem>
-                    }
-
-                    <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
-                        <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;">
-                        </MudDropZone>
-                    </MudItem>
-                </MudGrid>
-            </MudPaper>
+            <BucketList Items="content.Postmaster.Values" Sorted=@true Core=@core />
 
             <!-- Kinetic Weapons Section-->
-            <ManagmentList Items="content.KineticWeapons.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings/>
+            <ManagmentList Items="content.KineticWeapons.Values" Core=@core />
 
             <!-- Energy Weapons Section -->
-            <ManagmentList Items="content.EnergyWeapons.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings />
+            <ManagmentList Items="content.EnergyWeapons.Values" Core=@core />
 
             <!-- Power Weapons Section -->
-            <ManagmentList Items="content.PowerWeapons.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings />
+            <ManagmentList Items="content.PowerWeapons.Values" Core=@core />
 
             <!-- Helmets Section -->
-            <ManagmentList Items="content.Helmets.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings />
+            <ManagmentList Items="content.Helmets.Values" Core=@core />
 
             <!-- Gauntlets Section -->
-            <ManagmentList Items="content.Gauntlets.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings />
+            <ManagmentList Items="content.Gauntlets.Values" Core=@core />
 
             <!-- Chests Section -->
-            <ManagmentList Items="content.Chests.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings />
+            <ManagmentList Items="content.Chests.Values" Core=@core />
 
             <!-- Legs Section -->
-            <ManagmentList Items="content.Legs.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings />
+            <ManagmentList Items="content.Legs.Values" Core=@core />
 
             <!-- Class Items Section -->
-            <ManagmentList Items="content.Skirts.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings />
+            <ManagmentList Items="content.Skirts.Values" Core=@core />
 
             <!-- Accessories Section -->
-            <ManagmentList Items="content.Accessories.Values" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings />
+            <ManagmentList Items="content.Accessories.Values" Core=@core />
 
             <!-- Consumables Section -->
-            <ManagmentList Items="content.Consumables" Characters="content.Characters.Values" Details="content.Details" Core=@core Content=@content Settings=@core.Settings />
+            <BucketList Items="content.Consumables" Sorted=@false Core=@core />
         </MudContainer>
     }
     else
