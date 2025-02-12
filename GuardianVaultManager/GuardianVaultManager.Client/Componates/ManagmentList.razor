@@ -47,6 +47,8 @@
     [Parameter] public required ContentManager Content { get; set; }
     [Parameter] public required SettingsService Settings { get; set; }
 
+    string transferStatusMessage = string.Empty;
+
     /// <summary>
     /// Handles transfers of items between buckets and informs the core of the change.
     /// Supports Vault to Character, Character to Vault, and Character to Character transfers.
@@ -72,15 +74,19 @@
                 transferSuccess = await this.TransferItem(transfer, origin, destination);
             }
 
+            string charcterName = Characters.FirstOrDefault(x => x.CharacterId == destination)?.Class ?? destination;
+
             if (transferSuccess)
             {
                 // Update the item's location
                 Content.SetIdentifier(transfer, destination);
-                Core.Snackbar.AddMessage($"Successfully transferred {Content.Details[transfer.ItemHash].DisplayProperties.Name} to {destination}.", "Success");
+                Core.Snackbar.AddMessage($"Successfully transferred {Content.Details[transfer.ItemHash].DisplayProperties.Name} to {charcterName}.", "Success");
             }
             else
             {
-                Core.Snackbar.AddMessage($"Unable to transfer {Content.Details[transfer.ItemHash].DisplayProperties.Name} to {destination}.", "Error");
+                string details = transferStatusMessage.Equals(string.Empty) ? string.Empty : $": {transferStatusMessage}";
+                Core.Snackbar.AddMessage($"Unable to transfer {Content.Details[transfer.ItemHash].DisplayProperties.Name} to {charcterName}{details}", "Error");
+                transferStatusMessage = string.Empty;
             }
 
             this.StateHasChanged();
@@ -129,6 +135,7 @@
                     Content.SetIdentifier(transfer, "Vault");
                     Core.Snackbar.AddMessage($"Transfer failed. {Content.Details[transfer.ItemHash].DisplayProperties.Name} " +
                         "has ended up in the Vault as GVM was unable to return it.", "Warning");
+                    transferStatusMessage = "Second transfer of item failed.";
                     return false;
                 }
 
@@ -153,15 +160,17 @@
 
         if (charctersItemBucket.Count() == 0)
         {
+            transferStatusMessage = "Character has no items to to replace the equiped item. Transfer another weapon into your inventory to fix this.";
             return false; // TODO: Not the best solution. Could pull item from vault to equip but I am too lazy.
         }
 
-        string itemEquipID = charctersItemBucket.First().ItemInstanceId ?? "-1";
+        Item itemToEquip = charctersItemBucket.First();
 
-        bool equipCompleted = await Core.EquipItem(itemEquipID, trueOrigin);
+        bool equipCompleted = await Core.EquipItem(itemToEquip.ItemInstanceId ?? string.Empty, trueOrigin);
 
         if (equipCompleted)
         {
+            itemToEquip.Identifier = origin;
             return await this.TransferItem(transfer, trueOrigin, destination);
         }
 

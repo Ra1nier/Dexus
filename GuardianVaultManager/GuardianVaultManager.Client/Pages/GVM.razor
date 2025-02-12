@@ -47,10 +47,13 @@ else
                 <MudExpansionPanel Text="Manager Settings" MaxHeight="150">
                     <MudTabs Outlined="true" MinimumTabWidth="20px">
                         <MudTabPanel Icon="@Icons.Material.Filled.Settings">
-                            @{string name = "Weapon-Names";}
-                            <MudSwitch T=bool Value="GetSettingValue(name)" ValueChanged="(bool newValue) => SetSettingValue(name, newValue)" Label="Success" Color="Color.Success" />
+                            @foreach (string settingName in localSettings.Keys)
+                            {
+                                <MudSwitch T=bool Value="GetSettingValue(settingName)" ValueChanged="(bool newValue) => SetSettingValue(settingName, newValue)" Label="Success" Color="Color.Success" />
+                            }
                         </MudTabPanel>
                     </MudTabs>
+                    <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="ApplySettings" />
                 </MudExpansionPanel>
             </MudPaper>
 
@@ -149,6 +152,7 @@ else
     public static Core core = new Core();
     public static ContentManager content = new ContentManager();
     private bool initializationComplete = false;
+    private Dictionary<string, bool> localSettings = new Dictionary<string, bool>();
 
     /// <summary>
     /// Handles the first render of the webpage. 
@@ -189,10 +193,12 @@ else
     /// </summary>
     private void InitializeSettings()
     {
-        core.Settings.SetSettings(new Dictionary<string, bool>
+        localSettings = new Dictionary<string, bool> // TODO: Likly to get long. Replace with a settings file.
         {
             { "Weapon-Names", false },
-        }, false);
+        };
+
+        ApplySettings();
     }
 
     /// <summary>
@@ -232,13 +238,22 @@ else
     /// <returns>The Value of the setting.</returns>
     private void SetSettingValue(string setting, bool newValue)
     {
-        core.Settings.SetSetting(setting, newValue, true);
+        localSettings[setting] = newValue;
         StateHasChanged();
     }
 
-    private void RefreshManagmentLists()
+    /// <summary>
+    /// Applies the local settings and saves them to disk.
+    /// </summary>
+    /// <returns>True if completed succesfully, False otherwise.</returns>
+    private void ApplySettings()
     {
-
+        core.Settings.SetSettings(localSettings, false);
+        if (!core.Settings.SaveSettings())
+        {
+            core.Snackbar.AddMessage("Failed to save settings.", "Error");
+        }
+        StateHasChanged();
     }
 
     /// <summary>
