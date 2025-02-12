@@ -285,7 +285,6 @@ public class ContentManager
         {
             // Fetch Inventories contents
             string equipmentContentsJson = await this.request.PlatformDestiny2_Request_Contents("CharacterEquipment", true);
-            this.logger.LogCritical($"Loaded: {equipmentContentsJson}");
 
             JsonDocument equipmentContents = JsonDocument.Parse(equipmentContentsJson);
             JsonElement equipmentArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("characterEquipment").GetProperty("data");

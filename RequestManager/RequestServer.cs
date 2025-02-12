@@ -383,7 +383,7 @@ public class RequestServer
     }
 
     /// <summary>
-    /// Sends a request to Bungie for the given content type.
+    /// Sends a request to Bungie for the given content type. This should only be used if the manifest is not available or did not return a response.
     /// </summary>
     /// <param name="itemHash">The ItemHash of the item to look up.</param>
     /// <returns>The JSON response from bungie.</returns>
