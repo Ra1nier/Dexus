@@ -11,17 +11,19 @@
             <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
                 @foreach (var character in Core.Content.Characters)
                 {
-                    <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-row">
+                    <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
                         @{
                             string equipped = character.Value.CharacterId + "Equipped";
                         }
-                        <MudDropZone T="Item" Identifier="@equipped" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 90%; width: 25%;"></MudDropZone>
-                        <MudDropZone T="Item" Identifier="@character.Value.CharacterId" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 90%; width: 75%;"></MudDropZone>
+                        <MudDropZone T="Item" Identifier="@equipped" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 15%; width: 100%;"></MudDropZone>
+                        <MudDropZone T="Item" Identifier="@character.Value.CharacterId" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 85%; width: 100%;"></MudDropZone>
                     </MudItem>
                 }
                 <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
-                    <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;">
-                    </MudDropZone>
+                    @if ((Items.Where(x => x.Identifier == "Vault").Count()) > 0)
+                    {
+                        <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;" />
+                    }
                 </MudItem>
             </MudGrid>
         </ChildContent>
