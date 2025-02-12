@@ -15,8 +15,8 @@
                         @{
                             string equipped = character.CharacterId + "Equipped";
                         }
-                        <MudDropZone T="Item" Identifier="@equipped" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 25%;"></MudDropZone>
-                        <MudDropZone T="Item" Identifier="@character.CharacterId" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 75%;"></MudDropZone>
+                        <MudDropZone T="Item" Identifier="@equipped" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 90%; width: 25%;"></MudDropZone>
+                        <MudDropZone T="Item" Identifier="@character.CharacterId" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 90%; width: 75%;"></MudDropZone>
                     </MudItem>
                 }
                 <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
@@ -148,47 +148,24 @@
     /// <returns></returns>
     private async Task<bool> TransferEquipped(Item transfer, string origin, string destination)
     {
-        this.GenerateTransferData(transfer, out uint itemHash, out string itemID, out int stackSize);
+        string trueOrigin = origin.Replace("Equipped", string.Empty);
+        IEnumerable<Item> charctersItemBucket = Items.Where(x => x.Identifier == trueOrigin);
 
-        if (destination == "Vault") // Character -> Vault
+        if (charctersItemBucket.Count() == 0)
         {
-            // Transfer to Vault
-            return await Core.TransferItem(itemHash, itemID, stackSize, origin, true);
+            return false; // TODO: Not the best solution. Could pull item from vault to equip but I am too lazy.
         }
-        else if (origin == "Vault") // Vault -> Character
+
+        string itemEquipID = charctersItemBucket.First().ItemInstanceId ?? "-1";
+
+        bool equipCompleted = await Core.EquipItem(itemEquipID, trueOrigin);
+
+        if (equipCompleted)
         {
-            // Transfer to Character
-            return await Core.TransferItem(itemHash, itemID, stackSize, destination, false);
+            return await this.TransferItem(transfer, trueOrigin, destination);
         }
-        else // Character -> Character
-        {
-            // Transfer to Vault then to the Character
-            bool firstTransfer = await Core.TransferItem(itemHash, itemID, stackSize, origin, true);
-            bool secondTransfer = false;
-            if (firstTransfer)
-                secondTransfer = await Core.TransferItem(itemHash, itemID, stackSize, destination, false);
 
-            if (firstTransfer && secondTransfer)
-            {
-                return true;
-            }
-            else if (!secondTransfer) // If the second transfer failed return the item to the origin.
-            {
-                bool returnSuccesful = await Core.TransferItem(itemHash, itemID, stackSize, origin, false);
-
-                if (!returnSuccesful)
-                {
-                    Content.SetIdentifier(transfer, "Vault");
-                    Core.Snackbar.AddMessage($"Transfer failed. {Content.Details[transfer.ItemHash].DisplayProperties.Name} " +
-                        "has ended up in the Vault as GVM was unable to return it.", "Warning");
-                    return false;
-                }
-
-                return true;
-            }
-
-            return false;
-        }
+        return false;
     }
 
     /// <summary>

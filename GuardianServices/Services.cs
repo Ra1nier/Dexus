@@ -28,10 +28,10 @@ public class SnackbarService
     }
 
     /// <summary>
-    /// Gets the next message in the snakebar queue and dequeues it.
+    /// Gets the next message in the snackbar queue and dequeues it.
     /// </summary>
     /// <param name="message">The next message in the queue.</param>
-    /// <param name="severity">The assosiated severity.</param>
+    /// <param name="severity">The associated severity.</param>
     /// <returns>True if a message can be returned. False otherwise.</returns>
     public bool NextMessage(out string message, out string severity)
     {
@@ -312,18 +312,18 @@ public class SettingsService
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsService"/> class. The settings are initialized with the given names as true.
     /// </summary>
-    /// <param name="initalSettings">Inital settings to add.</param>
-    public SettingsService(string[] initalSettings)
+    /// <param name="initialSettings">Initial settings to add.</param>
+    public SettingsService(string[] initialSettings)
         : this()
     {
-        foreach (string setting in initalSettings)
+        foreach (string setting in initialSettings)
         {
             this.SetSetting(setting, true, false);
         }
     }
 
     /// <summary>
-    /// Sets the setting to the corrosponding value. If the setting does not exist, it will be created.
+    /// Sets the setting to the corresponding value. If the setting does not exist, it will be created.
     /// </summary>
     /// <param name="setting">Name of the setting.</param>
     /// <param name="value">Value of the setting.</param>
@@ -346,7 +346,7 @@ public class SettingsService
     }
 
     /// <summary>
-    /// Sets the setting to the corrosponding value. If the setting does not exist, it will be created.
+    /// Sets the setting to the corresponding value. If the setting does not exist, it will be created.
     /// </summary>
     /// <param name="settingsList">Dictionary of the settings to change or add.</param>
     /// <param name="overwrite">If true the value of the setting will be overwritten if the setting exists already.</param>
@@ -413,9 +413,9 @@ public class SettingsService
     }
 
     /// <summary>
-    /// Sets the setting to the corrosponding value. If the setting does not exist, it will be created.
+    /// Sets the setting to the corresponding value. If the setting does not exist, it will be created.
     /// </summary>
-    /// <param name="setting">Name of the setting.</param>
+    /// <param name="settingHash">Hash of the name for the setting.</param>
     /// <param name="value">Value of the setting.</param>
     /// <param name="overwrite">If true the value of the setting will be overwritten if the setting exists already.</param>
     private void SetSetting(int settingHash, bool value, bool overwrite)
