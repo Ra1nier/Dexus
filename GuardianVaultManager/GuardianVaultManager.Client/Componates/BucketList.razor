@@ -13,14 +13,14 @@
             {
                 <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
                     <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
-                        @foreach (var item in Core.Content.Postmaster.Where(i => i.Value.Identifier == character.CharacterId))
+                        @foreach (var item in Items.Where(i => i.Identifier == character.CharacterId))
                         {
                             <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
-                                <MudCardMedia Image=@Core.Content.Details[item.Value.ItemHash].DisplayProperties.Icon alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
+                                <MudCardMedia Image=@Core.Content.Details[item.ItemHash].DisplayProperties.Icon alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
                                 @if (Core.Settings.Check("Weapon-Names"))
                                 {
                                     <MudCardContent Style="text-align: center; padding: 4px;">
-                                        <MudText Typo="Typo.body2" Style="font-size: 10px;">@Core.Content.Details[item.Value.ItemHash].DisplayProperties.Name</MudText>
+                                        <MudText Typo="Typo.body2" Style="font-size: 10px;">@Core.Content.Details[item.ItemHash].DisplayProperties.Name</MudText>
                                     </MudCardContent>
                                 }
                             </MudCard>
@@ -30,8 +30,10 @@
             }
 
             <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
-                <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;">
-                </MudDropZone>
+                @if ((Items.Where(x => x.Identifier == "Vault").Count()) > 0)
+                {
+                    <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;" />
+                }
             </MudItem>
         </MudGrid>
     </MudPaper>
