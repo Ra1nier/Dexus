@@ -1,7 +1,6 @@
-﻿namespace RequestManager;
+﻿namespace RequestManager.Models;
 
 using System.Text.Json.Serialization;
-
 public class ItemDetails
 {
     [JsonPropertyName("displayProperties")]

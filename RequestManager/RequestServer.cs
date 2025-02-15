@@ -5,8 +5,10 @@
 namespace RequestManager;
 
 using ClientProfile;
-using Microsoft.Extensions.Logging;
 using OAuthService;
+using GuardianServices;
+using RequestManager.Models;
+using Microsoft.Extensions.Logging;
 using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
@@ -114,12 +116,12 @@ public class RequestServer
     }
 
     /// <summary>
-    /// Sends a request to Bungie for the given content type.
+    /// Sends a request to Bungie for the given content type in reference to the user's profile.
     /// </summary>
     /// <param name="contentType">Content to request from bungie.</param>
     /// <param name="includeDefinitions">Includes the definitions if true, ignores if false.</param>
     /// <returns>The JSON response from bungie.</returns>
-    public async Task<string> PlatformDestiny2_Request_Contents(string contentType, bool includeDefinitions)
+    public async Task<string> PlatformDestiny2_Request_ProfileContents(string contentType, bool includeDefinitions)
     {
         // Convert componentType to a component
         int content = ComponentTypeLookup.GetContent(contentType);
@@ -156,6 +158,159 @@ public class RequestServer
         catch (Exception e)
         {
             this.logger.LogError($"REQUEST FAILED: Destiny Profile Content {contentType}={content}, {e.Message}");
+            return "Error";
+        }
+    }
+
+    /// <summary>
+    /// Sends a request to Bungie for the given contents in reference to the user's profile.
+    /// </summary>
+    /// <param name="contentTypes">Contents to request from bungie.</param>
+    /// <param name="includeDefinitions">Includes the definitions if true, ignores if false.</param>
+    /// <returns>The JSON response from bungie.</returns>
+    public async Task<string> PlatformDestiny2_Request_ProfileContents(string[] contentTypes, bool includeDefinitions)
+    {
+        // Convert componentType to a component
+        List<int> contents = new List<int>();
+        foreach (string contentType in contentTypes)
+        {
+            contents.Add(ComponentTypeLookup.GetContent(contentType));
+        }
+
+        this.logger.LogInformation($"REQUEST: Destiny Profile Contents ({string.Join(", ", contentTypes)}={contents.Print()})");
+
+        // Construct HTTP request
+        string requestURI = $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.DestinyMembershipID}/?components={contents.PrintCSV()}&definitions={includeDefinitions}";
+        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
+
+        // Add headers
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Add("X-API-Key", this.auth.API_Key);
+
+        // Send request
+        try
+        {
+            HttpResponseMessage response = await this.client.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                string jsonResponse = await response.Content.ReadAsStringAsync();
+
+                this.logger.LogDebug($"Successful JSON Response: Content ({string.Join(", ", contentTypes)}={contents.Print()})");
+
+                return jsonResponse;
+            }
+            else
+            {
+                string errorResponse = await response.Content.ReadAsStringAsync();
+                this.logger.LogError($"Error Response: {errorResponse}");
+                return "Error";
+            }
+        }
+        catch (Exception e)
+        {
+            this.logger.LogError($"REQUEST FAILED: Destiny Profile Content {string.Join(", ", contentTypes)}={contents.Print()}, {e.Message}");
+            return "Error";
+        }
+    }
+
+    /// <summary>
+    /// Sends a request to Bungie for the given content type in reference to one of the user's characters.
+    /// </summary>
+    /// <param name="contentType">Content to request from bungie.</param>
+    /// <param name="characterId">Character to request the content type from.</param>
+    /// <param name="includeDefinitions">Includes the definitions if true, ignores if false.</param>
+    /// <returns>The JSON response from bungie.</returns>
+    public async Task<string> PlatformDestiny2_Request_CharacterContents(string contentType, string characterId, bool includeDefinitions)
+    {
+        // Convert componentType to a component
+        int content = ComponentTypeLookup.GetContent(contentType);
+        this.logger.LogInformation($"REQUEST: Destiny Character Content ({contentType}={content}) For Character={characterId}");
+
+        // Construct HTTP request
+        string requestURI = $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.DestinyMembershipID}/Character/{characterId}/?components={content}&definitions={includeDefinitions}";
+        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
+
+        // Add headers
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Add("X-API-Key", this.auth.API_Key);
+
+        // Send request
+        try
+        {
+            HttpResponseMessage response = await this.client.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                string jsonResponse = await response.Content.ReadAsStringAsync();
+
+                this.logger.LogDebug($"Successful JSON Response: Content ({contentType}={content})");
+
+                return jsonResponse;
+            }
+            else
+            {
+                string errorResponse = await response.Content.ReadAsStringAsync();
+                this.logger.LogError($"Error Response: {errorResponse}");
+                return "Error";
+            }
+        }
+        catch (Exception e)
+        {
+            this.logger.LogError($"REQUEST FAILED: Destiny Profile Content {contentType}={content}, {e.Message}");
+            return "Error";
+        }
+    }
+
+    /// <summary>
+    /// Sends a request to Bungie for the given content type in reference to one of the user's characters.
+    /// </summary>
+    /// <param name="contentTypes">Content to request from bungie.</param>
+    /// <param name="characterId">Character to request the content type from.</param>
+    /// <param name="includeDefinitions">Includes the definitions if true, ignores if false.</param>
+    /// <returns>The JSON response from bungie.</returns>
+    public async Task<string> PlatformDestiny2_Request_CharacterContents(string[] contentTypes, string characterId, bool includeDefinitions)
+    {
+        // Convert componentType to a component
+        List<int> contents = new List<int>();
+        foreach (string contentType in contentTypes)
+        {
+            contents.Add(ComponentTypeLookup.GetContent(contentType));
+        }
+
+        this.logger.LogInformation($"REQUEST: Destiny Character Contents ({string.Join(", ", contentTypes)}={contents.Print()}) For Character={characterId}");
+
+        // Construct HTTP request
+        string requestURI = $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.DestinyMembershipID}/Character/{characterId}/?components={contents.PrintCSV()}&definitions={includeDefinitions}";
+        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
+
+        // Add headers
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Add("X-API-Key", this.auth.API_Key);
+
+        // Send request
+        try
+        {
+            HttpResponseMessage response = await this.client.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                string jsonResponse = await response.Content.ReadAsStringAsync();
+
+                this.logger.LogDebug($"Successful JSON Response: Content ({string.Join(", ", contentTypes)}={contents.Print()}) For Character={characterId}");
+
+                return jsonResponse;
+            }
+            else
+            {
+                string errorResponse = await response.Content.ReadAsStringAsync();
+                this.logger.LogError($"Error Response: {errorResponse}");
+                return "Error";
+            }
+        }
+        catch (Exception e)
+        {
+            this.logger.LogError($"REQUEST FAILED: Destiny Character Content {string.Join(", ", contentTypes)}={contents.Print()} For Character={characterId}, {e.Message}");
             return "Error";
         }
     }
