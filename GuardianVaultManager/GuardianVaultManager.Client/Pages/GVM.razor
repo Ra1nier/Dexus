@@ -16,8 +16,6 @@
 @inject ILogger<GVM> Logger
 @inject ISnackbar Snackbar
 
-<!--<NavigationLock ConfirmExternalNavigation="true" OnBeforeInternalNavigation="OnApplicationExit" />-->
-
 <PageTitle>Guardian Vault Manager</PageTitle>
 
 @if (core.OAuthStatus == 2)
@@ -206,10 +204,7 @@ else
             core.Snackbar.AddMessage("Failed to save settings.", "Error");
         }
 
-        Logger.LogCritical($"Old Refresh Key: {ItemManagementRenderKey}");
         RefreshRenderKey(ref ItemManagementRenderKey);
-        Logger.LogCritical($"New Refresh Key: {ItemManagementRenderKey}");
-
         StateHasChanged();
     }
 
@@ -253,14 +248,4 @@ else
     {
         renderKey = Guid.NewGuid();
     }
-
-    /// <summary>
-    /// Handles final actions before the page is closed.
-    /// </summary>
-    // [JSInvokable]
-    // private void OnApplicationExit()
-    // {
-    //     core.Settings.SaveSettings();
-    //     Logger.LogError("Application Closed. Settings Saved");
-    // }
 }

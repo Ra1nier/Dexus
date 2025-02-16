@@ -1,0 +1,34 @@
+﻿@using MudBlazor
+@using ContentManager
+@using ContentManager.Models
+@using GuardianVaultManagerCore
+@using GuardianServices;
+
+<MudCard Style="width: 80px; height: 80px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; position: relative;" Elevation="4">
+    <MudCardMedia Image="@Core.Content.Details[Item.ItemHash].DisplayProperties.Icon" alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
+
+    <!-- Semi-transparent tag in the top-right corner for primary stat -->
+    @if (Item.Power != 0)
+    {
+        @if (Core.Settings.Check("WeaponStyle-Tag"))
+        {
+            <div style="position: absolute; right: 0%;  background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 2px 0px 10px; font-size: 12px; clip-path: polygon(0 0, 100% 0%, 100% 100%, 30% 100%);">@Item.Power</div>
+        }
+        else
+        {
+            <div style="position: absolute; top: 4px; right: 4px; background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 6px; font-size: 12px; border-radius: 4px;">@Item.Power</div>
+        }
+    }
+
+    @if (Core.Settings.Check("Weapon-Names"))
+    {
+        <MudCardContent Style="text-align: center; padding: 4px;">
+            <MudText Typo="Typo.body2" Style="font-size: 10px;">@Core.Content.Details[Item.ItemHash].DisplayProperties.Name</MudText>
+        </MudCardContent>
+    }
+</MudCard>
+
+@code {
+    [Parameter] public required Item Item { get; set; }
+    [Parameter] public required Core Core { get; set; }
+}
