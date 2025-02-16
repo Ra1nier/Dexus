@@ -49,11 +49,11 @@ else
                         <MudTabPanel Icon="@Icons.Material.Filled.Settings">
                             @foreach (string settingName in localSettings.Keys)
                             {
-                                <MudSwitch T=bool Value="GetSettingValue(settingName)" ValueChanged="(bool newValue) => SetSettingValue(settingName, newValue)" Label="Success" Color="Color.Success" />
+                                <MudSwitch T=bool @bind-Value="localSettings[settingName]" Label=@settingName Color="Color.Success" />
                             }
                         </MudTabPanel>
                     </MudTabs>
-                    <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="ApplySettings" />
+                    <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="ApplySettingsWithRefresh" />
                 </MudExpansionPanel>
             </MudPaper>
 
@@ -73,37 +73,37 @@ else
             </MudGrid>
 
             <!-- Postmaster Section -->
-            <BucketList Items="content.Postmaster.Values" Sorted=@true Core=@core />
+            <BucketList Items="content.Postmaster.Values" Sorted="true" Core=@core RenderKey=@ItemManagementRenderKey />
 
             <!-- Kinetic Weapons Section-->
-            <ManagmentList Items="content.KineticWeapons.Values" Core=@core />
+            <ManagmentList Items="content.KineticWeapons.Values" Core=@core RenderKey=@ItemManagementRenderKey />
 
             <!-- Energy Weapons Section -->
-            <ManagmentList Items="content.EnergyWeapons.Values" Core=@core />
+            <ManagmentList Items="content.EnergyWeapons.Values" Core=@core RenderKey=@ItemManagementRenderKey />
 
             <!-- Power Weapons Section -->
-            <ManagmentList Items="content.PowerWeapons.Values" Core=@core />
+            <ManagmentList Items="content.PowerWeapons.Values" Core=@core RenderKey=@ItemManagementRenderKey />
 
             <!-- Helmets Section -->
-            <ManagmentList Items="content.Helmets.Values" Core=@core />
+            <ManagmentList Items="content.Helmets.Values" Core=@core RenderKey=@ItemManagementRenderKey />
 
             <!-- Gauntlets Section -->
-            <ManagmentList Items="content.Gauntlets.Values" Core=@core />
+            <ManagmentList Items="content.Gauntlets.Values" Core=@core RenderKey=@ItemManagementRenderKey />
 
             <!-- Chests Section -->
-            <ManagmentList Items="content.Chests.Values" Core=@core />
+            <ManagmentList Items="content.Chests.Values" Core=@core RenderKey=@ItemManagementRenderKey />
 
             <!-- Legs Section -->
-            <ManagmentList Items="content.Legs.Values" Core=@core />
+            <ManagmentList Items="content.Legs.Values" Core=@core RenderKey=@ItemManagementRenderKey />
 
             <!-- Class Items Section -->
-            <ManagmentList Items="content.Skirts.Values" Core=@core />
+            <ManagmentList Items="content.Skirts.Values" Core=@core RenderKey=@ItemManagementRenderKey />
 
             <!-- Accessories Section -->
-            <ManagmentList Items="content.Accessories.Values" Core=@core />
+            <ManagmentList Items="content.Accessories.Values" Core=@core RenderKey=@ItemManagementRenderKey />
 
             <!-- Consumables Section -->
-            <BucketList Items="content.Consumables" Sorted=@false Core=@core />
+            <BucketList Items="content.Consumables" Sorted="false" Core=@core RenderKey=@ItemManagementRenderKey />
         </MudContainer>
     }
     else
@@ -130,8 +130,11 @@ else
     private bool initializationComplete = false;
     private Dictionary<string, bool> localSettings = new Dictionary<string, bool>();
 
+    // Render Keys
+    private Guid ItemManagementRenderKey = Guid.NewGuid();
+
     /// <summary>
-    /// Handles the first render of the webpage. 
+    /// Handles the first render of the webpage.
     /// </summary>
     /// <param name="firstRender">Indicates whether this is the first render of the webpage.</param>
     protected async override void OnAfterRender(bool firstRender)
@@ -172,9 +175,42 @@ else
         localSettings = new Dictionary<string, bool> // TODO: Likly to get long. Replace with a settings file.
         {
             { "Weapon-Names", false },
+            { "WeaponStyle-Tag", false },
         };
 
         ApplySettings();
+    }
+
+    /// <summary>
+    /// Applies the local settings and saves them to disk.
+    /// </summary>
+    /// <returns>True if completed succesfully, False otherwise.</returns>
+    private void ApplySettings()
+    {
+        core.Settings.SetSettings(localSettings, false);
+        if (!core.Settings.SaveSettings())
+        {
+            core.Snackbar.AddMessage("Failed to save settings.", "Error");
+        }
+    }
+
+    /// <summary>
+    /// Applies the local settings and saves them to disk.
+    /// </summary>
+    /// <returns>True if completed succesfully, False otherwise.</returns>
+    private void ApplySettingsWithRefresh()
+    {
+        core.Settings.SetSettings(localSettings, false);
+        if (!core.Settings.SaveSettings())
+        {
+            core.Snackbar.AddMessage("Failed to save settings.", "Error");
+        }
+
+        Logger.LogCritical($"Old Refresh Key: {ItemManagementRenderKey}");
+        RefreshRenderKey(ref ItemManagementRenderKey);
+        Logger.LogCritical($"New Refresh Key: {ItemManagementRenderKey}");
+
+        StateHasChanged();
     }
 
     /// <summary>
@@ -197,42 +233,6 @@ else
     }
 
     /// <summary>
-    /// Returns the value of the setting.
-    /// </summary>
-    /// <param name="setting">Setting to get value of.</param>
-    /// <returns>The Value of the setting.</returns>
-    private bool GetSettingValue(string setting)
-    {
-        return core.Settings.Check(setting);
-    }
-
-    /// <summary>
-    /// Returns the value of the setting.
-    /// </summary>
-    /// <param name="setting">Setting to get value of.</param>
-    /// <param name="newValue">Value to set setting to.</param>
-    /// <returns>The Value of the setting.</returns>
-    private void SetSettingValue(string setting, bool newValue)
-    {
-        localSettings[setting] = newValue;
-        StateHasChanged();
-    }
-
-    /// <summary>
-    /// Applies the local settings and saves them to disk.
-    /// </summary>
-    /// <returns>True if completed succesfully, False otherwise.</returns>
-    private void ApplySettings()
-    {
-        core.Settings.SetSettings(localSettings, false);
-        if (!core.Settings.SaveSettings())
-        {
-            core.Snackbar.AddMessage("Failed to save settings.", "Error");
-        }
-        StateHasChanged();
-    }
-
-    /// <summary>
     /// Starts the Sign In process at Bungie.
     /// </summary>
     private void HandleSignIn()
@@ -243,6 +243,15 @@ else
         {
             Navigation.NavigateTo(core.OAuthProfile.ConstructAuthorizationURL().ToString(), true);
         }
+    }
+
+    /// <summary>
+    /// Refreshes the Render Key to mark objects as dirty.
+    /// </summary>
+    /// <param name="renderKey">Render Key to refresh.</param>
+    private void RefreshRenderKey(ref Guid renderKey)
+    {
+        renderKey = Guid.NewGuid();
     }
 
     /// <summary>
