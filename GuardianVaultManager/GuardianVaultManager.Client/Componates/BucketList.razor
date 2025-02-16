@@ -7,7 +7,7 @@
 
 @if (Sorted)
 {
-    <MudPaper Class="d-flex flex-column gap-2">
+    <MudPaper Class="d-flex flex-column gap-2" @key="RenderKey">
         <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
             @foreach (var character in Core.Content.Characters.Values)
             {
@@ -15,8 +15,22 @@
                     <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
                         @foreach (var item in Items.Where(i => i.Identifier == character.CharacterId))
                         {
-                            <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
+                            <MudCard Style="width: 80px; height: 80px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; position: relative;" Elevation="4">
                                 <MudCardMedia Image=@Core.Content.Details[item.ItemHash].DisplayProperties.Icon alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
+
+                                <!-- Semi-transparent tag in the top-right corner for primary stat -->
+                                @if (item.Power != 0)
+                                {
+                                    @if (Core.Settings.Check("WeaponStyle-Tag"))
+                                    {
+                                        <div style="position: absolute; right: 0%;  background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 2px 0px 10px; font-size: 12px; clip-path: polygon(0 0, 100% 0%, 100% 100%, 30% 100%);">@item.Power</div>
+                                    }
+                                    else
+                                    {
+                                        <div style="position: absolute; top: 4px; right: 4px; background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 6px; font-size: 12px; border-radius: 4px;">@item.Power</div>
+                                    }
+                                }
+
                                 @if (Core.Settings.Check("Weapon-Names"))
                                 {
                                     <MudCardContent Style="text-align: center; padding: 4px;">
@@ -40,13 +54,27 @@
 }
 else
 {
-    <MudPaper Class="d-flex flex-column gap-2">
+    <MudPaper Class="d-flex flex-column gap-2" @key="RenderKey">
         <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
             <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex">
                 @foreach (var item in Items)
                 {
-                    <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
+                    <MudCard Style="width: 80px; height: 80px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; position: relative;" Elevation="4">
                         <MudCardMedia Image=@Core.Content.Details[item.ItemHash].DisplayProperties.Icon alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
+
+                        <!-- Semi-transparent tag in the top-right corner for primary stat -->
+                        @if (item.Power != 0)
+                        {
+                            @if (Core.Settings.Check("WeaponStyle-Tag"))
+                            {
+                                <div style="position: absolute; right: 0%;  background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 2px 0px 10px; font-size: 12px; clip-path: polygon(0 0, 100% 0%, 100% 100%, 30% 100%);">@item.Power</div>
+                            }
+                            else
+                            {
+                                <div style="position: absolute; top: 4px; right: 4px; background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 6px; font-size: 12px; border-radius: 4px;">@item.Power</div>
+                            }
+                        }
+
                         @if (Core.Settings.Check("Weapon-Names"))
                         {
                             <MudCardContent Style="text-align: center; padding: 4px;">
@@ -61,6 +89,7 @@ else
 }
 
 @code {
+    [Parameter] public required Guid RenderKey { get; set; }
     [Parameter] public required IEnumerable<Item> Items { get; set; }
     [Parameter] public required Core Core { get; set; }
     [Parameter] public required bool Sorted { get; set; }

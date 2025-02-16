@@ -5,7 +5,7 @@
 @using ContentManager
 @using GuardianServices;
 
-<MudPaper Class="d-flex flex-column gap-2">
+<MudPaper Class="d-flex flex-column gap-2" @key="RenderKey">
     <MudDropContainer T="Item" Items="Items" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
         <ChildContent>
             <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
@@ -28,8 +28,22 @@
             </MudGrid>
         </ChildContent>
         <ItemRenderer>
-            <MudCard Style="width: 60px; height: 60px; display: flex; flex-direction: column; justify-content: space-between; align-items: center;" Elevation="4">
+            <MudCard Style="width: 80px; height: 80px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; position: relative;" Elevation="4">
                 <MudCardMedia Image="@Core.Content.Details[context.ItemHash].DisplayProperties.Icon" alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
+
+                <!-- Semi-transparent tag in the top-right corner for primary stat -->
+                @if (context.Power != 0)
+                {
+                    @if (Core.Settings.Check("WeaponStyle-Tag"))
+                    {
+                        <div style="position: absolute; right: 0%;  background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 2px 0px 10px; font-size: 12px; clip-path: polygon(0 0, 100% 0%, 100% 100%, 30% 100%);">@context.Power</div>
+                    }
+                    else
+                    {
+                        <div style="position: absolute; top: 4px; right: 4px; background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 6px; font-size: 12px; border-radius: 4px;">@context.Power</div>
+                    }
+                }
+
                 @if (Core.Settings.Check("Weapon-Names"))
                 {
                     <MudCardContent Style="text-align: center; padding: 4px;">
@@ -42,6 +56,7 @@
 </MudPaper>
 
 @code {
+    [Parameter] public required Guid RenderKey { get; set; }
     [Parameter] public required IEnumerable<Item> Items { get; set; }
     [Parameter] public required Core Core { get; set; }
 
@@ -62,6 +77,14 @@
             string origin = transfer.Identifier ?? string.Empty;
             string destination = item.DropzoneIdentifier;
 
+            if (destination == origin)
+            {
+                return;
+            }
+
+            string charcterName = Core.Content.Characters.FirstOrDefault(x => x.Value.CharacterId == destination).Value.Class ?? destination;
+            Core.Snackbar.AddMessage($"Transfering {Core.Content.Details[transfer.ItemHash].DisplayProperties.Name} to {charcterName}.", "Info");
+
             bool transferSuccess = false;
             if (origin.Contains("Equipped"))
             {
@@ -72,12 +95,11 @@
                 transferSuccess = await this.TransferItem(transfer, origin, destination);
             }
 
-            string charcterName = Core.Content.Characters.FirstOrDefault(x => x.Value.CharacterId == destination).Value.Class ?? destination;
-
             if (transferSuccess)
             {
                 // Update the item's location
                 Core.Content.SetIdentifier(transfer, destination);
+                RenderKey = Guid.NewGuid();
                 Core.Snackbar.AddMessage($"Successfully transferred {Core.Content.Details[transfer.ItemHash].DisplayProperties.Name} to {charcterName}.", "Success");
             }
             else
@@ -87,6 +109,7 @@
                 transferStatusMessage = string.Empty;
             }
 
+            
             this.StateHasChanged();
         }
     }
@@ -170,6 +193,10 @@
         {
             itemToEquip.Identifier = origin;
             return await this.TransferItem(transfer, trueOrigin, destination);
+        }
+        else
+        {
+            transferStatusMessage = "GVM was unable to equip a different item to replace the item you wanted to transfer.";
         }
 
         return false;
