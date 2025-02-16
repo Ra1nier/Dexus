@@ -8,6 +8,7 @@ using GuardianServices;
 using Microsoft.Extensions.Logging;
 using Models;
 using RequestManager;
+using RequestManager.Models;
 using System.Text.Json;
 
 /// <summary>
@@ -217,7 +218,7 @@ public class ContentManager
     {
         try
         {
-            string charactersJson = await this.request.PlatformDestiny2_Request_Contents("Characters", true);
+            string charactersJson = await this.request.PlatformDestiny2_Request_ProfileContents("Characters", true);
             JsonDocument charactersContent = JsonDocument.Parse(charactersJson);
             JsonElement characters = charactersContent.RootElement.GetProperty("Response").GetProperty("characters").GetProperty("data");
 
@@ -283,11 +284,17 @@ public class ContentManager
     {
         try
         {
-            // Fetch Inventories contents
-            string equipmentContentsJson = await this.request.PlatformDestiny2_Request_Contents("CharacterEquipment", true);
+            // Fetch Inventories contents and associated data.
+            string[] requests = new string[]
+            {
+                "CharacterEquipment",
+                "ItemInstances",
+            };
+            string equipmentContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
 
             JsonDocument equipmentContents = JsonDocument.Parse(equipmentContentsJson);
             JsonElement equipmentArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("characterEquipment").GetProperty("data");
+            JsonElement instanceDataArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
 
             // Populate Inventories list
             int itemsLoaded = 0;
@@ -301,6 +308,10 @@ public class ContentManager
                     {
                         Item item = JsonSerializer.Deserialize<Item>(itemJson) ?? new Item();
                         item.Identifier = $"{character.CharacterId}Equipped";
+
+                        // Get needed data
+                        item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
+
                         this.dropzoneBackingStore.Add(item);
 
                         itemsLoaded++;
@@ -329,10 +340,17 @@ public class ContentManager
     {
         try
         {
-            // Fetch Inventories contents
-            string inventoriesContentsJson = await this.request.PlatformDestiny2_Request_Contents("CharacterInventories", true);
+            // Fetch Inventories contents and associated data.
+            string[] requests = new string[]
+            {
+                "CharacterInventories",
+                "ItemInstances",
+            };
+            string inventoriesContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
+
             JsonDocument inventoriesContents = JsonDocument.Parse(inventoriesContentsJson);
             JsonElement inventoriesArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("characterInventories").GetProperty("data");
+            JsonElement instanceDataArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
 
             // Populate Inventories list
             int itemsLoaded = 0;
@@ -346,6 +364,10 @@ public class ContentManager
                     {
                         Item item = JsonSerializer.Deserialize<Item>(itemJson) ?? new Item();
                         item.Identifier = character.CharacterId;
+
+                        // Get needed data
+                        item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
+
                         this.dropzoneBackingStore.Add(item);
 
                         itemsLoaded++;
@@ -378,10 +400,17 @@ public class ContentManager
     {
         try
         {
-            // Fetch vault contents
-            string vaultContentsJson = await this.request.PlatformDestiny2_Request_Contents("ProfileInventories", true);
+            // Fetch Inventories contents and associated data.
+            string[] requests = new string[]
+            {
+                "ProfileInventories",
+                "ItemInstances",
+            };
+            string vaultContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
+
             JsonDocument vaultContents = JsonDocument.Parse(vaultContentsJson);
             JsonElement vaultArray = vaultContents.RootElement.GetProperty("Response").GetProperty("profileInventory").GetProperty("data").GetProperty("items");
+            JsonElement instanceDataArray = vaultContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
 
             // Populate Vault list
             int itemsLoaded = 0;
@@ -389,6 +418,10 @@ public class ContentManager
             {
                 Item item = JsonSerializer.Deserialize<Item>(itemElement) ?? new Item();
                 item.Identifier = "Vault";
+
+                // Get needed data
+                item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
+
                 this.dropzoneBackingStore.Add(item);
 
                 itemsLoaded++;
@@ -627,5 +660,29 @@ public class ContentManager
         JsonDocument characterDetails = await this.manifest.Manifest_Query_CharacterDetails(characterHash);
 
         return characterDetails.RootElement.GetProperty("displayProperties").GetProperty("name").GetString() ?? string.Empty;
+    }
+
+    /// <summary>
+    /// Gets and item's primary stat.
+    /// </summary>
+    /// <returns>The value of the items primary stat.</returns>
+    private int GetItemPrimaryStat(JsonElement instanceDataArray, string instanceID)
+    {
+        if (string.IsNullOrEmpty(instanceID))
+        {
+            return 0;
+        }
+
+        // Get needed data
+        if (instanceDataArray.TryGetProperty(instanceID, out JsonElement itemInstanceData) && itemInstanceData.TryGetProperty("primaryStat", out JsonElement primaryStat))
+        {
+            // Retrive items power level and assign it to the item
+            if (primaryStat.TryGetProperty("value", out JsonElement powerLevel))
+            {
+                return powerLevel.GetInt32();
+            }
+        }
+
+        return 0;
     }
 }

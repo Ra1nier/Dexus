@@ -111,5 +111,5 @@ public class Item
     /// Gets or sets the Power.
     /// </summary>
     [JsonIgnore]
-    public string? Power { get; set; }
+    public int Power { get; set; }
 }
