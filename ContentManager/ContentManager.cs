@@ -209,6 +209,37 @@ public class ContentManager
     public Dictionary<uint, ItemDetails> Details { get => this.itemDetails; }
 
     /// <summary>
+    /// Retrieves all information needed to have a fully functioning content manager.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    public async Task InitalizeUserContent()
+    {
+        // Stage 1: Get client Characters
+        await this.FetchClientCharacters();
+
+        // Stage 2: Get client Buckets
+        // Step 1 - Make Tasks
+        List<Task> contentTasks = new List<Task>
+        {
+            Task.Run(async () => { await this.LoadClientInventories(); }),
+            Task.Run(async () => { await this.LoadClientVault(); }),
+            Task.Run(async () => { await this.LoadClientEquipment(); }),
+        };
+
+        // Step 2 - start process
+        Task initalizationTasks = Task.WhenAll(contentTasks);
+        initalizationTasks.Wait();
+
+        // Stage 3: Compile Details for Content
+        await this.QueryManifestForDetails(this.dropzoneBackingStore);
+
+        // Stage 4: Compile Buckets for Content
+        await this.QueryManifestForBuckets(this.dropzoneBackingStore);
+
+        this.logger.LogCritical("Content Manager Initalization Done.");
+    }
+
+    /// <summary>
     /// Sets the identifier of the item.
     /// </summary>
     /// <param name="item">Item to set identifier of.</param>
@@ -321,7 +352,10 @@ public class ContentManager
                         // Get needed data
                         item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
 
-                        this.dropzoneBackingStore.Add(item);
+                        lock (this.dropzoneBackingStore)
+                        {
+                            this.dropzoneBackingStore.Add(item);
+                        }
 
                         itemsLoaded++;
                     }
@@ -376,8 +410,10 @@ public class ContentManager
 
                         // Get needed data
                         item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
-
-                        this.dropzoneBackingStore.Add(item);
+                        lock (this.dropzoneBackingStore)
+                        {
+                            this.dropzoneBackingStore.Add(item);
+                        }
 
                         itemsLoaded++;
                     }
@@ -431,7 +467,10 @@ public class ContentManager
                 // Get needed data
                 item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
 
-                this.dropzoneBackingStore.Add(item);
+                lock (this.dropzoneBackingStore)
+                {
+                    this.dropzoneBackingStore.Add(item);
+                }
 
                 itemsLoaded++;
             }
@@ -474,7 +513,10 @@ public class ContentManager
                     this.snackbar.AddMessage("GVM is unable to define an item.", "warning");
                 }
 
-                this.itemDetails.Add(itemHash, itemDetails);
+                lock (this.itemDetails)
+                {
+                    this.itemDetails.Add(itemHash, itemDetails);
+                }
             }
         }
     }
@@ -494,8 +536,7 @@ public class ContentManager
             {
                 if (item.Identifier == "Vault")
                 {
-                    var itemDetails = this.itemDetails[hash];
-                    item.Bucket = await this.GetBucketDefinition(itemDetails.Inventory.BucketTypeHash);
+                    item.Bucket = await this.GetBucketDefinition(this.itemDetails[hash].Inventory.BucketTypeHash);
                 }
                 else
                 {

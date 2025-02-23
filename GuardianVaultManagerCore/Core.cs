@@ -237,40 +237,6 @@ public class Core
     }
 
     /// <summary>
-    /// Gets the clients content.
-    /// </summary>
-    /// <returns>A Task representing the function.</returns>
-    public async Task InitializeClientContent()
-    {
-        // Fetch Characters
-        this.loadingbars.SetProgressText("main", "Fetching Characters");
-        await this.content.FetchClientCharacters();
-        this.loadingbars.SetBufferValue("main", 20);
-
-        // Load Vault
-        this.loadingbars.SetProgressText("main", "Fetching Vault");
-        await this.content.LoadClientVault();
-        this.loadingbars.SetBufferValue("main", 60);
-
-        await this.content.LoadClientEquipment();
-
-        // Load Inventories
-        this.loadingbars.SetProgressText("main", "Fetching Inventory");
-        await this.content.LoadClientInventories();
-        this.loadingbars.SetBufferValue("main", 100);
-
-        // Load Item Details
-        this.loadingbars.SetProgressText("main", "Loading Your Items");
-        await this.content.QueryManifestForDetails(this.content.DropzoneBackingStore);
-        this.loadingbars.SetProgressValue("main", 50);
-
-        // Load Bucket Details and Sort
-        this.loadingbars.SetProgressText("main", "Finishing Up");
-        await this.content.QueryManifestForBuckets(this.content.DropzoneBackingStore);
-        this.loadingbars.SetProgressValue("main", 100);
-    }
-
-    /// <summary>
     /// Checks and confirms whether the user's access and refresh token are still valid. If not, it will refresh the access token.
     /// </summary>
     /// <returns>True if the access token can be used. False otherwise.</returns>
