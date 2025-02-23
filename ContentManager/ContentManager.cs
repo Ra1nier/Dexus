@@ -4,6 +4,7 @@
 
 namespace ContentManager;
 
+using ClientProfile;
 using GuardianServices;
 using Microsoft.Extensions.Logging;
 using Models;
@@ -25,6 +26,11 @@ public class ContentManager
     /// Logger for GVM.
     /// </summary>
     private ILogger logger;
+
+    /// <summary>
+    /// User profile.
+    /// </summary>
+    private Profile profile;
 
     /// <summary>
     /// Request Server for GVM.
@@ -79,6 +85,7 @@ public class ContentManager
     public ContentManager()
     {
         this.logger = null!;
+        this.profile = null!;
         this.request = null!;
         this.manifest = null!;
         this.snackbar = null!;
@@ -88,12 +95,14 @@ public class ContentManager
     /// Initializes a new instance of the <see cref="ContentManager"/> class.
     /// </summary>
     /// <param name="logger">GVM Logger.</param>
+    /// <param name="profile">GVM user profile.</param>
     /// <param name="request">GVM request server.</param>
     /// <param name="manifest">GVM manifest server.</param>
     /// <param name="snackbar">GVM snackbar provider.</param>
-    public ContentManager(ILogger logger, RequestServer request, ManifestServer manifest, SnackbarService snackbar)
+    public ContentManager(ILogger logger, Profile profile, RequestServer request, ManifestServer manifest, SnackbarService snackbar)
     {
         this.logger = logger;
+        this.profile = profile;
         this.request = request;
         this.manifest = manifest;
         this.snackbar = snackbar;
@@ -236,7 +245,7 @@ public class ContentManager
                         // Assign the character ID manually
                         character.CharacterId = characterJson.Name;
 
-                        // character.Class = await this.GetCharacterClass(character.ClassHash); This is causing issues so using switch statement for now
+                        // character.Class = await this.GetCharacterClass(character.ClassHash); This is causing issues so using switch statement for now. Switch is also probably more efficeent and what is the likelyhood they change the numbers :).
                         switch (character.ClassType)
                         {
                             case 0:
@@ -513,6 +522,202 @@ public class ContentManager
 
         this.clientComponents = this.clientComponents.Intersect(this.consumables).ToList();
         this.clientComponents = this.clientComponents.Intersect(this.extras).ToList();
+    }
+
+    /// <summary>
+    /// Equips the item to the provided character.
+    /// </summary>
+    /// <param name="item">Item to equip.</param>
+    /// <param name="location">Character id of the items location.</param>
+    /// <returns>True if the transfer operation was successful. False otherwise.</returns>
+    public async Task<bool> Equip(Item item, string location)
+    {
+        if (this.profile.MembershipType == null)
+        {
+            return false;
+        }
+
+        // Equip the item.
+        Item itemBeingReplaced = this.DropzoneBackingStore.DistinctBy(i => i.Identifier == $"{location}Equipped").FirstOrDefault() ?? new Item();
+        if (await this.request.ActionItem_Request_EquipItem(this.profile.MembershipType, item.ItemInstanceId ?? string.Empty, location))
+        {
+            this.SetIdentifier(itemBeingReplaced, location);
+            this.SetIdentifier(item, $"{location}Equipped");
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Transfers the provided item to the provided destination.
+    /// </summary>
+    /// <param name="item">Item to transfer.</param>
+    /// <param name="origin">Origin location (CharacterID or Vault) of the item.</param>
+    /// <param name="destination">Destination location (CharacterID or Vault) of the item.</param>
+    /// <returns>True if the transfer operation was successful. False otherwise.</returns>
+    public async Task<bool> Transfer(Item item, string origin, string destination)
+    {
+        if (this.profile.MembershipType == null)
+        {
+            return false;
+        }
+
+        bool transferSuccess = false;
+        if (origin.Contains("Equipped") || destination.Contains("Equipped"))
+        {
+            transferSuccess = await this.TransferEquipped(item, origin, destination);
+        }
+        else
+        {
+            transferSuccess = await this.TransferItem(item, origin, destination);
+        }
+
+        if (transferSuccess)
+        {
+            // Update the item's location
+            this.SetIdentifier(item, destination);
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Handles the transfer of an item between buckets.
+    /// </summary>
+    /// <param name="transfer">Item to transfer.</param>
+    /// <param name="origin">Origin of the transfer.</param>
+    /// <param name="destination">Destination of the transfer.</param>
+    /// <returns>True if the transfer operation was successful. False otherwise.</returns>
+    private async Task<bool> TransferItem(Item transfer, string origin, string destination)
+    {
+        this.GenerateTransferData(transfer, out uint itemHash, out string itemID, out int stackSize);
+
+        if (destination == "Vault") // Character -> Vault
+        {
+            // Transfer to Vault
+            return await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID, stackSize, origin, true);
+        }
+        else if (origin == "Vault") // Vault -> Character
+        {
+            // Transfer to Character
+            return await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID, stackSize, destination, false);
+        }
+        else // Character -> Character
+        {
+            // Transfer to Vault then to the Character
+            bool firstTransfer = await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID, stackSize, origin, true);
+
+            bool secondTransfer = false;
+            if (firstTransfer)
+            {
+                secondTransfer = await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID, stackSize, destination, false);
+            }
+
+            if (firstTransfer && secondTransfer)
+            {
+                return true;
+            }
+            else if (!secondTransfer) // If the second transfer failed return the item to the origin.
+            {
+                this.snackbar.AddMessage($"Transfer of {this.Details[transfer.ItemHash].DisplayProperties.Name} failed. Returning the item to the origin.", "Warning");
+                bool returnSuccesful = await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID, stackSize, origin, false);
+
+                if (!returnSuccesful)
+                {
+                    this.SetIdentifier(transfer, "Vault");
+                    this.snackbar.AddMessage(
+                        $"Transfer failed. {this.Details[transfer.ItemHash].DisplayProperties.Name} " +
+                        "has ended up in the Vault as GVM was unable to return it.", "Warning");
+                    return false;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Handles the transfer of an equipped item between buckets. The item will be replaced by a random item from the character's inventory.
+    /// </summary>
+    /// <param name="transfer">Item to transfer.</param>
+    /// <param name="origin">Origin of the transfer.</param>
+    /// <param name="destination">Destination of the transfer.</param>
+    /// <returns>True if the transfer operation was successful. False otherwise.</returns>
+    private async Task<bool> TransferEquipped(Item transfer, string origin, string destination)
+    {
+        string trueDestination = destination.Replace("Equipped", string.Empty);
+        bool transferSuccess = false;
+        if (origin.Contains("Equipped") && destination.Contains("Equipped")) // Transfer of an equipped item to another characters equipment slot. 
+        {
+            transferSuccess = await this.HandelTransferOfEquippedItem(transfer, origin, destination);
+        }
+        else if (origin.Contains("Equipped")) // Transfer of an equipped item to a different character.
+        {
+            return await this.HandelTransferOfEquippedItem(transfer, origin, destination);
+        }
+        else // Transfer of an item into a characters equipment slot.
+        {
+            transferSuccess = await this.TransferItem(transfer, origin, trueDestination);
+        }
+
+        if (transferSuccess)
+        {
+            return await this.Equip(transfer, trueDestination);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Handels the transfer of an item from ann equipped slot bucket to another characters inventroy bucket.
+    /// </summary>
+    /// <param name="item">Item to transfer.</param>
+    /// <param name="origin">Location of the item.</param>
+    /// <param name="destination">Where to send the item.</param>
+    /// <returns>True if the transfer operation was successful. False otherwise.</returns>
+    private async Task<bool> HandelTransferOfEquippedItem(Item item, string origin, string destination)
+    {
+        string trueOrigin = origin.Replace("Equipped", string.Empty);
+        string trueDestination = destination.Replace("Equipped", string.Empty);
+
+        IEnumerable<Item> charctersItemBucket = this.DropzoneBackingStore.Where(b => b.Bucket == item.Bucket).Where(i => i.Identifier == trueOrigin);
+        if (charctersItemBucket.Count() == 0)
+        {
+            this.snackbar.AddMessage("Character has no items to to replace the equiped item. Transfer another weapon into your inventory to fix this.", "Warning");
+            return false; // TODO: Not the best solution. Could pull item from vault to equip but I am too lazy.
+        }
+
+        Item itemToEquip = charctersItemBucket.First();
+
+        bool equipCompleted = await this.Equip(itemToEquip, trueOrigin);
+        if (equipCompleted)
+        {
+            return await this.TransferItem(item, trueOrigin, trueDestination);
+        }
+        else
+        {
+            this.snackbar.AddMessage("GVM was unable to equip a different item to replace the item you wanted to transfer.", "Warning");
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Generates the data required for a transfer.
+    /// </summary>
+    /// <param name="transfer">Item to extract data for.</param>
+    /// <param name="itemHash">The item hash of the item.</param>
+    /// <param name="itemID">The item ID of the item.</param>
+    /// <param name="stackSize">The item stack size of the item.</param>
+    private void GenerateTransferData(Item transfer, out uint itemHash, out string itemID, out int stackSize)
+    {
+        itemHash = transfer.ItemHash;
+        itemID = transfer.ItemInstanceId ?? "-1";
+        stackSize = transfer.Quantity;
     }
 
     /// <summary>

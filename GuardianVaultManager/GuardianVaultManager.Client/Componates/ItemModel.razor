@@ -4,15 +4,16 @@
 @using GuardianVaultManagerCore
 @using GuardianServices;
 
-<MudCard Style="width: 80px; height: 80px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; position: relative;" Elevation="4">
-    <MudCardMedia Image="@Core.Content.Details[Item.ItemHash].DisplayProperties.Icon" alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
+@inject NavigationManager NavManager
 
-    <!-- Semi-transparent tag in the top-right corner for primary stat -->
+<!-- Main Display -->
+<MudCard Style="width: 80px; height: 80px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; position: relative;" Elevation="4" @onclick="() => TogglePopover(itemModelID)">
+    <MudCardMedia Image="@Core.Content.Details[Item.ItemHash].DisplayProperties.Icon" alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
     @if (Item.Power != 0)
     {
         @if (Core.Settings.Check("WeaponStyle-Tag"))
         {
-            <div style="position: absolute; right: 0%;  background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 2px 0px 10px; font-size: 12px; clip-path: polygon(0 0, 100% 0%, 100% 100%, 30% 100%);">@Item.Power</div>
+            <div style="position: absolute; right: 0%; background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 2px 0px 10px; font-size: 12px; clip-path: polygon(0 0, 100% 0%, 100% 100%, 30% 100%);">@Item.Power</div>
         }
         else
         {
@@ -28,7 +29,76 @@
     }
 </MudCard>
 
+<!-- Popover for Info and Actions for the Item -->
+<MudPopover Open="@(activeItemId == itemModelID)" AnchorOrigin="Origin.TopCenter" TransformOrigin="Origin.BottomCenter">
+    <MudPaper Class="pa-4">
+        <MudText Typo="Typo.h6">@Core.Content.Details[Item.ItemHash].DisplayProperties.Name</MudText>
+        <MudMenu Icon="@Icons.Material.Outlined.IosShare" ActivationEvent="@MouseEvent.MouseOver" Class="mx-2">
+            <ChildContent>
+                @foreach (Character character in Core.Content.Characters.Values.Where(c => c.CharacterId != Item.Identifier))
+                {
+                    <MudButton Disabled="@processing" Tag=@character.CharacterId OnClick="() => Transfer(character.CharacterId ?? string.Empty)" Variant="Variant.Filled" Color="Color.Primary">
+                        @if (processing)
+                        {
+                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                            <MudText Class="ms-2">Transfering...</MudText>
+                        }
+                        else
+                        {
+                            <MudText>@character.Class</MudText>
+                        }
+                    </MudButton>
+                }
+            </ChildContent>
+        </MudMenu>
+        <MudButton Color="Color.Primary" OnClick="()=>activeItemId = null">Close</MudButton>
+    </MudPaper>
+</MudPopover>
+
 @code {
     [Parameter] public required Item Item { get; set; }
     [Parameter] public required Core Core { get; set; }
+
+    // Property Popover locks
+    private static Guid? activeItemId = null;
+    private Guid itemModelID = Guid.NewGuid();
+
+    // Item variables
+    bool processing = false;
+
+    private void TogglePopover(Guid itemId)
+    {
+        if (activeItemId == itemId)
+        {
+            activeItemId = null; // TODO: Clicking the same item closes it, at least it is supposed to but it aint working
+        }
+        else
+        {
+            activeItemId = itemId; // TODO: Clicking a different item switches the popover, at least it is supposed to but it aint working
+        }
+    }
+
+    /// <summary>
+    /// Transfers the item being represented to the destination provided.
+    /// </summary>
+    /// <param name="destination">Locaiton to transfer the item to.</param>
+    private async void Transfer(string destination)
+    {
+        if (!(await Core.ConfirmOAuthStatus()))
+        {
+            return;
+        }
+
+        string origin = Item.Identifier ?? string.Empty;
+
+        string charcterName = Core.Content.Characters.FirstOrDefault(x => x.Value.CharacterId == destination).Value.Class ?? destination;
+        Core.Snackbar.AddMessage($"Transfering {Core.Content.Details[Item.ItemHash].DisplayProperties.Name} to {charcterName}.", "Info");
+
+        if (await Core.Content.Transfer(Item, origin, destination))
+        {
+            Core.Snackbar.AddMessage($"Transfer of {Core.Content.Details[Item.ItemHash].DisplayProperties.Name} to {charcterName} was Succesful.", "Success");
+        }
+
+        this.StateHasChanged();
+    }
 }

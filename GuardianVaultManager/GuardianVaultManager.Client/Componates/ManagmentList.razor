@@ -6,7 +6,7 @@
 @using GuardianServices;
 
 <MudPaper Class="d-flex flex-column gap-2" @key="RenderKey">
-    <MudDropContainer T="Item" Items="Items" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
+    <MudDropContainer T="Item" Items="Items.OrderByDescending(item => item.Power)" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
         <ChildContent>
             <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
                 @foreach (var character in Core.Content.Characters)
@@ -49,149 +49,32 @@
     {
         if (item.Item != null)
         {
-            var transfer = item.Item;
+            Item transfer = item.Item;
 
             // Item bucket Identification
             string origin = transfer.Identifier ?? string.Empty;
             string destination = item.DropzoneIdentifier;
 
-            if (destination == origin)
+            if ((destination == origin) || !(await Core.ConfirmOAuthStatus()))
             {
                 return;
             }
 
-            string charcterName = Core.Content.Characters.FirstOrDefault(x => x.Value.CharacterId == destination).Value.Class ?? destination;
-            Core.Snackbar.AddMessage($"Transfering {Core.Content.Details[transfer.ItemHash].DisplayProperties.Name} to {charcterName}.", "Info");
-
-            bool transferSuccess = false;
-            if (origin.Contains("Equipped"))
+            string transferBucket = destination;
+            if (destination != "Vault")
             {
-                transferSuccess = await this.TransferEquipped(transfer, origin, destination);
-            }
-            else
-            {
-                transferSuccess = await this.TransferItem(transfer, origin, destination);
+                transferBucket = Core.Content.Characters.FirstOrDefault(x => x.Value.CharacterId == destination.Replace("Equipped", string.Empty)).Value.Class ?? destination;
             }
 
-            if (transferSuccess)
+            Core.Snackbar.AddMessage($"Transfering {Core.Content.Details[transfer.ItemHash].DisplayProperties.Name} to {transferBucket}.", "Info");
+
+            if (await Core.Content.Transfer(transfer, origin, destination))
             {
-                // Update the item's location
-                Core.Content.SetIdentifier(transfer, destination);
                 RenderKey = Guid.NewGuid();
-                Core.Snackbar.AddMessage($"Successfully transferred {Core.Content.Details[transfer.ItemHash].DisplayProperties.Name} to {charcterName}.", "Success");
-            }
-            else
-            {
-                string details = transferStatusMessage.Equals(string.Empty) ? string.Empty : $": {transferStatusMessage}";
-                Core.Snackbar.AddMessage($"Unable to transfer {Core.Content.Details[transfer.ItemHash].DisplayProperties.Name} to {charcterName}{details}", "Error");
-                transferStatusMessage = string.Empty;
+                Core.Snackbar.AddMessage($"Transfer of {Core.Content.Details[transfer.ItemHash].DisplayProperties.Name} to {transferBucket} was Succesful.", "Success");
             }
 
-            
             this.StateHasChanged();
         }
-    }
-
-    /// <summary>
-    /// Handles the transfer of an item between buckets.
-    /// </summary>
-    /// <param name="transfer">Item to transfer.</param>
-    /// <param name="origin">Origin of the transfer.</param>
-    /// <param name="destination">Destination of the transfer.</param>
-    /// <returns></returns>
-    private async Task<bool> TransferItem(Item transfer, string origin, string destination)
-    {
-        this.GenerateTransferData(transfer, out uint itemHash, out string itemID, out int stackSize);
-
-        if (destination == "Vault") // Character -> Vault
-        {
-            // Transfer to Vault
-            return await Core.TransferItem(itemHash, itemID, stackSize, origin, true);
-        }
-        else if (origin == "Vault") // Vault -> Character
-        {
-            // Transfer to Character
-            return await Core.TransferItem(itemHash, itemID, stackSize, destination, false);
-        }
-        else // Character -> Character
-        {
-            // Transfer to Vault then to the Character
-            bool firstTransfer = await Core.TransferItem(itemHash, itemID, stackSize, origin, true);
-            bool secondTransfer = false;
-            if (firstTransfer)
-                secondTransfer = await Core.TransferItem(itemHash, itemID, stackSize, destination, false);
-
-            if (firstTransfer && secondTransfer)
-            {
-                return true;
-            }
-            else if (!secondTransfer) // If the second transfer failed return the item to the origin.
-            {
-                bool returnSuccesful = await Core.TransferItem(itemHash, itemID, stackSize, origin, false);
-
-                if (!returnSuccesful)
-                {
-                    Core.Content.SetIdentifier(transfer, "Vault");
-                    Core.Snackbar.AddMessage($"Transfer failed. {Core.Content.Details[transfer.ItemHash].DisplayProperties.Name} " +
-                        "has ended up in the Vault as GVM was unable to return it.", "Warning");
-                    transferStatusMessage = "Second transfer of item failed.";
-                    return false;
-                }
-
-                return true;
-            }
-
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Handles the transfer of an equipped item between buckets. The item will be replaced by a random item from the character's inventory.
-    /// </summary>
-    /// <param name="transfer">Item to transfer.</param>
-    /// <param name="origin">Origin of the transfer.</param>
-    /// <param name="destination">Destination of the transfer.</param>
-    /// <returns></returns>
-    private async Task<bool> TransferEquipped(Item transfer, string origin, string destination)
-    {
-        string trueOrigin = origin.Replace("Equipped", string.Empty);
-        IEnumerable<Item> charctersItemBucket = Items.Where(x => x.Identifier == trueOrigin);
-
-        if (charctersItemBucket.Count() == 0)
-        {
-            transferStatusMessage = "Character has no items to to replace the equiped item. Transfer another weapon into your inventory to fix this.";
-            return false; // TODO: Not the best solution. Could pull item from vault to equip but I am too lazy.
-        }
-
-        Item itemToEquip = charctersItemBucket.First();
-
-        bool equipCompleted = await Core.EquipItem(itemToEquip.ItemInstanceId ?? string.Empty, trueOrigin);
-
-        if (equipCompleted)
-        {
-            itemToEquip.Identifier = origin;
-            return await this.TransferItem(transfer, trueOrigin, destination);
-        }
-        else
-        {
-            transferStatusMessage = "GVM was unable to equip a different item to replace the item you wanted to transfer.";
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Generates the data required for a transfer.
-    /// </summary>
-    /// <param name="transfer">Item to extract data for.</param>
-    /// <param name="itemHash">The item hash of the item.</param>
-    /// <param name="itemID">The item ID of the item.</param>
-    /// <param name="stackSize">The item stack size of the item.</param>
-    /// <returns></returns>
-    private void GenerateTransferData(Item transfer, out uint itemHash, out string itemID, out int stackSize)
-    {
-        itemHash = transfer.ItemHash;
-        itemID = transfer.ItemInstanceId ?? "-1";
-        stackSize = transfer.Quantity;
     }
 }

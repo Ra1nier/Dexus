@@ -60,7 +60,7 @@ public class Core
         this.settings = new SettingsService();
         this.request = new RequestServer(this.logger, this.profile, this.oauthProfile);
         this.manifest = new ManifestServer(this.logger);
-        this.content = new ContentManager(this.logger, this.request, this.manifest, this.snackbar);
+        this.content = new ContentManager(this.logger, this.profile, this.request, this.manifest, this.snackbar);
 
         // Setting Local Values
         this.loadingbars.GenerateLoadingbar("Main");
@@ -268,49 +268,6 @@ public class Core
         this.loadingbars.SetProgressText("main", "Finishing Up");
         await this.content.QueryManifestForBuckets(this.content.DropzoneBackingStore);
         this.loadingbars.SetProgressValue("main", 100);
-    }
-
-    /// <summary>
-    /// Transfers the requested item to either the characterID given or the vault if indicated.
-    /// </summary>
-    /// <param name="itemHash">The item's Hash.</param>
-    /// <param name="itemID">The item's ID.</param>
-    /// <param name="stackSize">The amount to transfer.</param>
-    /// <param name="characterID">The character ID of where either the item resides or is to be transferred.</param>
-    /// <param name="isVaultTransfer">Indicates whether this is a transfer between a character to the vault.</param>
-    /// <returns>True if the operation was completed successfully, false otherwise.</returns>
-    public async Task<bool> TransferItem(uint itemHash, string itemID, int stackSize, string characterID, bool isVaultTransfer)
-    {
-        if (await this.ConfirmOAuthStatus())
-        {
-            // Transfer the item.
-            if (this.profile.MembershipType != null)
-            {
-                return await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID, stackSize, characterID, isVaultTransfer);
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Equips the item to the character.
-    /// </summary>
-    /// <param name="itemID">Item to be equipped. Must be in the characters bucket.</param>
-    /// <param name="characterID">Character the item is to be equipped to.</param>
-    /// <returns>True if the operation was completed successfully, false otherwise.</returns>
-    public async Task<bool> EquipItem(string itemID, string characterID)
-    {
-        if (await this.ConfirmOAuthStatus())
-        {
-            // Equip the item.
-            if (this.profile.MembershipType != null)
-            {
-                return await this.request.ActionItem_Request_EquipItem(this.profile.MembershipType, itemID, characterID);
-            }
-        }
-
-        return false;
     }
 
     /// <summary>
