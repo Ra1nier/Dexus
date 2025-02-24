@@ -10,7 +10,6 @@ using Microsoft.Extensions.Logging;
 using Models;
 using RequestManager;
 using RequestManager.Models;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 /// <summary>
@@ -302,7 +301,7 @@ public class ContentManager
         // Stage 3: Compile Details for Content
         await this.FetchItemInformation(this.dropzoneBackingStore.Values.ToList());
 
-        this.logger.LogCritical("Content Manager Initialization Done.");
+        this.logger.LogDebug("Content Manager Initialization Done.");
     }
 
     /// <summary>
@@ -313,341 +312,6 @@ public class ContentManager
     public void SetIdentifier(Item item, string identifier)
     {
         this.dropzoneBackingStore[item.ItemInstanceId ?? string.Empty].Identifier = identifier;
-    }
-
-    /// <summary>
-    /// Gets clients character information from bungie.
-    /// </summary>
-    /// <returns>Task representing the operation.</returns>
-    public async Task FetchClientCharacters()
-    {
-        try
-        {
-            string charactersJson = await this.request.PlatformDestiny2_Request_ProfileContents("Characters", true);
-            JsonDocument charactersContent = JsonDocument.Parse(charactersJson);
-            JsonElement characters = charactersContent.RootElement.GetProperty("Response").GetProperty("characters").GetProperty("data");
-
-            foreach (JsonProperty characterJson in characters.EnumerateObject())
-            {
-                if (characterJson.Value.ValueKind != JsonValueKind.Null)
-                {
-                    var characterDetails = characterJson.Value;
-
-                    // Deserialize character details
-                    var character = JsonSerializer.Deserialize<Character>(characterDetails);
-
-                    if (character != null)
-                    {
-                        // Assign the character ID manually
-                        character.CharacterId = characterJson.Name;
-
-                        // character.Class = await this.GetCharacterClass(character.ClassHash); This is causing issues so using switch statement for now. Switch is also probably more efficeent and what is the likelyhood they change the numbers :).
-                        switch (character.ClassType)
-                        {
-                            case 0:
-                                character.Class = "Titan";
-                                break;
-                            case 1:
-                                character.Class = "Hunter";
-                                break;
-                            case 2:
-                                character.Class = "Warlock";
-                                break;
-                            default:
-                                character.Class = "Unknown";
-                                break;
-                        }
-
-                        character.EmblemPath = this.baseUrl + character.EmblemPath;
-                        character.EmblemBackgroundPath = this.baseUrl + character.EmblemBackgroundPath;
-
-                        this.characters.Add(character.CharacterId ?? "-1", character);
-                    }
-                }
-                else
-                {
-                    this.logger.LogWarning($"Character details for ID {characterJson.Name} are null.");
-                }
-            }
-
-            if (this.Characters.Count == 0)
-            {
-                this.snackbar.AddMessage($"GVM Could not load your Guardians.", "Error");
-            }
-        }
-        catch (Exception e)
-        {
-            this.logger.LogError($"GVM was unable to retrieve the client's characters: {e.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Creates the clients character equipment from Bungie.
-    /// </summary>
-    /// <returns>Task representing the operation.</returns>
-    public async Task LoadClientEquipment()
-    {
-        try
-        {
-            // Fetch Inventories contents and associated data.
-            string[] requests = new string[]
-            {
-                "CharacterEquipment",
-                "ItemInstances",
-            };
-            string equipmentContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
-
-            JsonDocument equipmentContents = JsonDocument.Parse(equipmentContentsJson);
-            JsonElement equipmentArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("characterEquipment").GetProperty("data");
-            JsonElement instanceDataArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
-
-            // Populate Inventories list
-            int itemsLoaded = 0;
-            foreach (Character character in this.characters.Values)
-            {
-                if (character.CharacterId != null)
-                {
-                    JsonElement characterInventory = equipmentArray.GetProperty(character.CharacterId).GetProperty("items");
-
-                    foreach (JsonElement itemJson in characterInventory.EnumerateArray())
-                    {
-                        Item item = JsonSerializer.Deserialize<Item>(itemJson) ?? new Item();
-                        item.Identifier = $"{character.CharacterId}Equipped";
-
-                        // Get needed data
-                        item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
-                        if (!string.IsNullOrEmpty(item.ItemInstanceId))
-                        {
-                            lock (this.dropzoneBackingStore)
-                            {
-                                this.dropzoneBackingStore.Add(item.ItemInstanceId, item);
-                            }
-                        }
-                        else
-                        {
-                            lock (this.uninstancatedItems)
-                            {
-                                this.uninstancatedItems.Add(item);
-                            }
-                        }
-
-                        itemsLoaded++;
-                    }
-                }
-            }
-
-            this.logger.LogInformation($"Loaded {itemsLoaded} items from Equipment.");
-
-            if (itemsLoaded == 0)
-            {
-                this.snackbar.AddMessage($"Could not load your equipment. Try reloading the page.", "Warning");
-            }
-        }
-        catch (Exception e)
-        {
-            this.logger.LogError($"GVM was unable to retrieve the client's equipment: {e.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Creates the clients character inventory contents from Bungie.
-    /// </summary>
-    /// <returns>Task representing the operation.</returns>
-    public async Task LoadClientInventories()
-    {
-        try
-        {
-            // Fetch Inventories contents and associated data.
-            string[] requests = new string[]
-            {
-                "CharacterInventories",
-                "ItemInstances",
-            };
-            string inventoriesContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
-
-            JsonDocument inventoriesContents = JsonDocument.Parse(inventoriesContentsJson);
-            JsonElement inventoriesArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("characterInventories").GetProperty("data");
-            JsonElement instanceDataArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
-
-            // Populate Inventories list
-            int itemsLoaded = 0;
-            foreach (Character character in this.characters.Values)
-            {
-                if (character.CharacterId != null)
-                {
-                    JsonElement characterInventory = inventoriesArray.GetProperty(character.CharacterId).GetProperty("items");
-
-                    foreach (JsonElement itemJson in characterInventory.EnumerateArray())
-                    {
-                        Item item = JsonSerializer.Deserialize<Item>(itemJson) ?? new Item();
-                        item.Identifier = character.CharacterId;
-
-                        // Get needed data
-                        item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
-                        if (!string.IsNullOrEmpty(item.ItemInstanceId))
-                        {
-                            lock (this.dropzoneBackingStore)
-                            {
-                                this.dropzoneBackingStore.Add(item.ItemInstanceId, item);
-                            }
-                        }
-                        else
-                        {
-                            lock (this.uninstancatedItems)
-                            {
-                                this.uninstancatedItems.Add(item);
-                            }
-                        }
-
-                        itemsLoaded++;
-                    }
-                }
-            }
-
-            this.logger.LogInformation($"Loaded {itemsLoaded} items into Inventories.");
-
-            if (itemsLoaded != 0)
-            {
-                this.snackbar.AddMessage($"Loaded {itemsLoaded} items into Inventories.", "success");
-            }
-            else
-            {
-                this.snackbar.AddMessage($"Could not load your Inventories. Try reloading the page.", "Warning");
-            }
-        }
-        catch (Exception e)
-        {
-            this.logger.LogError($"GVM was unable to retrieve the client's inventories: {e.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Creates the clients vault contents from bungie.
-    /// </summary>
-    /// <returns>Task representing the operation.</returns>
-    public async Task LoadClientVault()
-    {
-        try
-        {
-            // Fetch Inventories contents and associated data.
-            string[] requests = new string[]
-            {
-                "ProfileInventories",
-                "ItemInstances",
-            };
-            string vaultContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
-
-            JsonDocument vaultContents = JsonDocument.Parse(vaultContentsJson);
-            JsonElement vaultArray = vaultContents.RootElement.GetProperty("Response").GetProperty("profileInventory").GetProperty("data").GetProperty("items");
-            JsonElement instanceDataArray = vaultContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
-
-            // Populate Vault list
-            int itemsLoaded = 0;
-            foreach (JsonElement itemElement in vaultArray.EnumerateArray())
-            {
-                Item item = JsonSerializer.Deserialize<Item>(itemElement) ?? new Item();
-                item.Identifier = "Vault";
-
-                // Get needed data
-                item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
-
-                if (!string.IsNullOrEmpty(item.ItemInstanceId))
-                {
-                    lock (this.dropzoneBackingStore)
-                    {
-                        this.dropzoneBackingStore.Add(item.ItemInstanceId, item);
-                    }
-                }
-                else
-                {
-                    lock (this.uninstancatedItems)
-                    {
-                        this.uninstancatedItems.Add(item);
-                    }
-                }
-
-                itemsLoaded++;
-            }
-
-            this.logger.LogInformation($"Loaded {itemsLoaded} items into Vault.");
-
-            if (itemsLoaded != 0)
-            {
-                this.snackbar.AddMessage($"Loaded {itemsLoaded} items into Vault.", "success");
-            }
-            else
-            {
-                this.snackbar.AddMessage($"Could not load your Vault. Try reloading the page.", "Warning");
-            }
-        }
-        catch (Exception e)
-        {
-            this.logger.LogError($"GVM was unable to retrieve the client's vault: {e.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Gets the item details and bucket information for the clients items.
-    /// </summary>
-    /// <param name="items">List of items to fetch details for.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task FetchItemInformation(List<Item> items)
-    {
-        this.logger.LogInformation("Getting Clients Item Information.");
-        foreach (Item item in items)
-        {
-            await this.QueryManifestForDetails(item);
-            await this.QueryManifestForBuckets(item);
-        }
-    }
-
-    /// <summary>
-    /// Creates a dictionary for the clients weapons.
-    /// </summary>
-    /// <param name="item">Item to get infromation for.</param>
-    /// <returns>Task representing the operation.</returns>
-    public async Task QueryManifestForDetails(Item item)
-    {
-        uint itemHash = item.ItemHash;
-        if (!this.itemDetails.TryGetValue(itemHash, out _))
-        {
-            var itemDetails = await this.GetItemDetails(itemHash);
-
-            if (itemDetails.Equals(new ItemDetails()))
-            {
-                this.snackbar.AddMessage("GVM is unable to define an item.", "warning");
-            }
-
-            lock (this.itemDetails)
-            {
-                this.itemDetails.Add(itemHash, itemDetails);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Assigns each item in the given list into their buckets.
-    /// </summary>
-    /// <param name="item">Item to get infromation for.</param>
-    /// <returns>Task representing the operation.</returns>
-    public async Task QueryManifestForBuckets(Item item)
-    {
-        uint hash = item.ItemHash;
-        if (string.IsNullOrEmpty(item.Bucket))
-        {
-            if (item.Identifier == "Vault")
-            {
-                item.Bucket = await this.GetBucketDefinition(this.itemDetails[hash].Inventory.BucketTypeHash);
-            }
-            else
-            {
-                item.Bucket = await this.GetBucketDefinition(item.BucketHash);
-            }
-        }
-        else
-        {
-            this.logger.LogWarning($"Bucket not found for item: {item.ItemHash}, BucketHash: {item.BucketHash}");
-        }
     }
 
     /// <summary>
@@ -847,6 +511,341 @@ public class ContentManager
     }
 
     /// <summary>
+    /// Gets clients character information from bungie.
+    /// </summary>
+    /// <returns>Task representing the operation.</returns>
+    private async Task FetchClientCharacters()
+    {
+        try
+        {
+            string charactersJson = await this.request.PlatformDestiny2_Request_ProfileContents("Characters", true);
+            JsonDocument charactersContent = JsonDocument.Parse(charactersJson);
+            JsonElement characters = charactersContent.RootElement.GetProperty("Response").GetProperty("characters").GetProperty("data");
+
+            foreach (JsonProperty characterJson in characters.EnumerateObject())
+            {
+                if (characterJson.Value.ValueKind != JsonValueKind.Null)
+                {
+                    var characterDetails = characterJson.Value;
+
+                    // Deserialize character details
+                    var character = JsonSerializer.Deserialize<Character>(characterDetails);
+
+                    if (character != null)
+                    {
+                        // Assign the character ID manually
+                        character.CharacterId = characterJson.Name;
+
+                        // character.Class = await this.GetCharacterClass(character.ClassHash); This is causing issues so using switch statement for now. Switch is also probably more efficent and what is the likelyhood they change the numbers :).
+                        switch (character.ClassType)
+                        {
+                            case 0:
+                                character.Class = "Titan";
+                                break;
+                            case 1:
+                                character.Class = "Hunter";
+                                break;
+                            case 2:
+                                character.Class = "Warlock";
+                                break;
+                            default:
+                                character.Class = "Unknown";
+                                break;
+                        }
+
+                        character.EmblemPath = this.baseUrl + character.EmblemPath;
+                        character.EmblemBackgroundPath = this.baseUrl + character.EmblemBackgroundPath;
+
+                        this.characters.Add(character.CharacterId ?? "-1", character);
+                    }
+                }
+                else
+                {
+                    this.logger.LogWarning($"Character details for ID {characterJson.Name} are null.");
+                }
+            }
+
+            if (this.Characters.Count == 0)
+            {
+                this.snackbar.AddMessage($"GVM Could not load your Guardians.", "Error");
+            }
+        }
+        catch (Exception e)
+        {
+            this.logger.LogError($"GVM was unable to retrieve the client's characters: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Creates the clients character equipment from Bungie.
+    /// </summary>
+    /// <returns>Task representing the operation.</returns>
+    private async Task LoadClientEquipment()
+    {
+        try
+        {
+            // Fetch Inventories contents and associated data.
+            string[] requests = new string[]
+            {
+                "CharacterEquipment",
+                "ItemInstances",
+            };
+            string equipmentContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
+
+            JsonDocument equipmentContents = JsonDocument.Parse(equipmentContentsJson);
+            JsonElement equipmentArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("characterEquipment").GetProperty("data");
+            JsonElement instanceDataArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
+
+            // Populate Inventories list
+            int itemsLoaded = 0;
+            foreach (Character character in this.characters.Values)
+            {
+                if (character.CharacterId != null)
+                {
+                    JsonElement characterInventory = equipmentArray.GetProperty(character.CharacterId).GetProperty("items");
+
+                    foreach (JsonElement itemJson in characterInventory.EnumerateArray())
+                    {
+                        Item item = JsonSerializer.Deserialize<Item>(itemJson) ?? new Item();
+                        item.Identifier = $"{character.CharacterId}Equipped";
+
+                        // Get needed data
+                        item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
+                        if (!string.IsNullOrEmpty(item.ItemInstanceId))
+                        {
+                            lock (this.dropzoneBackingStore)
+                            {
+                                this.dropzoneBackingStore.Add(item.ItemInstanceId, item);
+                            }
+                        }
+                        else
+                        {
+                            lock (this.uninstancatedItems)
+                            {
+                                this.uninstancatedItems.Add(item);
+                            }
+                        }
+
+                        itemsLoaded++;
+                    }
+                }
+            }
+
+            this.logger.LogInformation($"Loaded {itemsLoaded} items from Equipment.");
+
+            if (itemsLoaded == 0)
+            {
+                this.snackbar.AddMessage($"Could not load your equipment. Try reloading the page.", "Warning");
+            }
+        }
+        catch (Exception e)
+        {
+            this.logger.LogError($"GVM was unable to retrieve the client's equipment: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Creates the clients character inventory contents from Bungie.
+    /// </summary>
+    /// <returns>Task representing the operation.</returns>
+    private async Task LoadClientInventories()
+    {
+        try
+        {
+            // Fetch Inventories contents and associated data.
+            string[] requests = new string[]
+            {
+                "CharacterInventories",
+                "ItemInstances",
+            };
+            string inventoriesContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
+
+            JsonDocument inventoriesContents = JsonDocument.Parse(inventoriesContentsJson);
+            JsonElement inventoriesArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("characterInventories").GetProperty("data");
+            JsonElement instanceDataArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
+
+            // Populate Inventories list
+            int itemsLoaded = 0;
+            foreach (Character character in this.characters.Values)
+            {
+                if (character.CharacterId != null)
+                {
+                    JsonElement characterInventory = inventoriesArray.GetProperty(character.CharacterId).GetProperty("items");
+
+                    foreach (JsonElement itemJson in characterInventory.EnumerateArray())
+                    {
+                        Item item = JsonSerializer.Deserialize<Item>(itemJson) ?? new Item();
+                        item.Identifier = character.CharacterId;
+
+                        // Get needed data
+                        item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
+                        if (!string.IsNullOrEmpty(item.ItemInstanceId))
+                        {
+                            lock (this.dropzoneBackingStore)
+                            {
+                                this.dropzoneBackingStore.Add(item.ItemInstanceId, item);
+                            }
+                        }
+                        else
+                        {
+                            lock (this.uninstancatedItems)
+                            {
+                                this.uninstancatedItems.Add(item);
+                            }
+                        }
+
+                        itemsLoaded++;
+                    }
+                }
+            }
+
+            this.logger.LogInformation($"Loaded {itemsLoaded} items into Inventories.");
+
+            if (itemsLoaded != 0)
+            {
+                this.snackbar.AddMessage($"Loaded {itemsLoaded} items into Inventories.", "success");
+            }
+            else
+            {
+                this.snackbar.AddMessage($"Could not load your Inventories. Try reloading the page.", "Warning");
+            }
+        }
+        catch (Exception e)
+        {
+            this.logger.LogError($"GVM was unable to retrieve the client's inventories: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Creates the clients vault contents from bungie.
+    /// </summary>
+    /// <returns>Task representing the operation.</returns>
+    private async Task LoadClientVault()
+    {
+        try
+        {
+            // Fetch Inventories contents and associated data.
+            string[] requests = new string[]
+            {
+                "ProfileInventories",
+                "ItemInstances",
+            };
+            string vaultContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
+
+            JsonDocument vaultContents = JsonDocument.Parse(vaultContentsJson);
+            JsonElement vaultArray = vaultContents.RootElement.GetProperty("Response").GetProperty("profileInventory").GetProperty("data").GetProperty("items");
+            JsonElement instanceDataArray = vaultContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
+
+            // Populate Vault list
+            int itemsLoaded = 0;
+            foreach (JsonElement itemElement in vaultArray.EnumerateArray())
+            {
+                Item item = JsonSerializer.Deserialize<Item>(itemElement) ?? new Item();
+                item.Identifier = "Vault";
+
+                // Get needed data
+                item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
+
+                if (!string.IsNullOrEmpty(item.ItemInstanceId))
+                {
+                    lock (this.dropzoneBackingStore)
+                    {
+                        this.dropzoneBackingStore.Add(item.ItemInstanceId, item);
+                    }
+                }
+                else
+                {
+                    lock (this.uninstancatedItems)
+                    {
+                        this.uninstancatedItems.Add(item);
+                    }
+                }
+
+                itemsLoaded++;
+            }
+
+            this.logger.LogInformation($"Loaded {itemsLoaded} items into Vault.");
+
+            if (itemsLoaded != 0)
+            {
+                this.snackbar.AddMessage($"Loaded {itemsLoaded} items into Vault.", "success");
+            }
+            else
+            {
+                this.snackbar.AddMessage($"Could not load your Vault. Try reloading the page.", "Warning");
+            }
+        }
+        catch (Exception e)
+        {
+            this.logger.LogError($"GVM was unable to retrieve the client's vault: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Gets the item details and bucket information for the clients items.
+    /// </summary>
+    /// <param name="items">List of items to fetch details for.</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    private async Task FetchItemInformation(List<Item> items)
+    {
+        this.logger.LogInformation("Getting Clients Item Information.");
+        foreach (Item item in items)
+        {
+            await this.QueryManifestForDetails(item);
+            await this.QueryManifestForBuckets(item);
+        }
+    }
+
+    /// <summary>
+    /// Creates a dictionary for the clients weapons.
+    /// </summary>
+    /// <param name="item">Item to get infromation for.</param>
+    /// <returns>Task representing the operation.</returns>
+    private async Task QueryManifestForDetails(Item item)
+    {
+        uint itemHash = item.ItemHash;
+        if (!this.itemDetails.TryGetValue(itemHash, out _))
+        {
+            var itemDetails = await this.GetItemDetails(itemHash);
+
+            if (itemDetails.Equals(new ItemDetails()))
+            {
+                this.snackbar.AddMessage("GVM is unable to define an item.", "warning");
+            }
+
+            lock (this.itemDetails)
+            {
+                this.itemDetails.Add(itemHash, itemDetails);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Assigns each item in the given list into their buckets.
+    /// </summary>
+    /// <param name="item">Item to get infromation for.</param>
+    /// <returns>Task representing the operation.</returns>
+    private async Task QueryManifestForBuckets(Item item)
+    {
+        uint hash = item.ItemHash;
+        if (string.IsNullOrEmpty(item.Bucket))
+        {
+            if (item.Identifier == "Vault")
+            {
+                item.Bucket = await this.GetBucketDefinition(this.itemDetails[hash].Inventory.BucketTypeHash);
+            }
+            else
+            {
+                item.Bucket = await this.GetBucketDefinition(item.BucketHash);
+            }
+        }
+        else
+        {
+            this.logger.LogWarning($"Bucket not found for item: {item.ItemHash}, BucketHash: {item.BucketHash}");
+        }
+    }
+
+    /// <summary>
     /// Gets the details of the itemHash provided.
     /// </summary>
     /// <param name="itemHash">ItemHash to use in the search.</param>
@@ -859,10 +858,6 @@ public class ContentManager
         if (details.Equals(new ItemDetails()))
         {
             details = await this.request.PlatformDestiny2_Request_ItemDefinition(itemHash);
-        }
-
-        if (details.Equals(new ItemDetails()))
-        {
             this.logger.LogError($"GVM could not find any ItemDetails for the itemHash={itemHash} in both the manifest or from Bungie.");
         }
 
@@ -879,8 +874,7 @@ public class ContentManager
         JsonDocument bucketDefinition = await this.manifest.Manifest_Query_BucketDefinition(bucketHash);
 
         // Validate if the JSON is empty
-        if (bucketDefinition.RootElement.ValueKind == JsonValueKind.Object &&
-            bucketDefinition.RootElement.TryGetProperty("displayProperties", out JsonElement displayProperties))
+        if (bucketDefinition.RootElement.ValueKind == JsonValueKind.Object && bucketDefinition.RootElement.TryGetProperty("displayProperties", out JsonElement displayProperties))
         {
             // Validate if the "name" property exists in "displayProperties"
             if (displayProperties.TryGetProperty("name", out JsonElement nameElement))
@@ -898,18 +892,6 @@ public class ContentManager
         }
 
         return string.Empty;
-    }
-
-    /// <summary>
-    /// Gets the class type of the provided characterHash.
-    /// </summary>
-    /// <param name="characterHash">CharacterHash to use.</param>
-    /// <returns>The name of the character.</returns>
-    private async Task<string> GetCharacterClass(uint characterHash)
-    {
-        JsonDocument characterDetails = await this.manifest.Manifest_Query_CharacterDetails(characterHash);
-
-        return characterDetails.RootElement.GetProperty("displayProperties").GetProperty("name").GetString() ?? string.Empty;
     }
 
     /// <summary>
