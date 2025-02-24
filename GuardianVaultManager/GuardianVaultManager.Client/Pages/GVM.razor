@@ -145,7 +145,8 @@ else
                     return;
             }
 
-            await core.InitializeClientContent();
+            await core.Content.InitializeUserContent();
+            core.Content.AllowTransfers();
             InitializeSettings();
 
             initializationComplete = true;
@@ -170,7 +171,7 @@ else
     /// </summary>
     private void InitializeSettings()
     {
-        localSettings = new Dictionary<string, bool> // TODO: Likly to get long. Replace with a settings file.
+        localSettings = new Dictionary<string, bool> // TODO: Likely to get long. Replace with a settings file.
         {
             { "Weapon-Names", false },
             { "WeaponStyle-Tag", false },
@@ -182,7 +183,7 @@ else
     /// <summary>
     /// Applies the local settings and saves them to disk.
     /// </summary>
-    /// <returns>True if completed succesfully, False otherwise.</returns>
+    /// <returns>True if completed successfully, False otherwise.</returns>
     private void ApplySettings()
     {
         core.Settings.SetSettings(localSettings, false);
@@ -195,7 +196,7 @@ else
     /// <summary>
     /// Applies the local settings and saves them to disk.
     /// </summary>
-    /// <returns>True if completed succesfully, False otherwise.</returns>
+    /// <returns>True if completed successfully, False otherwise.</returns>
     private void ApplySettingsWithRefresh()
     {
         core.Settings.SetSettings(localSettings, false);

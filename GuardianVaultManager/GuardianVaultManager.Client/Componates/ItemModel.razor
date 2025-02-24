@@ -33,6 +33,8 @@
 <MudPopover Open="@(activeItemId == itemModelID)" AnchorOrigin="Origin.TopCenter" TransformOrigin="Origin.BottomCenter">
     <MudPaper Class="pa-4">
         <MudText Typo="Typo.h6">@Core.Content.Details[Item.ItemHash].DisplayProperties.Name</MudText>
+
+        <!--Transfer Menu-->
         <MudMenu Icon="@Icons.Material.Outlined.IosShare" ActivationEvent="@MouseEvent.MouseOver" Class="mx-2">
             <ChildContent>
                 @foreach (Character character in Core.Content.Characters.Values.Where(c => c.CharacterId != Item.Identifier))
@@ -51,6 +53,14 @@
                 }
             </ChildContent>
         </MudMenu>
+
+        <!--Pull From Postmaster Button-->
+        @if (Item.Bucket == "Lost Items")
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowDown" OnClick="() => PullFromPostmaster()" />
+        }
+
+        <!--Close Button-->
         <MudButton Color="Color.Primary" OnClick="()=>activeItemId = null">Close</MudButton>
     </MudPaper>
 </MudPopover>
@@ -81,7 +91,7 @@
     /// <summary>
     /// Transfers the item being represented to the destination provided.
     /// </summary>
-    /// <param name="destination">Locaiton to transfer the item to.</param>
+    /// <param name="destination">Location to transfer the item to.</param>
     private async void Transfer(string destination)
     {
         if (!(await Core.ConfirmOAuthStatus()))
@@ -92,13 +102,38 @@
         string origin = Item.Identifier ?? string.Empty;
 
         string charcterName = Core.Content.Characters.FirstOrDefault(x => x.Value.CharacterId == destination).Value.Class ?? destination;
-        Core.Snackbar.AddMessage($"Transfering {Core.Content.Details[Item.ItemHash].DisplayProperties.Name} to {charcterName}.", "Info");
+        Core.Snackbar.AddMessage($"Transferring {Core.Content.Details[Item.ItemHash].DisplayProperties.Name} to {charcterName}.", "Info");
 
-        if (await Core.Content.Transfer(Item, origin, destination))
+        string itemID = Core.Content.QueueTransfer(Item, origin, destination);
+
+        while (Core.Content.GetTransferStatus(itemID) == 2)
         {
-            Core.Snackbar.AddMessage($"Transfer of {Core.Content.Details[Item.ItemHash].DisplayProperties.Name} to {charcterName} was Succesful.", "Success");
+            await Task.Delay(100);
+        }
+
+        if (Core.Content.GetTransferStatus(itemID) == 0)
+        {
+            Core.Snackbar.AddMessage($"Transfer of {Core.Content.Details[Item.ItemHash].DisplayProperties.Name} to {charcterName} was Successful.", "Success");
         }
 
         this.StateHasChanged();
+    }
+
+    /// <summary>
+    /// Pulls the item from postmaster.
+    /// </summary>
+    private async void PullFromPostmaster()
+    {
+        if (!(await Core.ConfirmOAuthStatus()))
+        {
+            return;
+        }
+
+        Core.Snackbar.AddMessage($"Pulling {Core.Content.Details[Item.ItemHash].DisplayProperties.Name} from Postmaster.", "Info");
+
+        if (await Core.Content.PullFromPostmaster(this.Item))
+        {
+            Core.Snackbar.AddMessage($"Successfully pulled {Core.Content.Details[Item.ItemHash].DisplayProperties.Name} from Postmaster.", "Success");
+        }
     }
 }
