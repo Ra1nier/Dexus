@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Models;
 using RequestManager;
 using RequestManager.Models;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 /// <summary>
@@ -231,10 +232,7 @@ public class ContentManager
         initalizationTasks.Wait();
 
         // Stage 3: Compile Details for Content
-        await this.QueryManifestForDetails(this.dropzoneBackingStore);
-
-        // Stage 4: Compile Buckets for Content
-        await this.QueryManifestForBuckets(this.dropzoneBackingStore);
+        await this.FetchItemInformation(this.dropzoneBackingStore);
 
         this.logger.LogCritical("Content Manager Initalization Done.");
     }
@@ -493,30 +491,42 @@ public class ContentManager
     }
 
     /// <summary>
-    /// Creates a dictionary for the clients weapons.
+    /// Gets the item details and bucket information for the clients items.
     /// </summary>
-    /// <param name="items">List of the clients weapons.</param>
-    /// <returns>Task representing the operation.</returns>
-    public async Task QueryManifestForDetails(List<Item> items)
+    /// <param name="items">List of items to fetch details for.</param>
+    public async Task FetchItemInformation(List<Item> items)
     {
-        this.logger.LogInformation("Getting Clients Weapon Information.");
+        this.logger.LogInformation("Getting Clients Item Information.");
         foreach (Item item in items)
         {
-            uint itemHash = item.ItemHash;
+            await this.QueryManifestForDetails(item);
+            await this.QueryManifestForBuckets(item);
+        }
 
-            if (!this.itemDetails.TryGetValue(itemHash, out _))
+        this.clientComponents = this.clientComponents.Intersect(this.consumables).ToList();
+        this.clientComponents = this.clientComponents.Intersect(this.extras).ToList();
+    }
+
+    /// <summary>
+    /// Creates a dictionary for the clients weapons.
+    /// </summary>
+    /// <param name="item">Item to get infromation for.</param>
+    /// <returns>Task representing the operation.</returns>
+    public async Task QueryManifestForDetails(Item item)
+    {
+        uint itemHash = item.ItemHash;
+        if (!this.itemDetails.TryGetValue(itemHash, out _))
+        {
+            var itemDetails = await this.GetItemDetails(itemHash);
+
+            if (itemDetails.Equals(new ItemDetails()))
             {
-                var itemDetails = await this.GetItemDetails(itemHash);
+                this.snackbar.AddMessage("GVM is unable to define an item.", "warning");
+            }
 
-                if (itemDetails.Equals(new ItemDetails()))
-                {
-                    this.snackbar.AddMessage("GVM is unable to define an item.", "warning");
-                }
-
-                lock (this.itemDetails)
-                {
-                    this.itemDetails.Add(itemHash, itemDetails);
-                }
+            lock (this.itemDetails)
+            {
+                this.itemDetails.Add(itemHash, itemDetails);
             }
         }
     }
@@ -524,45 +534,28 @@ public class ContentManager
     /// <summary>
     /// Assigns each item in the given list into their buckets.
     /// </summary>
-    /// <param name="items">List to assign buckets to.</param>
+    /// <param name="item">Item to get infromation for.</param>
     /// <returns>Task representing the operation.</returns>
-    public async Task QueryManifestForBuckets(List<Item> items)
+    public async Task QueryManifestForBuckets(Item item)
     {
-        this.logger.LogInformation("Getting Bucket Information.");
-        foreach (Item item in items)
+        uint hash = item.ItemHash;
+        if (string.IsNullOrEmpty(item.Bucket))
         {
-            uint hash = item.ItemHash;
-            if (string.IsNullOrEmpty(item.Bucket))
+            if (item.Identifier == "Vault")
             {
-                if (item.Identifier == "Vault")
-                {
-                    item.Bucket = await this.GetBucketDefinition(this.itemDetails[hash].Inventory.BucketTypeHash);
-                }
-                else
-                {
-                    item.Bucket = await this.GetBucketDefinition(item.BucketHash);
-                }
-
-                this.SortIntoSubComponent(item);
+                item.Bucket = await this.GetBucketDefinition(this.itemDetails[hash].Inventory.BucketTypeHash);
             }
             else
             {
-                this.logger.LogWarning($"Bucket not found for item: {item.ItemHash}, BucketHash: {item.BucketHash}");
+                item.Bucket = await this.GetBucketDefinition(item.BucketHash);
             }
+
+            this.SortIntoSubComponent(item);
         }
-
-        this.weapons = this.weapons.Intersect(this.kineticWeapons).ToDictionary();
-        this.weapons = this.weapons.Intersect(this.energyWeapons).ToDictionary();
-        this.weapons = this.weapons.Intersect(this.powerWeapons).ToDictionary();
-
-        this.armor = this.armor.Intersect(this.helmets).ToDictionary();
-        this.armor = this.armor.Intersect(this.gauntlets).ToDictionary();
-        this.armor = this.armor.Intersect(this.chests).ToDictionary();
-        this.armor = this.armor.Intersect(this.legs).ToDictionary();
-        this.armor = this.armor.Intersect(this.skirts).ToDictionary();
-
-        this.clientComponents = this.clientComponents.Intersect(this.consumables).ToList();
-        this.clientComponents = this.clientComponents.Intersect(this.extras).ToList();
+        else
+        {
+            this.logger.LogWarning($"Bucket not found for item: {item.ItemHash}, BucketHash: {item.BucketHash}");
+        }
     }
 
     /// <summary>
