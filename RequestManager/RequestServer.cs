@@ -430,6 +430,64 @@ public class RequestServer
     }
 
     /// <summary>
+    /// Pings bungie to request a item be pulled from the postmaster of a character.
+    /// </summary>
+    /// <param name="membershipType">MembershipType of the client.</param>
+    /// <param name="itemHash">Item Hash of the item to pull.</param>
+    /// <param name="itemID">The ItemInstanceID of the item to transfer.</param>
+    /// <param name="stackSize">Stack size of the item.</param>
+    /// <param name="characterID">Character ID of either the origin point to character to transfer to based on vaultTransfer.</param>
+    /// <returns>True if bungie returns a successful response, false otherwise.</returns>
+    public async Task<bool> ActionItem_Request_PullFromPostmaster(string membershipType, uint itemHash, string itemID, int stackSize, string characterID)
+    {
+        this.logger.LogInformation($"REQUEST: Postmaster Pull of Item - {itemID}, FOR Character - {characterID}");
+
+        // Construct HTTP request
+        string requestURI = $"https://www.bungie.net/Platform/Destiny2/Actions/Items/PullFromPostmaster/";
+        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, requestURI);
+
+        // Construct request body in JSON format
+        var body = new
+        {
+            membershipType = membershipType,
+            itemHash = itemHash,
+            itemID = itemID,
+            stackSize = stackSize,
+            characterID = characterID,
+        };
+        string jsonBody = JsonSerializer.Serialize(body);
+        request.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+        // Add headers
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Add("X-API-Key", this.auth.API_Key);
+
+        // Send request
+        try
+        {
+            HttpResponseMessage response = await this.client.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                this.logger.LogDebug($"Successful Response: Postmaster Pull of {itemID} successful");
+
+                return true;
+            }
+            else
+            {
+                string errorResponse = await response.Content.ReadAsStringAsync();
+                this.logger.LogError($"Error Response: {errorResponse}");
+                return false;
+            }
+        }
+        catch (Exception e)
+        {
+            this.logger.LogError($"REQUEST FAILED: Postmaster Pull of Item - {itemID}, FOR Character - {characterID}: {e.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Get the most current Destiny 2 manifest from Bungie.
     /// </summary>
     /// <returns>The path to the saved manifest.</returns>
