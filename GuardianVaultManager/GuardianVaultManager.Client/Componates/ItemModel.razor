@@ -94,7 +94,14 @@
         string charcterName = Core.Content.Characters.FirstOrDefault(x => x.Value.CharacterId == destination).Value.Class ?? destination;
         Core.Snackbar.AddMessage($"Transfering {Core.Content.Details[Item.ItemHash].DisplayProperties.Name} to {charcterName}.", "Info");
 
-        if (await Core.Content.Transfer(Item, origin, destination))
+        string itemID = Core.Content.QueueTransfer(Item, origin, destination);
+
+        while (Core.Content.GetTransferStatus(itemID) == 2)
+        {
+            await Task.Delay(100);
+        }
+
+        if (Core.Content.GetTransferStatus(itemID) == 0)
         {
             Core.Snackbar.AddMessage($"Transfer of {Core.Content.Details[Item.ItemHash].DisplayProperties.Name} to {charcterName} was Succesful.", "Success");
         }

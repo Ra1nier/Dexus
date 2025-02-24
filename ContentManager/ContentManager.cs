@@ -47,10 +47,19 @@ public class ContentManager
     /// </summary>
     private SnackbarService snackbar;
 
+    // Content Containers
     private Dictionary<string, Character> characters = new Dictionary<string, Character>();
     private Dictionary<string, Item> dropzoneBackingStore = new Dictionary<string, Item>();
     private List<Item> uninstancatedItems = new List<Item>();
     private Dictionary<uint, ItemDetails> itemDetails = new Dictionary<uint, ItemDetails>();
+
+    // Content Managment Containers
+    private Queue<TransferInfo> queuedTransfers = new Queue<TransferInfo>();
+    private TimedDictionary<string, bool> recentlyHandledTransfers = new TimedDictionary<string, bool>(TimeSpan.FromSeconds(10));
+
+    // Content Tasks
+    private Task? transferTask;
+    private CancellationTokenSource? cancellationTokenSource;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ContentManager"/> class.
@@ -92,10 +101,7 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> KineticWeapons
     {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Kinetic Weapons").ToDictionary(i => i.Key, i => i.Value);
-        }
+        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Kinetic Weapons").ToDictionary(i => i.Key, i => i.Value); }
     }
 
     /// <summary>
@@ -103,10 +109,7 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> EnergyWeapons
     {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Energy Weapons").ToDictionary(i => i.Key, i => i.Value);
-        }
+        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Energy Weapons").ToDictionary(i => i.Key, i => i.Value); }
     }
 
     /// <summary>
@@ -114,10 +117,7 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> PowerWeapons
     {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Power Weapons").ToDictionary(i => i.Key, i => i.Value);
-        }
+        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Power Weapons").ToDictionary(i => i.Key, i => i.Value); }
     }
 
     /// <summary>
@@ -125,10 +125,7 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> Helmets
     {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Helmet").ToDictionary(i => i.Key, i => i.Value);
-        }
+        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Helmet").ToDictionary(i => i.Key, i => i.Value); }
     }
 
     /// <summary>
@@ -136,10 +133,7 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> Gauntlets
     {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Gauntlets").ToDictionary(i => i.Key, i => i.Value);
-        }
+        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Gauntlets").ToDictionary(i => i.Key, i => i.Value); }
     }
 
     /// <summary>
@@ -147,10 +141,7 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> Chests
     {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Chest Armor").ToDictionary(i => i.Key, i => i.Value);
-        }
+        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Chest Armor").ToDictionary(i => i.Key, i => i.Value); }
     }
 
     /// <summary>
@@ -158,10 +149,7 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> Legs
     {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Leg Armor").ToDictionary(i => i.Key, i => i.Value);
-        }
+        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Leg Armor").ToDictionary(i => i.Key, i => i.Value); }
     }
 
     /// <summary>
@@ -169,10 +157,7 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> Skirts
     {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Class Armor").ToDictionary(i => i.Key, i => i.Value);
-        }
+        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Class Armor").ToDictionary(i => i.Key, i => i.Value); }
     }
 
     /// <summary>
@@ -200,10 +185,7 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> Postmaster
     {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Lost Items").ToDictionary(i => i.Key, i => i.Value);
-        }
+        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Lost Items").ToDictionary(i => i.Key, i => i.Value); }
     }
 
     /// <summary>
@@ -211,10 +193,7 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> Engrams
     {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Helmet").ToDictionary(i => i.Key, i => i.Value);
-        }
+        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Helmet").ToDictionary(i => i.Key, i => i.Value); }
     }
 
     /// <summary>
@@ -315,12 +294,102 @@ public class ContentManager
     }
 
     /// <summary>
+    /// Adds the request to the list of transfers.
+    /// </summary>
+    /// <param name="item">Item to transfer.</param>
+    /// <param name="origin">Where the item is.</param>
+    /// <param name="destination">Where the item should go.</param>
+    /// <returns>The Item instance ID of the item.</returns>
+    public string QueueTransfer(Item item, string origin, string destination)
+    {
+        this.queuedTransfers.Enqueue(new TransferInfo(item, origin, destination));
+        return item.ItemInstanceId ?? string.Empty;
+    }
+
+    /// <summary>
+    /// Gets the transfer status of the item.
+    /// </summary>
+    /// <param name="itemInstanceId">ID of the item.</param>
+    /// <returns>Returns 0 if the transfer was successful, 1 if the transfer was unsuccessful, 2 if the key was not found.</returns>
+    public int GetTransferStatus(string itemInstanceId)
+    {
+        if (this.recentlyHandledTransfers.TryGetValue(itemInstanceId, out bool status))
+        {
+            if (status)
+            {
+                return 0;
+            }
+
+            return 1;
+        }
+
+        return 2;
+    }
+
+    /// <summary>
+    /// Allows content manager to start processing transfers.
+    /// </summary>
+    public void AllowTransfers()
+    {
+        // Create a cancellation token source to signal task cancellation
+        this.cancellationTokenSource = new CancellationTokenSource();
+        CancellationToken token = this.cancellationTokenSource.Token;
+
+        this.logger.LogInformation("Transfer processing task was started. Content Manager will now handle transfer requests.");
+        this.recentlyHandledTransfers.StartAutoCleanup(TimeSpan.FromSeconds(5));
+        this.transferTask = Task.Run(
+            async () =>
+        {
+            try
+            {
+                while (true)
+                {
+                    token.ThrowIfCancellationRequested();
+
+                    while (this.queuedTransfers.Count > 0)
+                    {
+                        TransferInfo transfer = this.queuedTransfers.Dequeue();
+                        bool transferSuccess = await this.Transfer(transfer.Item, transfer.Origin, transfer.Destination);
+
+                        this.recentlyHandledTransfers.Add(transfer.Item.ItemInstanceId ?? string.Empty, transferSuccess);
+                    }
+
+                    await Task.Delay(100, token);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                this.logger.LogInformation("Transfer processing task was canceled. Content Manager will not handle anymore transfer requests.");
+            }
+            catch (Exception e)
+            {
+                this.logger.LogError(e, "Error occurred while processing transfers.");
+            }
+        }, token);
+    }
+
+    /// <summary>
+    /// Stops content manager from processing transfers.
+    /// </summary>
+    public void StopTransfers()
+    {
+        this.cancellationTokenSource?.Cancel();
+        this.transferTask?.Wait();
+
+        this.cancellationTokenSource?.Dispose();
+        this.transferTask?.Dispose();
+
+        this.recentlyHandledTransfers.StopAutoCleanup();
+        this.recentlyHandledTransfers.Clear();
+    }
+
+    /// <summary>
     /// Equips the item to the provided character.
     /// </summary>
     /// <param name="item">Item to equip.</param>
     /// <param name="location">Character id of the items location.</param>
     /// <returns>True if the transfer operation was successful. False otherwise.</returns>
-    public async Task<bool> Equip(Item item, string location)
+    private async Task<bool> Equip(Item item, string location)
     {
         if (this.profile.MembershipType == null)
         {
@@ -346,10 +415,12 @@ public class ContentManager
     /// <param name="origin">Origin location (CharacterID or Vault) of the item.</param>
     /// <param name="destination">Destination location (CharacterID or Vault) of the item.</param>
     /// <returns>True if the transfer operation was successful. False otherwise.</returns>
-    public async Task<bool> Transfer(Item item, string origin, string destination)
+    private async Task<bool> Transfer(Item item, string origin, string destination)
     {
         if (this.profile.MembershipType == null)
         {
+            this.logger.LogCritical("MembershipType is null. Unable to transfer item.");
+            this.snackbar.AddMessage("Something went wrong. GVM is unable to access your bungie data. Transfer cannot be completed. Try logging back in to solve this issue.", "Error");
             return false;
         }
 
@@ -441,7 +512,7 @@ public class ContentManager
     {
         string trueDestination = destination.Replace("Equipped", string.Empty);
         bool transferSuccess = false;
-        if (origin.Contains("Equipped") && destination.Contains("Equipped")) // Transfer of an equipped item to another characters equipment slot. 
+        if (origin.Contains("Equipped") && destination.Contains("Equipped")) // Transfer of an equipped item to another characters equipment slot.
         {
             transferSuccess = await this.HandelTransferOfEquippedItem(transfer, origin, destination);
         }

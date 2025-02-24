@@ -68,7 +68,14 @@
 
             Core.Snackbar.AddMessage($"Transfering {Core.Content.Details[transfer.ItemHash].DisplayProperties.Name} to {transferBucket}.", "Info");
 
-            if (await Core.Content.Transfer(transfer, origin, destination))
+            string itemID = Core.Content.QueueTransfer(transfer, origin, destination);
+
+            while (Core.Content.GetTransferStatus(itemID) == 2)
+            {
+                await Task.Delay(100);
+            }
+
+            if (Core.Content.GetTransferStatus(itemID) == 0)
             {
                 RenderKey = Guid.NewGuid();
                 Core.Snackbar.AddMessage($"Transfer of {Core.Content.Details[transfer.ItemHash].DisplayProperties.Name} to {transferBucket} was Succesful.", "Success");

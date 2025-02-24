@@ -146,6 +146,7 @@ else
             }
 
             await core.Content.InitializeUserContent();
+            core.Content.AllowTransfers();
             InitializeSettings();
 
             initializationComplete = true;
