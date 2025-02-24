@@ -436,6 +436,28 @@ public class ContentManager
     }
 
     /// <summary>
+    /// Pulls the requested item from the postmaster.
+    /// </summary>
+    /// <param name="item">Item to fetch.</param>
+    /// <returns>True if the operation was completed successfully. False Otherwise.</returns>
+    public async Task<bool> PullFromPostmaster(Item item)
+    {
+        if (this.profile.MembershipType == null)
+        {
+            this.logger.LogCritical("MembershipType is null. Unable to transfer item.");
+            this.snackbar.AddMessage("Something went wrong. GVM is unable to access your bungie data. Transfer cannot be completed. Try logging back in to solve this issue.", "Error");
+            return false;
+        }
+
+        if (await this.request.ActionItem_Request_PullFromPostmaster(this.profile.MembershipType, item.ItemHash, item.ItemInstanceId ?? string.Empty, item.Quantity, item.Identifier ?? string.Empty))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Equips the item to the provided character.
     /// </summary>
     /// <param name="item">Item to equip.</param>
@@ -443,11 +465,6 @@ public class ContentManager
     /// <returns>True if the transfer operation was successful. False otherwise.</returns>
     private async Task<bool> Equip(Item item, string location)
     {
-        if (this.profile.MembershipType == null)
-        {
-            return false;
-        }
-
         // Equip the item.
         Item itemBeingReplaced = this.DropzoneBackingStore.DistinctBy(i => i.Value.Identifier == $"{location}Equipped").First().Value ?? new Item();
         if (await this.request.ActionItem_Request_EquipItem(this.profile.MembershipType, item.ItemInstanceId ?? string.Empty, location))
