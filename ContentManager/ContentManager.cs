@@ -47,6 +47,9 @@ public class ContentManager
     /// </summary>
     private SnackbarService snackbar;
 
+    // Content Manager Variables
+    private bool isInitialized = false;
+
     // Content Containers
     private Dictionary<string, Character> characters = new Dictionary<string, Character>();
     private Dictionary<string, Item> dropzoneBackingStore = new Dictionary<string, Item>();
@@ -60,6 +63,11 @@ public class ContentManager
     // Content Tasks
     private Task? transferTask;
     private CancellationTokenSource? cancellationTokenSource;
+
+    // Content Refresh Tokens
+    private Guid clientEquipment;
+    private Guid clientInventory;
+    private Guid clientVault;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ContentManager"/> class.
@@ -257,11 +265,22 @@ public class ContentManager
     public Dictionary<uint, ItemDetails> Details { get => this.itemDetails; }
 
     /// <summary>
+    /// Gets a value indicating whether if transfers are currently being handled.
+    /// </summary>
+    public bool TransfersAllowed { get; private set; }
+
+    /// <summary>
     /// Retrieves all information needed to have a fully functioning content manager.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task InitializeUserContent()
     {
+        if (this.isInitialized)
+        {
+            this.logger.LogWarning("Content Manager has already been initialized.");
+            return;
+        }
+
         // Stage 1: Get client Characters
         await this.FetchClientCharacters();
 
@@ -280,7 +299,36 @@ public class ContentManager
         // Stage 3: Compile Details for Content
         await this.FetchItemInformation(this.dropzoneBackingStore.Values.ToList());
 
+        // Stage 4: Finishing up
+        this.clientEquipment = Guid.NewGuid();
+        this.clientInventory = Guid.NewGuid();
+        this.clientVault = Guid.NewGuid();
+
         this.logger.LogDebug("Content Manager Initialization Done.");
+    }
+
+    /// <summary>
+    /// Refreshes the user content information.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    public async Task RefreshUserContent()
+    {
+        if (!this.isInitialized)
+        {
+            this.logger.LogWarning("Content Manager has not been initialized. It nust be initialized before user contents can be refreshed.");
+            return;
+        }
+
+        List<Task> contentTasks = new List<Task>
+        {
+            this.LoadClientInventories(),
+            this.LoadClientVault(),
+            this.LoadClientEquipment(),
+        };
+        await Task.WhenAll(contentTasks);
+
+        await this.FetchItemInformation(this.dropzoneBackingStore.Values.ToList());
+        this.logger.LogDebug("User content refreshed.");
     }
 
     /// <summary>
@@ -331,6 +379,8 @@ public class ContentManager
     /// </summary>
     public void AllowTransfers()
     {
+        this.TransfersAllowed = true;
+
         // Create a cancellation token source to signal task cancellation
         this.cancellationTokenSource = new CancellationTokenSource();
         CancellationToken token = this.cancellationTokenSource.Token;
@@ -373,6 +423,8 @@ public class ContentManager
     /// </summary>
     public void StopTransfers()
     {
+        this.TransfersAllowed = false;
+
         this.cancellationTokenSource?.Cancel();
         this.transferTask?.Wait();
 
