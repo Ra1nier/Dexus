@@ -269,6 +269,11 @@ public class ContentManager
     public Dictionary<string, Item> DropzoneBackingStore { get => this.dropzoneBackingStore; }
 
     /// <summary>
+    /// Gets the UninstantiatedItems List.
+    /// </summary>
+    public List<Item> UninstantiatedItems { get => this.uninstancatedItems; }
+
+    /// <summary>
     /// Gets the Details List.
     /// </summary>
     public Dictionary<uint, ItemDetails> Details { get => this.itemDetails; }
@@ -277,7 +282,7 @@ public class ContentManager
     /// Retrieves all information needed to have a fully functioning content manager.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public async Task InitalizeUserContent()
+    public async Task InitializeUserContent()
     {
         // Stage 1: Get client Characters
         await this.FetchClientCharacters();
@@ -286,19 +291,18 @@ public class ContentManager
         // Step 1 - Make Tasks
         List<Task> contentTasks = new List<Task>
         {
-            Task.Run(async () => { await this.LoadClientInventories(); }),
-            Task.Run(async () => { await this.LoadClientVault(); }),
-            Task.Run(async () => { await this.LoadClientEquipment(); }),
+            this.LoadClientInventories(),
+            this.LoadClientVault(),
+            this.LoadClientEquipment(),
         };
 
         // Step 2 - start process
-        Task initalizationTasks = Task.WhenAll(contentTasks);
-        initalizationTasks.Wait();
+        await Task.WhenAll(contentTasks);
 
         // Stage 3: Compile Details for Content
         await this.FetchItemInformation(this.dropzoneBackingStore.Values.ToList());
 
-        this.logger.LogCritical("Content Manager Initalization Done.");
+        this.logger.LogCritical("Content Manager Initialization Done.");
     }
 
     /// <summary>
