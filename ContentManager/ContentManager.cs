@@ -48,35 +48,9 @@ public class ContentManager
     /// </summary>
     private SnackbarService snackbar;
 
-    // Client specific objects
     private Dictionary<string, Character> characters = new Dictionary<string, Character>();
-
-    // Sub Components for each character
-    private Dictionary<string, Item> weapons = new Dictionary<string, Item>();
-    private Dictionary<string, Item> kineticWeapons = new Dictionary<string, Item>();
-    private Dictionary<string, Item> energyWeapons = new Dictionary<string, Item>();
-    private Dictionary<string, Item> powerWeapons = new Dictionary<string, Item>();
-
-    private Dictionary<string, Item> armor = new Dictionary<string, Item>();
-    private Dictionary<string, Item> helmets = new Dictionary<string, Item>();
-    private Dictionary<string, Item> gauntlets = new Dictionary<string, Item>();
-    private Dictionary<string, Item> chests = new Dictionary<string, Item>();
-    private Dictionary<string, Item> legs = new Dictionary<string, Item>();
-    private Dictionary<string, Item> skirts = new Dictionary<string, Item>();
-
-    private Dictionary<string, Item> accessories = new Dictionary<string, Item>();
-    private Dictionary<string, Item> postmaster = new Dictionary<string, Item>();
-    private Dictionary<string, Item> engrams = new Dictionary<string, Item>();
-    private Dictionary<string, Item> quests = new Dictionary<string, Item>();
-
-    // Non Specific Sub Components
-    private List<Item> clientComponents = new List<Item>();
-
-    private List<Item> consumables = new List<Item>();
-    private List<Item> extras = new List<Item>();
-
-    // Complete Components
-    private List<Item> dropzoneBackingStore = new List<Item>();
+    private Dictionary<string, Item> dropzoneBackingStore = new Dictionary<string, Item>();
+    private List<Item> uninstancatedItems = new List<Item>();
     private Dictionary<uint, ItemDetails> itemDetails = new Dictionary<uint, ItemDetails>();
 
     /// <summary>
@@ -115,94 +89,184 @@ public class ContentManager
     public Dictionary<string, Character> Characters { get => this.characters; }
 
     /// <summary>
-    /// Gets the Weapons List.
-    /// </summary>
-    public Dictionary<string, Item> Weapons { get => this.weapons; }
-
-    /// <summary>
     /// Gets the KineticWeapons List.
     /// </summary>
-    public Dictionary<string, Item> KineticWeapons { get => this.kineticWeapons; }
+    public Dictionary<string, Item> KineticWeapons
+    {
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Kinetic Weapons").ToDictionary(i => i.Key, i => i.Value);
+        }
+    }
 
     /// <summary>
     /// Gets the EnergyWeapons List.
     /// </summary>
-    public Dictionary<string, Item> EnergyWeapons { get => this.energyWeapons; }
+    public Dictionary<string, Item> EnergyWeapons
+    {
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Energy Weapons").ToDictionary(i => i.Key, i => i.Value);
+        }
+    }
 
     /// <summary>
     /// Gets the PowerWeapons List.
     /// </summary>
-    public Dictionary<string, Item> PowerWeapons { get => this.powerWeapons; }
-
-    /// <summary>
-    /// Gets the Armor List.
-    /// </summary>
-    public Dictionary<string, Item> Armor { get => this.armor; }
+    public Dictionary<string, Item> PowerWeapons
+    {
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Power Weapons").ToDictionary(i => i.Key, i => i.Value);
+        }
+    }
 
     /// <summary>
     /// Gets the Helmets List.
     /// </summary>
-    public Dictionary<string, Item> Helmets { get => this.helmets; }
+    public Dictionary<string, Item> Helmets
+    {
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Helmet").ToDictionary(i => i.Key, i => i.Value);
+        }
+    }
 
     /// <summary>
     /// Gets the Gauntlets List.
     /// </summary>
-    public Dictionary<string, Item> Gauntlets { get => this.gauntlets; }
+    public Dictionary<string, Item> Gauntlets
+    {
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Gauntlets").ToDictionary(i => i.Key, i => i.Value);
+        }
+    }
 
     /// <summary>
     /// Gets the Chests List.
     /// </summary>
-    public Dictionary<string, Item> Chests { get => this.chests; }
+    public Dictionary<string, Item> Chests
+    {
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Chest Armor").ToDictionary(i => i.Key, i => i.Value);
+        }
+    }
 
     /// <summary>
     /// Gets the Legs List.
     /// </summary>
-    public Dictionary<string, Item> Legs { get => this.legs; }
+    public Dictionary<string, Item> Legs
+    {
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Leg Armor").ToDictionary(i => i.Key, i => i.Value);
+        }
+    }
 
     /// <summary>
     /// Gets the Skirts List.
     /// </summary>
-    public Dictionary<string, Item> Skirts { get => this.skirts; }
+    public Dictionary<string, Item> Skirts
+    {
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Class Armor").ToDictionary(i => i.Key, i => i.Value);
+        }
+    }
 
     /// <summary>
     /// Gets the Accessories List.
     /// </summary>
-    public Dictionary<string, Item> Accessories { get => this.accessories; }
+    public Dictionary<string, Item> Accessories
+    {
+        get
+        {
+            string[] buckets =
+            {
+                "Ghost",
+                "Ships",
+                "Vehicle",
+                "Emblems",
+                "Accessories",
+            };
+
+            return this.dropzoneBackingStore.Where(i => buckets.Contains(i.Value.Bucket)).ToDictionary(i => i.Key, i => i.Value);
+        }
+    }
 
     /// <summary>
     /// Gets the Postmaster List.
     /// </summary>
-    public Dictionary<string, Item> Postmaster { get => this.postmaster; }
+    public Dictionary<string, Item> Postmaster
+    {
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Lost Items").ToDictionary(i => i.Key, i => i.Value);
+        }
+    }
 
     /// <summary>
     /// Gets the Engrams List.
     /// </summary>
-    public Dictionary<string, Item> Engrams { get => this.engrams; }
+    public Dictionary<string, Item> Engrams
+    {
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Helmet").ToDictionary(i => i.Key, i => i.Value);
+        }
+    }
 
     /// <summary>
     /// Gets the Quests List.
     /// </summary>
-    public Dictionary<string, Item> Quests { get => this.quests; }
+    public Dictionary<string, Item> Quests
+    {
+        get
+        {
+            string[] buckets =
+            {
+                "Messages",
+                "Special Orders",
+                "Quests",
+            };
 
-    /// <summary>
-    /// Gets the ClientComponents List.
-    /// </summary>
-    public List<Item> ClientComponents { get => this.clientComponents; }
+            return this.dropzoneBackingStore.Where(i => buckets.Contains(i.Value.Bucket)).ToDictionary(i => i.Key, i => i.Value);
+        }
+    }
 
     /// <summary>
     /// Gets the consumables List.
     /// </summary>
-    public List<Item> Consumables { get => this.consumables; }
+    public List<Item> Consumables
+    {
+        get
+        {
+            string[] buckets =
+            {
+                "Strange Coin",
+                "Glimmer",
+                "Legendary Shards",
+                "Silver",
+                "Bright Dust",
+                "Wrapped Items",
+                "Materials",
+                "Synthweave Bolt",
+                "Synthweave Strap",
+                "Synthweave Plate",
+                "Synthweave Template",
+                "Consumables",
+            };
 
-    /// <summary>
-    /// Gets the Extras List.
-    /// </summary>
-    public List<Item> Extras { get => this.extras; }
+            return this.uninstancatedItems.Where(i => buckets.Contains(i.Bucket)).ToList();
+        }
+    }
 
     /// <summary>
     /// Gets the DropzoneBackingStore List.
     /// </summary>
-    public List<Item> DropzoneBackingStore { get => this.dropzoneBackingStore; }
+    public Dictionary<string, Item> DropzoneBackingStore { get => this.dropzoneBackingStore; }
 
     /// <summary>
     /// Gets the Details List.
@@ -232,7 +296,7 @@ public class ContentManager
         initalizationTasks.Wait();
 
         // Stage 3: Compile Details for Content
-        await this.FetchItemInformation(this.dropzoneBackingStore);
+        await this.FetchItemInformation(this.dropzoneBackingStore.Values.ToList());
 
         this.logger.LogCritical("Content Manager Initalization Done.");
     }
@@ -244,8 +308,7 @@ public class ContentManager
     /// <param name="identifier">Identifier to set.</param>
     public void SetIdentifier(Item item, string identifier)
     {
-        int index = this.dropzoneBackingStore.IndexOf(item);
-        this.dropzoneBackingStore[index].Identifier = identifier;
+        this.dropzoneBackingStore[item.ItemInstanceId ?? string.Empty].Identifier = identifier;
     }
 
     /// <summary>
@@ -349,10 +412,19 @@ public class ContentManager
 
                         // Get needed data
                         item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
-
-                        lock (this.dropzoneBackingStore)
+                        if (!string.IsNullOrEmpty(item.ItemInstanceId))
                         {
-                            this.dropzoneBackingStore.Add(item);
+                            lock (this.dropzoneBackingStore)
+                            {
+                                this.dropzoneBackingStore.Add(item.ItemInstanceId, item);
+                            }
+                        }
+                        else
+                        {
+                            lock (this.uninstancatedItems)
+                            {
+                                this.uninstancatedItems.Add(item);
+                            }
                         }
 
                         itemsLoaded++;
@@ -408,9 +480,19 @@ public class ContentManager
 
                         // Get needed data
                         item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
-                        lock (this.dropzoneBackingStore)
+                        if (!string.IsNullOrEmpty(item.ItemInstanceId))
                         {
-                            this.dropzoneBackingStore.Add(item);
+                            lock (this.dropzoneBackingStore)
+                            {
+                                this.dropzoneBackingStore.Add(item.ItemInstanceId, item);
+                            }
+                        }
+                        else
+                        {
+                            lock (this.uninstancatedItems)
+                            {
+                                this.uninstancatedItems.Add(item);
+                            }
                         }
 
                         itemsLoaded++;
@@ -465,9 +547,19 @@ public class ContentManager
                 // Get needed data
                 item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
 
-                lock (this.dropzoneBackingStore)
+                if (!string.IsNullOrEmpty(item.ItemInstanceId))
                 {
-                    this.dropzoneBackingStore.Add(item);
+                    lock (this.dropzoneBackingStore)
+                    {
+                        this.dropzoneBackingStore.Add(item.ItemInstanceId, item);
+                    }
+                }
+                else
+                {
+                    lock (this.uninstancatedItems)
+                    {
+                        this.uninstancatedItems.Add(item);
+                    }
                 }
 
                 itemsLoaded++;
@@ -494,6 +586,7 @@ public class ContentManager
     /// Gets the item details and bucket information for the clients items.
     /// </summary>
     /// <param name="items">List of items to fetch details for.</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public async Task FetchItemInformation(List<Item> items)
     {
         this.logger.LogInformation("Getting Clients Item Information.");
@@ -502,9 +595,6 @@ public class ContentManager
             await this.QueryManifestForDetails(item);
             await this.QueryManifestForBuckets(item);
         }
-
-        this.clientComponents = this.clientComponents.Intersect(this.consumables).ToList();
-        this.clientComponents = this.clientComponents.Intersect(this.extras).ToList();
     }
 
     /// <summary>
@@ -549,8 +639,6 @@ public class ContentManager
             {
                 item.Bucket = await this.GetBucketDefinition(item.BucketHash);
             }
-
-            this.SortIntoSubComponent(item);
         }
         else
         {
@@ -572,7 +660,7 @@ public class ContentManager
         }
 
         // Equip the item.
-        Item itemBeingReplaced = this.DropzoneBackingStore.DistinctBy(i => i.Identifier == $"{location}Equipped").FirstOrDefault() ?? new Item();
+        Item itemBeingReplaced = this.DropzoneBackingStore.DistinctBy(i => i.Value.Identifier == $"{location}Equipped").First().Value ?? new Item();
         if (await this.request.ActionItem_Request_EquipItem(this.profile.MembershipType, item.ItemInstanceId ?? string.Empty, location))
         {
             this.SetIdentifier(itemBeingReplaced, location);
@@ -718,14 +806,14 @@ public class ContentManager
         string trueOrigin = origin.Replace("Equipped", string.Empty);
         string trueDestination = destination.Replace("Equipped", string.Empty);
 
-        IEnumerable<Item> charctersItemBucket = this.DropzoneBackingStore.Where(b => b.Bucket == item.Bucket).Where(i => i.Identifier == trueOrigin);
+        Dictionary<string, Item> charctersItemBucket = this.DropzoneBackingStore.Where(b => b.Value.Bucket == item.Bucket).Where(i => i.Value.Identifier == trueOrigin).ToDictionary(i => i.Key, i => i.Value);
         if (charctersItemBucket.Count() == 0)
         {
             this.snackbar.AddMessage("Character has no items to to replace the equiped item. Transfer another weapon into your inventory to fix this.", "Warning");
             return false; // TODO: Not the best solution. Could pull item from vault to equip but I am too lazy.
         }
 
-        Item itemToEquip = charctersItemBucket.First();
+        Item itemToEquip = charctersItemBucket.Values.First();
 
         bool equipCompleted = await this.Equip(itemToEquip, trueOrigin);
         if (equipCompleted)
@@ -752,87 +840,6 @@ public class ContentManager
         itemHash = transfer.ItemHash;
         itemID = transfer.ItemInstanceId ?? "-1";
         stackSize = transfer.Quantity;
-    }
-
-    /// <summary>
-    /// Sorts everything in the list to the appropriate sub categories.
-    /// </summary>
-    /// <param name="item">Item to sort into components.</param>
-    private void SortIntoSubComponent(Item item)
-    {
-        // Sort Items into buckets
-        if (!string.IsNullOrEmpty(item.Bucket))
-        {
-            switch (item.Bucket)
-            {
-                case "Kinetic Weapons":
-                    this.kineticWeapons.TryAdd(item.ItemInstanceId ?? "-1", item);
-                    break;
-                case "Energy Weapons":
-                    this.energyWeapons.TryAdd(item.ItemInstanceId ?? "-1", item);
-                    break;
-                case "Power Weapons":
-                    this.powerWeapons.TryAdd(item.ItemInstanceId ?? "-1", item);
-                    break;
-
-                case "Helmet":
-                    this.helmets.TryAdd(item.ItemInstanceId ?? "-1", item);
-                    break;
-                case "Gauntlets":
-                    this.gauntlets.TryAdd(item.ItemInstanceId ?? "-1", item);
-                    break;
-                case "Chest Armor":
-                    this.chests.TryAdd(item.ItemInstanceId ?? "-1", item);
-                    break;
-                case "Leg Armor":
-                    this.legs.TryAdd(item.ItemInstanceId ?? "-1", item);
-                    break;
-                case "Class Armor":
-                    this.skirts.TryAdd(item.ItemInstanceId ?? "-1", item);
-                    break;
-
-                case "Lost Items":
-                    this.postmaster.TryAdd(item.ItemInstanceId ?? "-1", item);
-                    break;
-
-                case "Ghost":
-                case "Ships":
-                case "Vehicle":
-                case "Emblems":
-                case "Accessories":
-                    this.accessories.TryAdd(item.ItemInstanceId ?? "-1", item);
-                    break;
-
-                case "Engrams":
-                    this.engrams.TryAdd(item.ItemInstanceId ?? "-1", item);
-                    break;
-
-                case "Messages":
-                case "Special Orders":
-                case "Quests":
-                    this.quests.TryAdd(item.ItemInstanceId ?? "-1", item);
-                    break;
-
-                case "Strange Coin":
-                case "Glimmer":
-                case "Legendary Shards":
-                case "Silver":
-                case "Bright Dust":
-                case "Wrapped Items":
-                case "Materials":
-                case "Synthweave Bolt":
-                case "Synthweave Strap":
-                case "Synthweave Plate":
-                case "Synthweave Template":
-                case "Consumables":
-                    this.consumables.Add(item);
-                    break;
-
-                default:
-                    this.extras.Add(item);
-                    break;
-            }
-        }
     }
 
     /// <summary>
