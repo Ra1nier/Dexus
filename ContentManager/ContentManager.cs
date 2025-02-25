@@ -56,18 +56,13 @@ public class ContentManager
     private List<Item> uninstancatedItems = new List<Item>();
     private Dictionary<uint, ItemDetails> itemDetails = new Dictionary<uint, ItemDetails>();
 
-    // Content Managment Containers
+    // Content Management Containers
     private Queue<TransferInfo> queuedTransfers = new Queue<TransferInfo>();
     private TimedDictionary<string, bool> recentlyHandledTransfers = new TimedDictionary<string, bool>(TimeSpan.FromSeconds(10));
 
     // Content Tasks
     private Task? transferTask;
     private CancellationTokenSource? cancellationTokenSource;
-
-    // Content Refresh Tokens
-    private Guid clientEquipment;
-    private Guid clientInventory;
-    private Guid clientVault;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ContentManager"/> class.
@@ -299,11 +294,6 @@ public class ContentManager
         // Stage 3: Compile Details for Content
         await this.FetchItemInformation(this.dropzoneBackingStore.Values.ToList());
 
-        // Stage 4: Finishing up
-        this.clientEquipment = Guid.NewGuid();
-        this.clientInventory = Guid.NewGuid();
-        this.clientVault = Guid.NewGuid();
-
         this.logger.LogDebug("Content Manager Initialization Done.");
     }
 
@@ -315,7 +305,7 @@ public class ContentManager
     {
         if (!this.isInitialized)
         {
-            this.logger.LogWarning("Content Manager has not been initialized. It nust be initialized before user contents can be refreshed.");
+            this.logger.LogWarning("Content Manager has not been initialized. It must be initialized before user contents can be refreshed.");
             return;
         }
 
@@ -603,7 +593,7 @@ public class ContentManager
     }
 
     /// <summary>
-    /// Handels the transfer of an item from ann equipped slot bucket to another characters inventroy bucket.
+    /// Handles the transfer of an item from ann equipped slot bucket to another characters inventory bucket.
     /// </summary>
     /// <param name="item">Item to transfer.</param>
     /// <param name="origin">Location of the item.</param>
@@ -614,14 +604,14 @@ public class ContentManager
         string trueOrigin = origin.Replace("Equipped", string.Empty);
         string trueDestination = destination.Replace("Equipped", string.Empty);
 
-        Dictionary<string, Item> charctersItemBucket = this.DropzoneBackingStore.Where(b => b.Value.Bucket == item.Bucket).Where(i => i.Value.Identifier == trueOrigin).ToDictionary(i => i.Key, i => i.Value);
-        if (charctersItemBucket.Count() == 0)
+        Dictionary<string, Item> charactersItemBucket = this.DropzoneBackingStore.Where(b => b.Value.Bucket == item.Bucket).Where(i => i.Value.Identifier == trueOrigin).ToDictionary(i => i.Key, i => i.Value);
+        if (charactersItemBucket.Count() == 0)
         {
-            this.snackbar.AddMessage("Character has no items to to replace the equiped item. Transfer another weapon into your inventory to fix this.", "Warning");
+            this.snackbar.AddMessage("Character has no items to to replace the equipped item. Transfer another weapon into your inventory to fix this.", "Warning");
             return false; // TODO: Not the best solution. Could pull item from vault to equip but I am too lazy.
         }
 
-        Item itemToEquip = charctersItemBucket.Values.First();
+        Item itemToEquip = charactersItemBucket.Values.First();
 
         bool equipCompleted = await this.Equip(itemToEquip, trueOrigin);
         if (equipCompleted)
@@ -676,7 +666,7 @@ public class ContentManager
                         // Assign the character ID manually
                         character.CharacterId = characterJson.Name;
 
-                        // character.Class = await this.GetCharacterClass(character.ClassHash); This is causing issues so using switch statement for now. Switch is also probably more efficent and what is the likelyhood they change the numbers :).
+                        // character.Class = await this.GetCharacterClass(character.ClassHash); This is causing issues so using switch statement for now. Switch is also probably more efficient and what are the chances they change the numbers :).
                         switch (character.ClassType)
                         {
                             case 0:
@@ -939,7 +929,7 @@ public class ContentManager
     /// <summary>
     /// Creates a dictionary for the clients weapons.
     /// </summary>
-    /// <param name="item">Item to get infromation for.</param>
+    /// <param name="item">Item to get information for.</param>
     /// <returns>Task representing the operation.</returns>
     private async Task QueryManifestForDetails(Item item)
     {
@@ -963,7 +953,7 @@ public class ContentManager
     /// <summary>
     /// Assigns each item in the given list into their buckets.
     /// </summary>
-    /// <param name="item">Item to get infromation for.</param>
+    /// <param name="item">Item to get information for.</param>
     /// <returns>Task representing the operation.</returns>
     private async Task QueryManifestForBuckets(Item item)
     {
@@ -1048,7 +1038,7 @@ public class ContentManager
         // Get needed data
         if (instanceDataArray.TryGetProperty(instanceID, out JsonElement itemInstanceData) && itemInstanceData.TryGetProperty("primaryStat", out JsonElement primaryStat))
         {
-            // Retrive items power level and assign it to the item
+            // Retrieve items power level and assign it to the item
             if (primaryStat.TryGetProperty("value", out JsonElement powerLevel))
             {
                 return powerLevel.GetInt32();

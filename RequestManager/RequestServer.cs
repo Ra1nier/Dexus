@@ -643,7 +643,7 @@ public class RequestServer
     }
 
     /// <summary>
-    /// Gets the file from the provied URL.
+    /// Gets the file from the provide URL.
     /// </summary>
     /// <param name="url">URL to download file from.</param>
     /// <param name="filePath">File path to save the file to.</param>
@@ -678,7 +678,7 @@ public class RequestServer
     }
 
     /// <summary>
-    /// Gets the file from the provied URL and extracts it to the provided file path.
+    /// Gets the file from the provide URL and extracts it to the provided file path.
     /// </summary>
     /// <param name="url">URL to download file from.</param>
     /// <param name="filePath">File path to save the file to.</param>
