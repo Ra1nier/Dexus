@@ -1,4 +1,8 @@
-﻿namespace ContentManager.Models;
+﻿// <copyright file="TransferInfo.cs" company="PlaceholderCompany">
+// Copyright (c) PlaceholderCompany. All rights reserved.
+// </copyright>
+
+namespace ContentManager.Models;
 
 /// <summary>
 /// Contains information about a queued transfer.
