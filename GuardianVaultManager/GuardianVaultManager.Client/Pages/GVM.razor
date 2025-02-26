@@ -18,7 +18,7 @@
 
 <PageTitle>Guardian Vault Manager</PageTitle>
 
-@if (core.OAuthStatus == 2)
+@if (Core.OAuthStatus == 2)
 {
     <!--Sign In Page-->
     <MudContainer Class="justify-center d-flex flex-column align-items-center justify-content-center min-vh-100 bg-dark">
@@ -57,7 +57,7 @@ else
 
             <!-- Column Labels -->
             <MudGrid Class="d-flex justify-center" Justify="Justify.SpaceBetween">
-                @foreach (var character in content.Characters.Values)
+                @foreach (var character in Content.Characters.Values)
                 {
                     <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column justify-center">
                         <MudText Typo="Typo.h6" Class="mb-1 text-center">@character.Class</MudText>
@@ -71,37 +71,37 @@ else
             </MudGrid>
 
             <!-- Postmaster Section -->
-            <BucketList Items="content.Postmaster.Values" Sorted="true" Core=@core RenderKey=@ItemManagementRenderKey />
+            <BucketList Items="Content.Postmaster.Values" Sorted="true" Core=@Core RenderKey=@itemManagementRenderKey />
 
             <!-- Kinetic Weapons Section-->
-            <ManagmentList Items="content.KineticWeapons.Values" Core=@core RenderKey=@ItemManagementRenderKey />
+            <ManagmentList Items="Content.KineticWeapons.Values" Core=@Core RenderKey=@itemManagementRenderKey />
 
             <!-- Energy Weapons Section -->
-            <ManagmentList Items="content.EnergyWeapons.Values" Core=@core RenderKey=@ItemManagementRenderKey />
+            <ManagmentList Items="Content.EnergyWeapons.Values" Core=@Core RenderKey=@itemManagementRenderKey />
 
             <!-- Power Weapons Section -->
-            <ManagmentList Items="content.PowerWeapons.Values" Core=@core RenderKey=@ItemManagementRenderKey />
+            <ManagmentList Items="Content.PowerWeapons.Values" Core=@Core RenderKey=@itemManagementRenderKey />
 
             <!-- Helmets Section -->
-            <ManagmentList Items="content.Helmets.Values" Core=@core RenderKey=@ItemManagementRenderKey />
+            <ManagmentList Items="Content.Helmets.Values" Core=@Core RenderKey=@itemManagementRenderKey />
 
             <!-- Gauntlets Section -->
-            <ManagmentList Items="content.Gauntlets.Values" Core=@core RenderKey=@ItemManagementRenderKey />
+            <ManagmentList Items="Content.Gauntlets.Values" Core=@Core RenderKey=@itemManagementRenderKey />
 
             <!-- Chests Section -->
-            <ManagmentList Items="content.Chests.Values" Core=@core RenderKey=@ItemManagementRenderKey />
+            <ManagmentList Items="Content.Chests.Values" Core=@Core RenderKey=@itemManagementRenderKey />
 
             <!-- Legs Section -->
-            <ManagmentList Items="content.Legs.Values" Core=@core RenderKey=@ItemManagementRenderKey />
+            <ManagmentList Items="Content.Legs.Values" Core=@Core RenderKey=@itemManagementRenderKey />
 
             <!-- Class Items Section -->
-            <ManagmentList Items="content.Skirts.Values" Core=@core RenderKey=@ItemManagementRenderKey />
+            <ManagmentList Items="Content.Skirts.Values" Core=@Core RenderKey=@itemManagementRenderKey />
 
             <!-- Accessories Section -->
-            <ManagmentList Items="content.Accessories.Values" Core=@core RenderKey=@ItemManagementRenderKey />
+            <ManagmentList Items="Content.Accessories.Values" Core=@Core RenderKey=@itemManagementRenderKey />
 
             <!-- Consumables Section -->
-            <BucketList Items="content.Consumables" Sorted="false" Core=@core RenderKey=@ItemManagementRenderKey />
+            <BucketList Items="Content.Consumables" Sorted="false" Core=@Core RenderKey=@itemManagementRenderKey />
         </MudContainer>
     }
     else
@@ -109,11 +109,11 @@ else
         <!--Vault loading Page-->
         <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge" Class="d-flex flex-column gap-3 justify-center">
             <div class="loader"></div>
-            <MudProgressLinear Color="Color.Error" Buffer="true" Value="@core.Loadingbars.GetProgressValue("Main")" BufferValue="@core.Loadingbars.GetBufferValue("Main")" Class="my-7">
-                @if (!string.IsNullOrEmpty(core.Loadingbars.GetProgressText("Main")))
+            <MudProgressLinear Color="Color.Error" Buffer="true" Value="@Core.Loadingbars.GetProgressValue("Main")" BufferValue="@Core.Loadingbars.GetBufferValue("Main")" Class="my-7">
+                @if (!string.IsNullOrEmpty(Core.Loadingbars.GetProgressText("Main")))
                 {
                     <MudText Typo="Typo.subtitle1" Color="Color.Dark">
-                        <b>@core.Loadingbars.GetProgressText("Main")</b>
+                        <b>@Core.Loadingbars.GetProgressText("Main")</b>
                     </MudText>
                 }
             </MudProgressLinear>
@@ -123,13 +123,23 @@ else
 
 @code {
     // GVM Objects
-    public static Core core = new Core();
-    public static ContentManager content = new ContentManager();
+
+    /// <summary>
+    /// Holds the singleton instance of core that GVM uses.
+    /// </summary>
+    public static Core Core = new Core();
+
+    /// <summary>
+    /// Holds the singleton instance of Content Manager from Core that GVM uses.
+    /// </summary>
+    public static ContentManager Content = new ContentManager();
+
+    // GVM Variables
     private bool initializationComplete = false;
     private Dictionary<string, bool> localSettings = new Dictionary<string, bool>();
 
     // Render Keys
-    private Guid ItemManagementRenderKey = Guid.NewGuid();
+    private Guid itemManagementRenderKey = Guid.NewGuid();
 
     /// <summary>
     /// Handles the first render of the webpage.
@@ -137,21 +147,23 @@ else
     /// <param name="firstRender">Indicates whether this is the first render of the webpage.</param>
     protected async override void OnAfterRender(bool firstRender)
     {
-        if (firstRender)
+        if (!firstRender || Core.OAuthStatus == 2)
         {
-            if (core.OAuthStatus != 0 && core.OAuthStatus == 1)
-            {
-                if (!await core.ConfirmOAuthStatus())
-                    return;
-            }
-
-            await core.Content.InitializeUserContent();
-            core.Content.AllowTransfers();
-            InitializeSettings();
-
-            initializationComplete = true;
-            StateHasChanged();
+            return;
         }
+
+        if (Core.OAuthStatus == 1)
+        {
+            if (!await Core.ConfirmOAuthStatus())
+                return;
+        }
+
+        await Content.InitializeUserContent();
+        Content.AllowTransfers();
+        InitializeSettings();
+
+        initializationComplete = true;
+        StateHasChanged();
     }
 
     /// <summary>
@@ -159,10 +171,10 @@ else
     /// </summary>
     protected async override void OnInitialized()
     {
-        core = Core.Instance;
-        content = core.Content;
+        Core = Core.Instance;
+        Content = Core.Content;
 
-        await core.ConfirmOAuthStatus();
+        await Core.ConfirmOAuthStatus();
         SnackbarProvider();
     }
 
@@ -186,10 +198,10 @@ else
     /// <returns>True if completed successfully, False otherwise.</returns>
     private void ApplySettings()
     {
-        core.Settings.SetSettings(localSettings, false);
-        if (!core.Settings.SaveSettings())
+        Core.Settings.SetSettings(localSettings, false);
+        if (!Core.Settings.SaveSettings())
         {
-            core.Snackbar.AddMessage("Failed to save settings.", "Error");
+            Core.Snackbar.AddMessage("Failed to save settings.", "Error");
         }
     }
 
@@ -199,13 +211,13 @@ else
     /// <returns>True if completed successfully, False otherwise.</returns>
     private void ApplySettingsWithRefresh()
     {
-        core.Settings.SetSettings(localSettings, false);
-        if (!core.Settings.SaveSettings())
+        Core.Settings.SetSettings(localSettings, false);
+        if (!Core.Settings.SaveSettings())
         {
-            core.Snackbar.AddMessage("Failed to save settings.", "Error");
+            Core.Snackbar.AddMessage("Failed to save settings.", "Error");
         }
 
-        RefreshRenderKey(ref ItemManagementRenderKey);
+        RefreshRenderKey(ref itemManagementRenderKey);
         StateHasChanged();
     }
 
@@ -219,7 +231,7 @@ else
             while (true)
             {
                 await Task.Delay(1000);
-                while (core.Snackbar.NextMessage(out string message, out string severity))
+                while (Core.Snackbar.NextMessage(out string message, out string severity))
                 {
                     Severity mode = (Severity)Enum.Parse(typeof(Severity), severity);
                     Snackbar.Add(message, mode);
@@ -229,15 +241,15 @@ else
     }
 
     /// <summary>
-    /// Starts the Sign In process at Bungie.
+    /// Starts the Sign-In process at Bungie.
     /// </summary>
     private void HandleSignIn()
     {
         Logger.LogDebug("Sign In Started");
 
-        if (core.OAuthStatus > 0)
+        if (Core.OAuthStatus > 0)
         {
-            Navigation.NavigateTo(core.OAuthProfile.ConstructAuthorizationURL().ToString(), true);
+            Navigation.NavigateTo(Core.OAuthProfile.ConstructAuthorizationURL().ToString(), true);
         }
     }
 
