@@ -196,7 +196,7 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> Engrams
     {
-        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Helmet").ToDictionary(i => i.Key, i => i.Value); }
+        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Engrams").ToDictionary(i => i.Key, i => i.Value); }
     }
 
     /// <summary>

@@ -123,7 +123,7 @@ public class Profile
     {
         try
         {
-            string userTokensJSON = JsonSerializer.Serialize<Tokens>(this.tokens);
+            string userTokensJSON = JsonSerializer.Serialize(this.tokens);
 
             File.WriteAllText(this.userTokenFileLocation, userTokensJSON);
 
