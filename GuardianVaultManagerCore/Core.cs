@@ -120,7 +120,7 @@ public class Core
         }
     }
 
-    // Servies
+    // Services
 
     /// <summary>
     /// Gets the snackbar service.
@@ -136,6 +136,8 @@ public class Core
     /// Gets the settings service.
     /// </summary>
     public SettingsService Settings => this.settings;
+
+    // Main Functionality
 
     /// <summary>
     /// Starts the GuardianVaultManagerCore.
