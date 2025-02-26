@@ -4,7 +4,6 @@
 
 namespace ClientProfile;
 
-using System;
 using System.Text.Json.Serialization;
 
 /// <summary>

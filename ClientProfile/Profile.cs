@@ -7,7 +7,7 @@ namespace ClientProfile;
 using System.Text.Json;
 
 /// <summary>
-/// Contains the definition of a Profle created from Bungie.
+/// Contains the definition of a Profile created from Bungie.
 /// </summary>
 public class Profile
 {
@@ -159,8 +159,8 @@ public class Profile
         }
         catch (Exception e)
         {
+            Console.WriteLine($"Exception occurred when attempting to store user tokens: {e.Message}");
             return false;
-            throw new IOException($"Could not write tokens to user tokens file: {e.Message}");
         }
     }
 
@@ -183,8 +183,8 @@ public class Profile
         }
         catch (Exception e)
         {
+            Console.WriteLine($"Exception occurred when trying to write the users membershipID: {e.Message}");
             return false;
-            throw new IOException($"Could not write tokens to user tokens file: {e.Message}");
         }
     }
 
@@ -248,7 +248,7 @@ public class Profile
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Exception occurred: {e.Message}");
+            Console.WriteLine($"Exception occurred when trying to store key expiry dates: {e.Message}");
             return false;
         }
     }
@@ -269,7 +269,7 @@ public class Profile
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Exception occurred: {e.Message}");
+            Console.WriteLine($"Exception occurred when attempting to read key expiry dates: {e.Message}");
             return false;
         }
     }
