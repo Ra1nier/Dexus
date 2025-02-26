@@ -41,8 +41,8 @@ public class TimedDictionary<TKey, TValue>
     /// Tries to get the value associated with the key.
     /// </summary>
     /// <param name="key">Key to find.</param>
-    /// <param name="value">Value that the key is assosiated with.</param>
-    /// <returns>True of a value was assosiated with a key. False otherwise.</returns>
+    /// <param name="value">Value that the key is associated with.</param>
+    /// <returns>True of a value was associated with a key. False otherwise.</returns>
     public bool TryGetValue(TKey key, out TValue value)
     {
         lock (this.storage)

@@ -1,13 +1,13 @@
-﻿// <copyright file="Extentions.cs" company="PlaceholderCompany">
+﻿// <copyright file="Extensions.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
 namespace GuardianServices;
 
 /// <summary>
-/// Provides Extentions to the List class.
+/// Provides Extensions to the List class.
 /// </summary>
-public static class ListExtentions
+public static class ListExtensions
 {
     /// <summary>
     /// Prints the contents of a List in the following format: "item1, item2, item3, ...".

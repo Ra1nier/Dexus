@@ -63,7 +63,7 @@ public class SnackbarService
     /// Adds a message to the snackbar queue.
     /// </summary>
     /// <param name="message">The message to add to the queue.</param>
-    /// <param name="severity">The assosiated severity for the message.</param>
+    /// <param name="severity">The associated severity for the message.</param>
     public void AddMessage(string message, string severity)
     {
         this.messages.Enqueue(message);
