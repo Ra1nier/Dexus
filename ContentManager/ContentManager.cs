@@ -728,13 +728,15 @@ public class ContentManager
             string[] requests =
             [
                 "CharacterEquipment",
-                "ItemInstances"
+                "ItemInstances",
+                "ItemPerks",
             ];
             string equipmentContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
 
             JsonDocument equipmentContents = JsonDocument.Parse(equipmentContentsJson);
             JsonElement equipmentArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("characterEquipment").GetProperty("data");
             JsonElement instanceDataArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
+            JsonElement perksDataArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("perks").GetProperty("data");
 
             // Populate Inventories list
             int itemsLoaded = 0;
@@ -746,8 +748,30 @@ public class ContentManager
 
                     foreach (JsonElement itemJson in characterInventory.EnumerateArray())
                     {
-                        Item item = JsonSerializer.Deserialize<Item>(itemJson) ?? new Item();
+                        Item item = itemJson.Deserialize<Item>() ?? new Item();
                         item.Identifier = $"{character.CharacterId}Equipped";
+
+                        if (perksDataArray.TryGetProperty(item.ItemInstanceId?.ToString() ?? string.Empty, out JsonElement itemPerks))
+                        {
+                            List<Item.Perk> perks = new List<Item.Perk>();
+                            if (itemPerks.TryGetProperty("perks", out JsonElement perksArray))
+                            {
+                                foreach (var perk in perksArray.EnumerateArray())
+                                {
+                                    perks.Add(new Item.Perk(
+                                        perk.GetProperty("perkHash").GetUInt32(),
+                                        perk.GetProperty("iconPath").GetString(),
+                                        perk.GetProperty("isActive").GetBoolean(),
+                                        perk.GetProperty("visible").GetBoolean()));
+                                }
+                            }
+
+                            item.Perks = perks;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Perk data not found for item instance: {item.ItemInstanceId}");
+                        }
 
                         // Get needed data
                         item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
@@ -799,13 +823,15 @@ public class ContentManager
             string[] requests =
             [
                 "CharacterInventories",
-                "ItemInstances"
+                "ItemInstances",
+                "ItemPerks",
             ];
             string inventoriesContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
 
             JsonDocument inventoriesContents = JsonDocument.Parse(inventoriesContentsJson);
             JsonElement inventoriesArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("characterInventories").GetProperty("data");
             JsonElement instanceDataArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
+            JsonElement perksDataArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("perks").GetProperty("data");
 
             // Populate Inventories list
             int itemsLoaded = 0;
@@ -817,8 +843,30 @@ public class ContentManager
 
                     foreach (JsonElement itemJson in characterInventory.EnumerateArray())
                     {
-                        Item item = JsonSerializer.Deserialize<Item>(itemJson) ?? new Item();
+                        Item item = itemJson.Deserialize<Item>() ?? new Item();
                         item.Identifier = character.CharacterId;
+
+                        if (perksDataArray.TryGetProperty(item.ItemInstanceId?.ToString() ?? string.Empty, out JsonElement itemPerks))
+                        {
+                            List<Item.Perk> perks = new List<Item.Perk>();
+                            if (itemPerks.TryGetProperty("perks", out JsonElement perksArray))
+                            {
+                                foreach (var perk in perksArray.EnumerateArray())
+                                {
+                                    perks.Add(new Item.Perk(
+                                        perk.GetProperty("perkHash").GetUInt32(),
+                                        perk.GetProperty("iconPath").GetString(),
+                                        perk.GetProperty("isActive").GetBoolean(),
+                                        perk.GetProperty("visible").GetBoolean()));
+                                }
+                            }
+
+                            item.Perks = perks;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Perk data not found for item instance: {item.ItemInstanceId}");
+                        }
 
                         // Get needed data
                         item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
@@ -874,24 +922,47 @@ public class ContentManager
             string[] requests =
             [
                 "ProfileInventories",
-                "ItemInstances"
+                "ItemInstances",
+                "ItemPerks",
             ];
             string vaultContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
 
             JsonDocument vaultContents = JsonDocument.Parse(vaultContentsJson);
             JsonElement vaultArray = vaultContents.RootElement.GetProperty("Response").GetProperty("profileInventory").GetProperty("data").GetProperty("items");
             JsonElement instanceDataArray = vaultContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
+            JsonElement perksDataArray = vaultContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("perks").GetProperty("data");
 
             // Populate Vault list
             int itemsLoaded = 0;
             foreach (JsonElement itemElement in vaultArray.EnumerateArray())
             {
-                Item item = JsonSerializer.Deserialize<Item>(itemElement) ?? new Item();
+                Item item = itemElement.Deserialize<Item>() ?? new Item();
                 item.Identifier = "Vault";
+
+                if (perksDataArray.TryGetProperty(item.ItemInstanceId?.ToString() ?? string.Empty, out JsonElement itemPerks))
+                {
+                    List<Item.Perk> perks = new List<Item.Perk>();
+                    if (itemPerks.TryGetProperty("perks", out JsonElement perksArray))
+                    {
+                        foreach (var perk in perksArray.EnumerateArray())
+                        {
+                            perks.Add(new Item.Perk(
+                                perk.GetProperty("perkHash").GetUInt32(),
+                                perk.GetProperty("iconPath").GetString(),
+                                perk.GetProperty("isActive").GetBoolean(),
+                                perk.GetProperty("visible").GetBoolean()));
+                        }
+                    }
+
+                    item.Perks = perks;
+                }
+                else
+                {
+                    Console.WriteLine($"Perk data not found for item instance: {item.ItemInstanceId}");
+                }
 
                 // Get needed data
                 item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
-
                 if (!string.IsNullOrEmpty(item.ItemInstanceId))
                 {
                     lock (this.dropzoneBackingStore)

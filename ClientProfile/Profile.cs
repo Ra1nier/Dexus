@@ -129,10 +129,9 @@ public class Profile
 
             return true;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return false;
-            throw new IOException($"Could not write tokens to user tokens file: {e.Message}");
         }
     }
 

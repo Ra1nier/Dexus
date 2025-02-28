@@ -35,6 +35,9 @@
     private bool _isDarkMode = true;
     private MudTheme? _theme = null;
 
+    /// <summary>
+    /// Starts the process when the webpage is loaded.
+    /// </summary>
     protected override void OnInitialized()
     {
         base.OnInitialized();
@@ -106,6 +109,9 @@
         OverlayLight = "#1e1e2d80",
     };
 
+    /// <summary>
+    /// Holds the styles to use for dark mode.
+    /// </summary>
     public string DarkLightModeButtonIcon => _isDarkMode switch
     {
         true => Icons.Material.Rounded.AutoMode,
