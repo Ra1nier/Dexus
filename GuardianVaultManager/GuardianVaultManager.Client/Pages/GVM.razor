@@ -65,37 +65,37 @@ else
             </MudGrid>
 
             <!-- Postmaster Section -->
-            <BucketList Items="Content.Postmaster.Values" Sorted="true" Core=@Core RenderKey=@itemManagementRenderKey />
+            <BucketList Items="Content.Postmaster.Values" Sorted="true" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
 
             <!-- Kinetic Weapons Section-->
-            <ManagmentList Items="Content.KineticWeapons.Values" Core=@Core RenderKey=@itemManagementRenderKey />
+            <ManagmentList Items="Content.KineticWeapons.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
 
             <!-- Energy Weapons Section -->
-            <ManagmentList Items="Content.EnergyWeapons.Values" Core=@Core RenderKey=@itemManagementRenderKey />
+            <ManagmentList Items="Content.EnergyWeapons.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
 
             <!-- Power Weapons Section -->
-            <ManagmentList Items="Content.PowerWeapons.Values" Core=@Core RenderKey=@itemManagementRenderKey />
+            <ManagmentList Items="Content.PowerWeapons.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
 
             <!-- Helmets Section -->
-            <ManagmentList Items="Content.Helmets.Values" Core=@Core RenderKey=@itemManagementRenderKey />
+            <ManagmentList Items="Content.Helmets.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
 
             <!-- Gauntlets Section -->
-            <ManagmentList Items="Content.Gauntlets.Values" Core=@Core RenderKey=@itemManagementRenderKey />
+            <ManagmentList Items="Content.Gauntlets.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
 
             <!-- Chests Section -->
-            <ManagmentList Items="Content.Chests.Values" Core=@Core RenderKey=@itemManagementRenderKey />
+            <ManagmentList Items="Content.Chests.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
 
             <!-- Legs Section -->
-            <ManagmentList Items="Content.Legs.Values" Core=@Core RenderKey=@itemManagementRenderKey />
+            <ManagmentList Items="Content.Legs.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
 
             <!-- Class Items Section -->
-            <ManagmentList Items="Content.Skirts.Values" Core=@Core RenderKey=@itemManagementRenderKey />
+            <ManagmentList Items="Content.Skirts.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
 
             <!-- Accessories Section -->
-            <ManagmentList Items="Content.Accessories.Values" Core=@Core RenderKey=@itemManagementRenderKey />
+            <ManagmentList Items="Content.Accessories.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
 
             <!-- Consumables Section -->
-            <BucketList Items="Content.Consumables" Sorted="false" Core=@Core RenderKey=@itemManagementRenderKey />
+            <BucketList Items="Content.Consumables" Sorted="false" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
         </MudContainer>
     }
     else
@@ -131,9 +131,6 @@ else
     // GVM Variables
     private bool initializationComplete = false;
     private Dictionary<string, bool> localSettings = new Dictionary<string, bool>();
-
-    // Render Keys
-    private Guid itemManagementRenderKey = Guid.NewGuid();
 
     /// <summary>
     /// Handles the first render of the webpage.
@@ -183,6 +180,15 @@ else
     }
 
     /// <summary>
+    /// Refreshes the users content manager.
+    /// </summary>
+    public async Task RefreshUserContent()
+    {
+        await Content.RefreshUserContent();
+        StateHasChanged();
+    }
+
+    /// <summary>
     /// Initializes the startup settings for the application.
     /// </summary>
     private void InitializeSettings()
@@ -221,7 +227,6 @@ else
             Core.Snackbar.AddMessage("Failed to save settings.", "Error");
         }
 
-        RefreshRenderKey(ref itemManagementRenderKey);
         StateHasChanged();
     }
 
@@ -255,14 +260,5 @@ else
         {
             Navigation.NavigateTo(Core.OAuthProfile.ConstructAuthorizationURL().ToString(), true);
         }
-    }
-
-    /// <summary>
-    /// Refreshes the Render Key to mark objects as dirty.
-    /// </summary>
-    /// <param name="renderKey">Render Key to refresh.</param>
-    private void RefreshRenderKey(ref Guid renderKey)
-    {
-        renderKey = Guid.NewGuid();
     }
 }

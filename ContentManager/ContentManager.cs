@@ -64,6 +64,9 @@ public class ContentManager
     private Task? transferTask;
     private CancellationTokenSource? cancellationTokenSource;
 
+    // Render Keys
+    private Guid itemManagementRenderKey = Guid.NewGuid();
+
     /// <summary>
     /// Initializes a new instance of the <see cref="ContentManager"/> class.
     /// This instance will be NON-FUNCTIONAL. This should only be used for nullable purposes.
@@ -265,6 +268,11 @@ public class ContentManager
     public bool TransfersAllowed { get; private set; }
 
     /// <summary>
+    /// Provides a keu for when item management lists need to be rendered again.
+    /// </summary>
+    public Guid ItemManagementRenderKey { get => this.itemManagementRenderKey; }
+
+    /// <summary>
     /// Retrieves all information needed to have a fully functioning content manager.
     /// </summary>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
@@ -279,6 +287,8 @@ public class ContentManager
         this.logger.LogDebug("Content Manager Initializing.");
         await this.FetchClientCharacters();
         await this.LoadUserContents();
+
+        this.isInitialized = true;
         this.logger.LogDebug("Content Manager Initialization Done.");
     }
 
@@ -412,6 +422,7 @@ public class ContentManager
             return false;
         }
 
+        this.itemManagementRenderKey = Guid.NewGuid();
         return await this.request.ActionItem_Request_PullFromPostmaster(this.profile.MembershipType, item.ItemHash, item.ItemInstanceId ?? string.Empty, item.Quantity, item.Identifier ?? string.Empty);
     }
 
@@ -421,6 +432,13 @@ public class ContentManager
     /// <returns>A Task representing the operation.</returns>
     private async Task LoadUserContents()
     {
+        // Erase old information if needed.
+        if (this.dropzoneBackingStore.Any())
+        {
+            this.dropzoneBackingStore.Clear();
+        }
+
+        // Load client contents from bungie.
         List<Task> contentTasks =
         [
             this.LoadClientInventories(),
@@ -430,6 +448,7 @@ public class ContentManager
         await Task.WhenAll(contentTasks);
 
         await this.FetchItemInformation(this.dropzoneBackingStore.Values.ToList());
+        this.itemManagementRenderKey = Guid.NewGuid();
     }
 
     /// <summary>
@@ -484,6 +503,7 @@ public class ContentManager
             this.SetIdentifier(item, destination);
         }
 
+        this.itemManagementRenderKey = Guid.NewGuid();
         return transferSuccess;
     }
 
