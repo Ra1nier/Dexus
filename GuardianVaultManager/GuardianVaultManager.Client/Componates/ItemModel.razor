@@ -53,6 +53,13 @@
                 }
             </ChildContent>
         </MudMenu>
+        
+        <!--Details panel-->
+        <MudCard>
+            <MudCardContent>
+                <MudIcon />
+            </MudCardContent>
+        </MudCard>
 
         <!--Pull From Postmaster Button-->
         @if (Item.Bucket == "Lost Items")
@@ -66,7 +73,14 @@
 </MudPopover>
 
 @code {
+    /// <summary>
+    /// The Item to be represented by this model.
+    /// </summary>
     [Parameter] public required Item Item { get; set; }
+
+    /// <summary>
+    /// Singleton instance of the Core service.
+    /// </summary>
     [Parameter] public required Core Core { get; set; }
 
     // Property Popover locks

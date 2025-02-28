@@ -207,11 +207,11 @@ public class ContentManager
         get
         {
             string[] buckets =
-            {
+            [
                 "Messages",
                 "Special Orders",
-                "Quests",
-            };
+                "Quests"
+            ];
 
             return this.dropzoneBackingStore.Where(i => buckets.Contains(i.Value.Bucket)).ToDictionary(i => i.Key, i => i.Value);
         }
@@ -276,24 +276,9 @@ public class ContentManager
             return;
         }
 
-        // Stage 1: Get client Characters
+        this.logger.LogDebug("Content Manager Initializing.");
         await this.FetchClientCharacters();
-
-        // Stage 2: Get client Buckets
-        // Step 1 - Make Tasks
-        List<Task> contentTasks = new List<Task>
-        {
-            this.LoadClientInventories(),
-            this.LoadClientVault(),
-            this.LoadClientEquipment(),
-        };
-
-        // Step 2 - start process
-        await Task.WhenAll(contentTasks);
-
-        // Stage 3: Compile Details for Content
-        await this.FetchItemInformation(this.dropzoneBackingStore.Values.ToList());
-
+        await this.LoadUserContents();
         this.logger.LogDebug("Content Manager Initialization Done.");
     }
 
@@ -309,15 +294,8 @@ public class ContentManager
             return;
         }
 
-        List<Task> contentTasks = new List<Task>
-        {
-            this.LoadClientInventories(),
-            this.LoadClientVault(),
-            this.LoadClientEquipment(),
-        };
-        await Task.WhenAll(contentTasks);
-
-        await this.FetchItemInformation(this.dropzoneBackingStore.Values.ToList());
+        this.logger.LogDebug("Refreshing user content.");
+        await this.LoadUserContents();
         this.logger.LogDebug("User content refreshed.");
     }
 
@@ -337,7 +315,7 @@ public class ContentManager
     /// <param name="item">Item to transfer.</param>
     /// <param name="origin">Where the item is.</param>
     /// <param name="destination">Where the item should go.</param>
-    /// <returns>The Item instance ID of the item.</returns>
+    /// <returns>The Item instance ID of the item. Can be used to track the progress of the transfer.</returns>
     public string QueueTransfer(Item item, string origin, string destination)
     {
         this.queuedTransfers.Enqueue(new TransferInfo(item, origin, destination));
@@ -353,12 +331,7 @@ public class ContentManager
     {
         if (this.recentlyHandledTransfers.TryGetValue(itemInstanceId, out bool status))
         {
-            if (status)
-            {
-                return 0;
-            }
-
-            return 1;
+            return status ? 0 : 1;
         }
 
         return 2;
@@ -439,12 +412,24 @@ public class ContentManager
             return false;
         }
 
-        if (await this.request.ActionItem_Request_PullFromPostmaster(this.profile.MembershipType, item.ItemHash, item.ItemInstanceId ?? string.Empty, item.Quantity, item.Identifier ?? string.Empty))
-        {
-            return true;
-        }
+        return await this.request.ActionItem_Request_PullFromPostmaster(this.profile.MembershipType, item.ItemHash, item.ItemInstanceId ?? string.Empty, item.Quantity, item.Identifier ?? string.Empty);
+    }
 
-        return false;
+    /// <summary>
+    /// Performs all tasks related to loading the users content.
+    /// </summary>
+    /// <returns>A Task representing the operation.</returns>
+    private async Task LoadUserContents()
+    {
+        List<Task> contentTasks =
+        [
+            this.LoadClientInventories(),
+            this.LoadClientVault(),
+            this.LoadClientEquipment()
+        ];
+        await Task.WhenAll(contentTasks);
+
+        await this.FetchItemInformation(this.dropzoneBackingStore.Values.ToList());
     }
 
     /// <summary>
@@ -455,6 +440,13 @@ public class ContentManager
     /// <returns>True if the transfer operation was successful. False otherwise.</returns>
     private async Task<bool> Equip(Item item, string location)
     {
+        if (this.profile.MembershipType == null)
+        {
+            this.logger.LogCritical("MembershipType is null. Unable to transfer item.");
+            this.snackbar.AddMessage("Something went wrong. GVM is unable to access your bungie data. Equip cannot be completed. Try logging back in to solve this issue.", "Error");
+            return false;
+        }
+
         // Equip the item.
         Item itemBeingReplaced = this.DropzoneBackingStore.DistinctBy(i => i.Value.Identifier == $"{location}Equipped").First().Value ?? new Item();
         if (await this.request.ActionItem_Request_EquipItem(this.profile.MembershipType, item.ItemInstanceId ?? string.Empty, location))
@@ -476,13 +468,6 @@ public class ContentManager
     /// <returns>True if the transfer operation was successful. False otherwise.</returns>
     private async Task<bool> Transfer(Item item, string origin, string destination)
     {
-        if (this.profile.MembershipType == null)
-        {
-            this.logger.LogCritical("MembershipType is null. Unable to transfer item.");
-            this.snackbar.AddMessage("Something went wrong. GVM is unable to access your bungie data. Transfer cannot be completed. Try logging back in to solve this issue.", "Error");
-            return false;
-        }
-
         bool transferSuccess = false;
         if (origin.Contains("Equipped") || destination.Contains("Equipped"))
         {
@@ -497,10 +482,9 @@ public class ContentManager
         {
             // Update the item's location
             this.SetIdentifier(item, destination);
-            return true;
         }
 
-        return false;
+        return transferSuccess;
     }
 
     /// <summary>
@@ -512,6 +496,13 @@ public class ContentManager
     /// <returns>True if the transfer operation was successful. False otherwise.</returns>
     private async Task<bool> TransferItem(Item transfer, string origin, string destination)
     {
+        if (this.profile.MembershipType == null)
+        {
+            this.logger.LogCritical("MembershipType is null. Unable to transfer item.");
+            this.snackbar.AddMessage("Something went wrong. GVM is unable to access your bungie data. Transfer cannot be completed. Try logging back in to solve this issue.", "Error");
+            return false;
+        }
+
         this.GenerateTransferData(transfer, out uint itemHash, out string itemID, out int stackSize);
 
         if (destination == "Vault") // Character -> Vault
@@ -542,18 +533,17 @@ public class ContentManager
             else if (!secondTransfer) // If the second transfer failed return the item to the origin.
             {
                 this.snackbar.AddMessage($"Transfer of {this.Details[transfer.ItemHash].DisplayProperties.Name} failed. Returning the item to the origin.", "Warning");
-                bool returnSuccesful = await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID, stackSize, origin, false);
+                bool returnSuccessful = await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID, stackSize, origin, false);
 
-                if (!returnSuccesful)
+                if (!returnSuccessful)
                 {
                     this.SetIdentifier(transfer, "Vault");
                     this.snackbar.AddMessage(
                         $"Transfer failed. {this.Details[transfer.ItemHash].DisplayProperties.Name} " +
                         "has ended up in the Vault as GVM was unable to return it.", "Warning");
-                    return false;
                 }
 
-                return true;
+                return returnSuccessful;
             }
 
             return false;
@@ -605,10 +595,10 @@ public class ContentManager
         string trueDestination = destination.Replace("Equipped", string.Empty);
 
         Dictionary<string, Item> charactersItemBucket = this.DropzoneBackingStore.Where(b => b.Value.Bucket == item.Bucket).Where(i => i.Value.Identifier == trueOrigin).ToDictionary(i => i.Key, i => i.Value);
-        if (charactersItemBucket.Count() == 0)
+        if (charactersItemBucket.Any())
         {
             this.snackbar.AddMessage("Character has no items to to replace the equipped item. Transfer another weapon into your inventory to fix this.", "Warning");
-            return false; // TODO: Not the best solution. Could pull item from vault to equip but I am too lazy.
+            return false; // TODO: Not the best solution. Could pull item from vault to equip, but I am too lazy.
         }
 
         Item itemToEquip = charactersItemBucket.Values.First();
@@ -686,7 +676,7 @@ public class ContentManager
                         character.EmblemPath = this.baseUrl + character.EmblemPath;
                         character.EmblemBackgroundPath = this.baseUrl + character.EmblemBackgroundPath;
 
-                        this.characters.Add(character.CharacterId ?? "-1", character);
+                        this.characters.TryAdd(character.CharacterId ?? "-1", character);
                     }
                 }
                 else
@@ -715,11 +705,11 @@ public class ContentManager
         try
         {
             // Fetch Inventories contents and associated data.
-            string[] requests = new string[]
-            {
+            string[] requests =
+            [
                 "CharacterEquipment",
-                "ItemInstances",
-            };
+                "ItemInstances"
+            ];
             string equipmentContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
 
             JsonDocument equipmentContents = JsonDocument.Parse(equipmentContentsJson);
@@ -745,14 +735,17 @@ public class ContentManager
                         {
                             lock (this.dropzoneBackingStore)
                             {
-                                this.dropzoneBackingStore.Add(item.ItemInstanceId, item);
+                                this.dropzoneBackingStore.TryAdd(item.ItemInstanceId, item);
                             }
                         }
                         else
                         {
                             lock (this.uninstancatedItems)
                             {
-                                this.uninstancatedItems.Add(item);
+                                if (!this.uninstancatedItems.Contains(item))
+                                {
+                                    this.uninstancatedItems.Add(item);
+                                }
                             }
                         }
 
@@ -783,11 +776,11 @@ public class ContentManager
         try
         {
             // Fetch Inventories contents and associated data.
-            string[] requests = new string[]
-            {
+            string[] requests =
+            [
                 "CharacterInventories",
-                "ItemInstances",
-            };
+                "ItemInstances"
+            ];
             string inventoriesContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
 
             JsonDocument inventoriesContents = JsonDocument.Parse(inventoriesContentsJson);
@@ -813,14 +806,17 @@ public class ContentManager
                         {
                             lock (this.dropzoneBackingStore)
                             {
-                                this.dropzoneBackingStore.Add(item.ItemInstanceId, item);
+                                this.dropzoneBackingStore.TryAdd(item.ItemInstanceId, item);
                             }
                         }
                         else
                         {
                             lock (this.uninstancatedItems)
                             {
-                                this.uninstancatedItems.Add(item);
+                                if (!this.uninstancatedItems.Contains(item))
+                                {
+                                    this.uninstancatedItems.Add(item);
+                                }
                             }
                         }
 
@@ -855,11 +851,11 @@ public class ContentManager
         try
         {
             // Fetch Inventories contents and associated data.
-            string[] requests = new string[]
-            {
+            string[] requests =
+            [
                 "ProfileInventories",
-                "ItemInstances",
-            };
+                "ItemInstances"
+            ];
             string vaultContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
 
             JsonDocument vaultContents = JsonDocument.Parse(vaultContentsJson);
@@ -880,14 +876,17 @@ public class ContentManager
                 {
                     lock (this.dropzoneBackingStore)
                     {
-                        this.dropzoneBackingStore.Add(item.ItemInstanceId, item);
+                        this.dropzoneBackingStore.TryAdd(item.ItemInstanceId, item);
                     }
                 }
                 else
                 {
                     lock (this.uninstancatedItems)
                     {
-                        this.uninstancatedItems.Add(item);
+                        if (!this.uninstancatedItems.Contains(item))
+                        {
+                            this.uninstancatedItems.Add(item);
+                        }
                     }
                 }
 

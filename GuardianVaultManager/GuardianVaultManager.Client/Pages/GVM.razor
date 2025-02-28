@@ -158,9 +158,12 @@ else
                 return;
         }
 
-        await Content.InitializeUserContent();
-        Content.AllowTransfers();
-        InitializeSettings();
+        if (!initializationComplete)
+        {
+            await Content.InitializeUserContent();
+            Content.AllowTransfers();
+            InitializeSettings();
+        }
 
         initializationComplete = true;
         StateHasChanged();
@@ -174,6 +177,13 @@ else
         Core = Core.Instance;
         Content = Core.Content;
 
+        // Refresh user content
+        if (initializationComplete)
+        {
+            await Content.RefreshUserContent();
+        }
+
+        // Final Checks
         await Core.ConfirmOAuthStatus();
         SnackbarProvider();
     }

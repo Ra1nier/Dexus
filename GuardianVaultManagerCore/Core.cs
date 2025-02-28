@@ -128,7 +128,7 @@ public class Core
     public SnackbarService Snackbar => this.snackbar;
 
     /// <summary>
-    /// Gets the loadingbar service.
+    /// Gets the loadingbars service.
     /// </summary>
     public LoadingbarService Loadingbars => this.loadingbars;
 
@@ -157,7 +157,7 @@ public class Core
     /// <summary>
     /// Attempts to sign in the client and create the user profile.
     /// </summary>
-    /// <returns>A bool value indicating whether or not Sign In was successful.</returns>
+    /// <returns>A bool value indicating whether Sign-In was successful.</returns>
     public async Task<bool> SignIn()
     {
         // Create the client profile and assign client OAuth status.

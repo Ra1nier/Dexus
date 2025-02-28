@@ -20,7 +20,7 @@
                     </MudItem>
                 }
                 <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
-                    @if ((Items.Where(x => x.Identifier == "Vault").Count()) > 0)
+                    @if (Items.Count(x => x.Identifier == "Vault") > 0)
                     {
                         <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;" />
                     }
@@ -34,8 +34,19 @@
 </MudPaper>
 
 @code {
+    /// <summary>
+    /// Render key that determines if the content in the management list needs to be refreshed
+    /// </summary>
     [Parameter] public required Guid RenderKey { get; set; }
+
+    /// <summary>
+    /// The items to display in the management list
+    /// </summary>
     [Parameter] public required IEnumerable<Item> Items { get; set; }
+
+    /// <summary>
+    /// The singleton instance of core that GVM uses.
+    /// </summary>
     [Parameter] public required Core Core { get; set; }
 
     string transferStatusMessage = string.Empty;
