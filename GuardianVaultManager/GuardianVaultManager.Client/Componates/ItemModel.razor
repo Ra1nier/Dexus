@@ -1,8 +1,5 @@
-﻿@using MudBlazor
-@using ContentManager
-@using ContentManager.Models
+﻿@using ContentManager.Models
 @using GuardianVaultManagerCore
-@using GuardianServices;
 
 @inject NavigationManager NavManager
 
@@ -43,7 +40,7 @@
                         @if (processing)
                         {
                             <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
-                            <MudText Class="ms-2">Transfering...</MudText>
+                            <MudText Class="ms-2">Transferring...</MudText>
                         }
                         else
                         {
@@ -115,8 +112,8 @@
 
         string origin = Item.Identifier ?? string.Empty;
 
-        string charcterName = Core.Content.Characters.FirstOrDefault(x => x.Value.CharacterId == destination).Value.Class ?? destination;
-        Core.Snackbar.AddMessage($"Transferring {Core.Content.Details[Item.ItemHash].DisplayProperties.Name} to {charcterName}.", "Info");
+        string characterName = Core.Content.Characters.FirstOrDefault(x => x.Value.CharacterId == destination).Value.Class ?? destination;
+        Core.Snackbar.AddMessage($"Transferring {Core.Content.Details[Item.ItemHash].DisplayProperties.Name} to {characterName}.", "Info");
 
         string itemID = Core.Content.QueueTransfer(Item, origin, destination);
 
@@ -127,7 +124,7 @@
 
         if (Core.Content.GetTransferStatus(itemID) == 0)
         {
-            Core.Snackbar.AddMessage($"Transfer of {Core.Content.Details[Item.ItemHash].DisplayProperties.Name} to {charcterName} was Successful.", "Success");
+            Core.Snackbar.AddMessage($"Transfer of {Core.Content.Details[Item.ItemHash].DisplayProperties.Name} to {characterName} was Successful.", "Success");
         }
 
         this.StateHasChanged();

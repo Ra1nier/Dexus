@@ -1,9 +1,5 @@
-﻿@using MudBlazor
-@using RequestManager
-@using ContentManager
-@using ContentManager.Models
+﻿@using ContentManager.Models
 @using GuardianVaultManagerCore
-@using GuardianServices;
 
 <MudPaper Class="d-flex flex-column gap-2" @key="RenderKey">
     <MudDropContainer T="Item" Items="Items.OrderByDescending(item => item.Power)" ItemsSelector="@((item,dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer" Class="d-flex flex-wrap flex-grow-1">
@@ -49,8 +45,6 @@
     /// </summary>
     [Parameter] public required Core Core { get; set; }
 
-    string transferStatusMessage = string.Empty;
-
     /// <summary>
     /// Handles transfers of items between buckets and informs the core of the change.
     /// Supports Vault to Character, Character to Vault, and Character to Character transfers.
@@ -77,7 +71,7 @@
                 transferBucket = Core.Content.Characters.FirstOrDefault(x => x.Value.CharacterId == destination.Replace("Equipped", string.Empty)).Value.Class ?? destination;
             }
 
-            Core.Snackbar.AddMessage($"Transfering {Core.Content.Details[transfer.ItemHash].DisplayProperties.Name} to {transferBucket}.", "Info");
+            Core.Snackbar.AddMessage($"Transferring {Core.Content.Details[transfer.ItemHash].DisplayProperties.Name} to {transferBucket}.", "Info");
 
             string itemID = Core.Content.QueueTransfer(transfer, origin, destination);
 
@@ -89,7 +83,7 @@
             if (Core.Content.GetTransferStatus(itemID) == 0)
             {
                 RenderKey = Guid.NewGuid();
-                Core.Snackbar.AddMessage($"Transfer of {Core.Content.Details[transfer.ItemHash].DisplayProperties.Name} to {transferBucket} was Succesful.", "Success");
+                Core.Snackbar.AddMessage($"Transfer of {Core.Content.Details[transfer.ItemHash].DisplayProperties.Name} to {transferBucket} was Successful.", "Success");
             }
 
             this.StateHasChanged();

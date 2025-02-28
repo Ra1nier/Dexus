@@ -1,9 +1,5 @@
-﻿@using MudBlazor
-@using RequestManager
-@using ContentManager
-@using ContentManager.Models
+﻿@using ContentManager.Models
 @using GuardianVaultManagerCore
-@using GuardianServices;
 
 @if (Sorted)
 {
@@ -22,7 +18,7 @@
             }
 
             <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
-                @if ((Items.Where(x => x.Identifier == "Vault").Count()) > 0)
+                @if ((Items.Count(x => x.Identifier == "Vault")) > 0)
                 {
                     <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;" />
                 }
@@ -45,8 +41,23 @@ else
 }
 
 @code {
+    /// <summary>
+    /// Render key that determines if the content in the bucket list needs to be refreshed.
+    /// </summary>
     [Parameter] public required Guid RenderKey { get; set; }
+
+    /// <summary>
+    /// Items to display in the bucket list.
+    /// </summary>
     [Parameter] public required IEnumerable<Item> Items { get; set; }
+
+    /// <summary>
+    /// Core used by GVM.
+    /// </summary>
     [Parameter] public required Core Core { get; set; }
+
+    /// <summary>
+    /// A bool value used to determine if the items should be sorted by character.
+    /// </summary>
     [Parameter] public required bool Sorted { get; set; }
 }
