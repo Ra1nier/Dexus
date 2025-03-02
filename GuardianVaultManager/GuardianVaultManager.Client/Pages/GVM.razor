@@ -240,10 +240,10 @@ else
             while (true)
             {
                 await Task.Delay(1000);
-                while (Core.Snackbar.NextMessage(out string message, out string severity))
+                while (Core.Snackbar.NextMessage(out string message, out string severity, out Action<SnackbarOptions> config))
                 {
                     Severity mode = (Severity)Enum.Parse(typeof(Severity), severity);
-                    Snackbar.Add(message, mode);
+                    Snackbar.Add(message, mode, config);
                 }
             }
         }).Start();

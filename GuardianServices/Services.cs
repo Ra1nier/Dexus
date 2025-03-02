@@ -2,19 +2,22 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
+using MudBlazor;
+
 namespace GuardianServices;
 
-using System.Numerics;
 using System.Text.Json;
+using MudBlazor;
 
 /// <summary>
 /// Contains the logic for the snackbar service.
 /// </summary>
 public class SnackbarService
 {
-    // Contains all of the queued messages.
+    // Contains all the queued messages.
     private Queue<string> messages;
     private Queue<string> severity;
+    private Queue<Action<SnackbarOptions>> config;
 
     private List<string> levels = new List<string> { "Normal", "Info", "Success", "Warning", "Error" };
 
@@ -32,19 +35,22 @@ public class SnackbarService
     /// </summary>
     /// <param name="message">The next message in the queue.</param>
     /// <param name="severity">The associated severity.</param>
+    /// <param name="config">The config to use for the message.</param>
     /// <returns>True if a message can be returned. False otherwise.</returns>
-    public bool NextMessage(out string message, out string severity)
+    public bool NextMessage(out string message, out string severity, out Action<SnackbarOptions> config)
     {
         if (this.severity.Count > 0 && this.messages.Count > 0)
         {
             message = this.messages.Dequeue();
             severity = this.severity.Dequeue();
+            config = this.config.Dequeue();
 
             return true;
         }
 
         message = string.Empty;
         severity = string.Empty;
+        config = (config) => { };
 
         return false;
     }
@@ -57,6 +63,7 @@ public class SnackbarService
     {
         this.messages.Enqueue(message);
         this.severity.Enqueue("Info");
+        this.config.Enqueue((config) => { });
     }
 
     /// <summary>
@@ -67,8 +74,30 @@ public class SnackbarService
     public void AddMessage(string message, string severity)
     {
         this.messages.Enqueue(message);
-        severity = char.ToUpper(severity[0]) + severity.Substring(1);
+        this.config.Enqueue((config) => { });
+        this.ExtractSeverity(severity);
+    }
 
+    /// <summary>
+    /// Adds a message to the snackbar queue.
+    /// </summary>
+    /// <param name="message">The message to add to the queue.</param>
+    /// <param name="severity">The associated severity for the message.</param>
+    /// <param name="config">The config params to be used for the message.</param>
+    public void AddMessage(string message, string severity, Action<SnackbarOptions> config)
+    {
+        this.messages.Enqueue(message);
+        this.config.Enqueue(config);
+        this.ExtractSeverity(severity);
+    }
+
+    /// <summary>
+    /// Extracts and adds the severity to the queue. Normal will be queued instead if extract failed.
+    /// </summary>
+    /// <param name="severity">The severity level.</param>
+    private void ExtractSeverity(string severity)
+    {
+        severity = char.ToUpper(severity[0]) + severity.Substring(1);
         if (this.levels.Contains(severity))
         {
             this.severity.Enqueue(severity);
