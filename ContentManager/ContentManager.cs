@@ -751,48 +751,15 @@ public class ContentManager
                         Item item = itemJson.Deserialize<Item>() ?? new Item();
                         item.Identifier = $"{character.CharacterId}Equipped";
 
-                        if (perksDataArray.TryGetProperty(item.ItemInstanceId?.ToString() ?? string.Empty, out JsonElement itemPerks))
+                        if (this.GetItemPerks(perksDataArray, item, out List<Item.Perk> perks))
                         {
-                            List<Item.Perk> perks = new List<Item.Perk>();
-                            if (itemPerks.TryGetProperty("perks", out JsonElement perksArray))
-                            {
-                                foreach (var perk in perksArray.EnumerateArray())
-                                {
-                                    perks.Add(new Item.Perk(
-                                        perk.GetProperty("perkHash").GetUInt32(),
-                                        perk.GetProperty("iconPath").GetString(),
-                                        perk.GetProperty("isActive").GetBoolean(),
-                                        perk.GetProperty("visible").GetBoolean()));
-                                }
-                            }
-
                             item.Perks = perks;
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Perk data not found for item instance: {item.ItemInstanceId}");
                         }
 
                         // Get needed data
                         item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
-                        if (!string.IsNullOrEmpty(item.ItemInstanceId))
-                        {
-                            lock (this.dropzoneBackingStore)
-                            {
-                                this.dropzoneBackingStore.TryAdd(item.ItemInstanceId, item);
-                            }
-                        }
-                        else
-                        {
-                            lock (this.uninstancatedItems)
-                            {
-                                if (!this.uninstancatedItems.Contains(item))
-                                {
-                                    this.uninstancatedItems.Add(item);
-                                }
-                            }
-                        }
 
+                        this.AddItemToStore(item);
                         itemsLoaded++;
                     }
                 }
@@ -846,48 +813,15 @@ public class ContentManager
                         Item item = itemJson.Deserialize<Item>() ?? new Item();
                         item.Identifier = character.CharacterId;
 
-                        if (perksDataArray.TryGetProperty(item.ItemInstanceId?.ToString() ?? string.Empty, out JsonElement itemPerks))
+                        if (this.GetItemPerks(perksDataArray, item, out List<Item.Perk> perks))
                         {
-                            List<Item.Perk> perks = new List<Item.Perk>();
-                            if (itemPerks.TryGetProperty("perks", out JsonElement perksArray))
-                            {
-                                foreach (var perk in perksArray.EnumerateArray())
-                                {
-                                    perks.Add(new Item.Perk(
-                                        perk.GetProperty("perkHash").GetUInt32(),
-                                        perk.GetProperty("iconPath").GetString(),
-                                        perk.GetProperty("isActive").GetBoolean(),
-                                        perk.GetProperty("visible").GetBoolean()));
-                                }
-                            }
-
                             item.Perks = perks;
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Perk data not found for item instance: {item.ItemInstanceId}");
                         }
 
                         // Get needed data
                         item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
-                        if (!string.IsNullOrEmpty(item.ItemInstanceId))
-                        {
-                            lock (this.dropzoneBackingStore)
-                            {
-                                this.dropzoneBackingStore.TryAdd(item.ItemInstanceId, item);
-                            }
-                        }
-                        else
-                        {
-                            lock (this.uninstancatedItems)
-                            {
-                                if (!this.uninstancatedItems.Contains(item))
-                                {
-                                    this.uninstancatedItems.Add(item);
-                                }
-                            }
-                        }
 
+                        this.AddItemToStore(item);
                         itemsLoaded++;
                     }
                 }
@@ -939,48 +873,15 @@ public class ContentManager
                 Item item = itemElement.Deserialize<Item>() ?? new Item();
                 item.Identifier = "Vault";
 
-                if (perksDataArray.TryGetProperty(item.ItemInstanceId?.ToString() ?? string.Empty, out JsonElement itemPerks))
+                if (this.GetItemPerks(perksDataArray, item, out List<Item.Perk> perks))
                 {
-                    List<Item.Perk> perks = new List<Item.Perk>();
-                    if (itemPerks.TryGetProperty("perks", out JsonElement perksArray))
-                    {
-                        foreach (var perk in perksArray.EnumerateArray())
-                        {
-                            perks.Add(new Item.Perk(
-                                perk.GetProperty("perkHash").GetUInt32(),
-                                perk.GetProperty("iconPath").GetString(),
-                                perk.GetProperty("isActive").GetBoolean(),
-                                perk.GetProperty("visible").GetBoolean()));
-                        }
-                    }
-
                     item.Perks = perks;
-                }
-                else
-                {
-                    Console.WriteLine($"Perk data not found for item instance: {item.ItemInstanceId}");
                 }
 
                 // Get needed data
                 item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
-                if (!string.IsNullOrEmpty(item.ItemInstanceId))
-                {
-                    lock (this.dropzoneBackingStore)
-                    {
-                        this.dropzoneBackingStore.TryAdd(item.ItemInstanceId, item);
-                    }
-                }
-                else
-                {
-                    lock (this.uninstancatedItems)
-                    {
-                        if (!this.uninstancatedItems.Contains(item))
-                        {
-                            this.uninstancatedItems.Add(item);
-                        }
-                    }
-                }
-
+                
+                this.AddItemToStore(item);
                 itemsLoaded++;
             }
 
@@ -998,6 +899,62 @@ public class ContentManager
         catch (Exception e)
         {
             this.logger.LogError($"GVM was unable to retrieve the client's vault: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Gets the perks for the item associated with the item instance ID.
+    /// </summary>
+    /// <param name="perkData">Perk data received from bungie.</param>
+    /// <param name="item">Item to get the perks for.</param>
+    /// <param name="perks">The list of perks for the item.</param>
+    /// <returns>A Perk class constructed from the time.</returns>
+    private bool GetItemPerks(JsonElement perkData, Item item, out List<Item.Perk> perks)
+    {
+        perks = new List<Item.Perk>();
+        if (perkData.TryGetProperty(item.ItemInstanceId ?? string.Empty, out JsonElement itemPerks))
+        {
+            if (itemPerks.TryGetProperty("perks", out JsonElement perksArray))
+            {
+                foreach (var perk in perksArray.EnumerateArray())
+                {
+                    perks.Add(new Item.Perk(
+                        perk.GetProperty("perkHash").GetUInt32(),
+                        perk.GetProperty("iconPath").GetString(),
+                        perk.GetProperty("isActive").GetBoolean(),
+                        perk.GetProperty("visible").GetBoolean()));
+                }
+            }
+
+            return true;
+        }
+
+        Console.WriteLine($"Perk data not found for item instance: {item.ItemInstanceId}");
+        return false;
+    }
+
+    /// <summary>
+    /// Adds the item to the correct store in content manager.
+    /// </summary>
+    /// <param name="item">Item to add.</param>
+    private void AddItemToStore(Item item)
+    {
+        if (!string.IsNullOrEmpty(item.ItemInstanceId))
+        {
+            lock (this.dropzoneBackingStore)
+            {
+                this.dropzoneBackingStore.TryAdd(item.ItemInstanceId, item);
+            }
+        }
+        else
+        {
+            lock (this.uninstancatedItems)
+            {
+                if (!this.uninstancatedItems.Contains(item))
+                {
+                    this.uninstancatedItems.Add(item);
+                }
+            }
         }
     }
 

@@ -22,7 +22,7 @@ public class Item
     /// Gets or sets the item instance ID.
     /// </summary>
     [JsonPropertyName("itemInstanceId")]
-    public string ItemInstanceId { get; set; }
+    public string? ItemInstanceId { get; set; }
 
     /// <summary>
     /// Gets or sets the quantity.
