@@ -174,13 +174,13 @@ public class ContentManager
         get
         {
             string[] buckets =
-            {
+            [
                 "Ghost",
                 "Ships",
                 "Vehicle",
                 "Emblems",
-                "Accessories",
-            };
+                "Accessories"
+            ];
 
             return this.dropzoneBackingStore.Where(i => buckets.Contains(i.Value.Bucket)).ToDictionary(i => i.Key, i => i.Value);
         }
@@ -228,7 +228,7 @@ public class ContentManager
         get
         {
             string[] buckets =
-            {
+            [
                 "Strange Coin",
                 "Glimmer",
                 "Legendary Shards",
@@ -240,8 +240,8 @@ public class ContentManager
                 "Synthweave Strap",
                 "Synthweave Plate",
                 "Synthweave Template",
-                "Consumables",
-            };
+                "Consumables"
+            ];
 
             return this.uninstancatedItems.Where(i => buckets.Contains(i.Bucket)).ToList();
         }
@@ -268,7 +268,7 @@ public class ContentManager
     public bool TransfersAllowed { get; private set; }
 
     /// <summary>
-    /// Provides a keu for when item management lists need to be rendered again.
+    /// Gets the render key that indicates whether item management lists need to be rendered again.
     /// </summary>
     public Guid ItemManagementRenderKey { get => this.itemManagementRenderKey; }
 
@@ -307,16 +307,6 @@ public class ContentManager
         this.logger.LogDebug("Refreshing user content.");
         await this.LoadUserContents();
         this.logger.LogDebug("User content refreshed.");
-    }
-
-    /// <summary>
-    /// Sets the identifier of the item.
-    /// </summary>
-    /// <param name="item">Item to set identifier of.</param>
-    /// <param name="identifier">Identifier to set.</param>
-    public void SetIdentifier(Item item, string identifier)
-    {
-        this.dropzoneBackingStore[item.ItemInstanceId ?? string.Empty].Identifier = identifier;
     }
 
     /// <summary>
@@ -1093,5 +1083,15 @@ public class ContentManager
         }
 
         return 0;
+    }
+
+    /// <summary>
+    /// Sets the identifier of the item.
+    /// </summary>
+    /// <param name="item">Item to set identifier of.</param>
+    /// <param name="identifier">Identifier to set.</param>
+    private void SetIdentifier(Item item, string identifier)
+    {
+        this.dropzoneBackingStore[item.ItemInstanceId ?? string.Empty].Identifier = identifier;
     }
 }
