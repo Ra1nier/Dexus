@@ -1,21 +1,34 @@
 ﻿@using GuardianVaultManager.Client.Pages
+@using RequestManager.Models
 @inherits LayoutComponentBase
 
-<MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
-<MudPopoverProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
+<MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode"/>
+<MudPopoverProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
 <MudLayout>
     <MudAppBar Elevation="1">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
+                       OnClick="@((e) => DrawerToggle())"/>
         <MudText Typo="Typo.h5" Class="ml-3">Guardian Vault Manager</MudText>
-        <MudSpacer />
-        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Inherit" OnClick="@RefreshClientContent" />
-        <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
-        <MudIconButton Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" Edge="Edge.End" OnClick="@AccountDrawerToggle"/>
+        <MudSpacer/>
+        @if (refreshingContent)
+        {
+            <MudProgressCircular Size="Size.Medium" Indeterminate="true"/>
+        }
+        else
+        {
+            <MudTooltip Text="@tooltipText">
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Inherit"
+                               OnClick="@RefreshClientContent"/>
+            </MudTooltip>
+        }
+        <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle"/>
+        <MudIconButton Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" Edge="Edge.End"
+                       OnClick="@AccountDrawerToggle"/>
     </MudAppBar>
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
-        <NavMenu />
+        <NavMenu/>
     </MudDrawer>
     <MudMainContent Class="mt-16 pa-4">
         @Body
@@ -35,6 +48,15 @@
     private bool _isDarkMode = true;
     private MudTheme? _theme = null;
 
+    // Custom variables
+    private bool refreshingContent = false;
+    private DateTime lastRefreshTime = DateTime.Now;
+    private string tooltipText = "Time Since Last Refresh: 00:00";
+    private System.Timers.Timer? refreshUpdateTimer;
+
+    /// <summary>
+    /// Starts the process when the webpage is loaded.
+    /// </summary>
     protected override void OnInitialized()
     {
         base.OnInitialized();
@@ -45,6 +67,11 @@
             PaletteDark = _darkPalette,
             LayoutProperties = new LayoutProperties()
         };
+        
+        refreshUpdateTimer = new System.Timers.Timer(1000);
+        refreshUpdateTimer.Elapsed += (sender, e) => UpdateTooltip();
+        refreshUpdateTimer.AutoReset = true;
+        refreshUpdateTimer.Enabled = true;
     }
 
     private void DrawerToggle()
@@ -62,9 +89,23 @@
         _isDarkMode = !_isDarkMode;
     }
 
-    private static async void RefreshClientContent()
+    private async Task RefreshClientContent()
     {
+        refreshingContent = true;
+        StateHasChanged();
+
         await GVM.Content.RefreshUserContent();
+
+        lastRefreshTime = DateTime.Now;
+        refreshingContent = false;
+        StateHasChanged();
+    }
+
+    private void UpdateTooltip()
+    {
+        TimeSpan elapsed = DateTime.Now - lastRefreshTime;
+        tooltipText = $"Time Since Last Refresh: {elapsed:mm\\:ss}";
+        InvokeAsync(StateHasChanged);
     }
 
     private readonly PaletteLight _lightPalette = new()
@@ -106,9 +147,13 @@
         OverlayLight = "#1e1e2d80",
     };
 
+    /// <summary>
+    /// Holds the styles to use for dark mode.
+    /// </summary>
     public string DarkLightModeButtonIcon => _isDarkMode switch
     {
         true => Icons.Material.Rounded.AutoMode,
         false => Icons.Material.Outlined.DarkMode,
     };
+
 }

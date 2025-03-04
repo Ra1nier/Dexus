@@ -174,13 +174,13 @@ public class ContentManager
         get
         {
             string[] buckets =
-            {
+            [
                 "Ghost",
                 "Ships",
                 "Vehicle",
                 "Emblems",
-                "Accessories",
-            };
+                "Accessories"
+            ];
 
             return this.dropzoneBackingStore.Where(i => buckets.Contains(i.Value.Bucket)).ToDictionary(i => i.Key, i => i.Value);
         }
@@ -228,7 +228,7 @@ public class ContentManager
         get
         {
             string[] buckets =
-            {
+            [
                 "Strange Coin",
                 "Glimmer",
                 "Legendary Shards",
@@ -240,8 +240,8 @@ public class ContentManager
                 "Synthweave Strap",
                 "Synthweave Plate",
                 "Synthweave Template",
-                "Consumables",
-            };
+                "Consumables"
+            ];
 
             return this.uninstancatedItems.Where(i => buckets.Contains(i.Bucket)).ToList();
         }
@@ -268,7 +268,7 @@ public class ContentManager
     public bool TransfersAllowed { get; private set; }
 
     /// <summary>
-    /// Provides a keu for when item management lists need to be rendered again.
+    /// Gets the render key that indicates whether item management lists need to be rendered again.
     /// </summary>
     public Guid ItemManagementRenderKey { get => this.itemManagementRenderKey; }
 
@@ -307,16 +307,6 @@ public class ContentManager
         this.logger.LogDebug("Refreshing user content.");
         await this.LoadUserContents();
         this.logger.LogDebug("User content refreshed.");
-    }
-
-    /// <summary>
-    /// Sets the identifier of the item.
-    /// </summary>
-    /// <param name="item">Item to set identifier of.</param>
-    /// <param name="identifier">Identifier to set.</param>
-    public void SetIdentifier(Item item, string identifier)
-    {
-        this.dropzoneBackingStore[item.ItemInstanceId ?? string.Empty].Identifier = identifier;
     }
 
     /// <summary>
@@ -732,13 +722,15 @@ public class ContentManager
             string[] requests =
             [
                 "CharacterEquipment",
-                "ItemInstances"
+                "ItemInstances",
+                "ItemPerks",
             ];
             string equipmentContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
 
             JsonDocument equipmentContents = JsonDocument.Parse(equipmentContentsJson);
             JsonElement equipmentArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("characterEquipment").GetProperty("data");
             JsonElement instanceDataArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
+            JsonElement perksDataArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("perks").GetProperty("data");
 
             // Populate Inventories list
             int itemsLoaded = 0;
@@ -750,29 +742,18 @@ public class ContentManager
 
                     foreach (JsonElement itemJson in characterInventory.EnumerateArray())
                     {
-                        Item item = JsonSerializer.Deserialize<Item>(itemJson) ?? new Item();
+                        Item item = itemJson.Deserialize<Item>() ?? new Item();
                         item.Identifier = $"{character.CharacterId}Equipped";
+
+                        if (this.GetItemPerks(perksDataArray, item, out List<Item.Perk> perks))
+                        {
+                            item.Perks = perks;
+                        }
 
                         // Get needed data
                         item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
-                        if (!string.IsNullOrEmpty(item.ItemInstanceId))
-                        {
-                            lock (this.dropzoneBackingStore)
-                            {
-                                this.dropzoneBackingStore.TryAdd(item.ItemInstanceId, item);
-                            }
-                        }
-                        else
-                        {
-                            lock (this.uninstancatedItems)
-                            {
-                                if (!this.uninstancatedItems.Contains(item))
-                                {
-                                    this.uninstancatedItems.Add(item);
-                                }
-                            }
-                        }
 
+                        this.AddItemToStore(item);
                         itemsLoaded++;
                     }
                 }
@@ -803,13 +784,15 @@ public class ContentManager
             string[] requests =
             [
                 "CharacterInventories",
-                "ItemInstances"
+                "ItemInstances",
+                "ItemPerks",
             ];
             string inventoriesContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
 
             JsonDocument inventoriesContents = JsonDocument.Parse(inventoriesContentsJson);
             JsonElement inventoriesArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("characterInventories").GetProperty("data");
             JsonElement instanceDataArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
+            JsonElement perksDataArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("perks").GetProperty("data");
 
             // Populate Inventories list
             int itemsLoaded = 0;
@@ -821,29 +804,18 @@ public class ContentManager
 
                     foreach (JsonElement itemJson in characterInventory.EnumerateArray())
                     {
-                        Item item = JsonSerializer.Deserialize<Item>(itemJson) ?? new Item();
+                        Item item = itemJson.Deserialize<Item>() ?? new Item();
                         item.Identifier = character.CharacterId;
+
+                        if (this.GetItemPerks(perksDataArray, item, out List<Item.Perk> perks))
+                        {
+                            item.Perks = perks;
+                        }
 
                         // Get needed data
                         item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
-                        if (!string.IsNullOrEmpty(item.ItemInstanceId))
-                        {
-                            lock (this.dropzoneBackingStore)
-                            {
-                                this.dropzoneBackingStore.TryAdd(item.ItemInstanceId, item);
-                            }
-                        }
-                        else
-                        {
-                            lock (this.uninstancatedItems)
-                            {
-                                if (!this.uninstancatedItems.Contains(item))
-                                {
-                                    this.uninstancatedItems.Add(item);
-                                }
-                            }
-                        }
 
+                        this.AddItemToStore(item);
                         itemsLoaded++;
                     }
                 }
@@ -878,42 +850,32 @@ public class ContentManager
             string[] requests =
             [
                 "ProfileInventories",
-                "ItemInstances"
+                "ItemInstances",
+                "ItemPerks",
             ];
             string vaultContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
 
             JsonDocument vaultContents = JsonDocument.Parse(vaultContentsJson);
             JsonElement vaultArray = vaultContents.RootElement.GetProperty("Response").GetProperty("profileInventory").GetProperty("data").GetProperty("items");
             JsonElement instanceDataArray = vaultContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
+            JsonElement perksDataArray = vaultContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("perks").GetProperty("data");
 
             // Populate Vault list
             int itemsLoaded = 0;
             foreach (JsonElement itemElement in vaultArray.EnumerateArray())
             {
-                Item item = JsonSerializer.Deserialize<Item>(itemElement) ?? new Item();
+                Item item = itemElement.Deserialize<Item>() ?? new Item();
                 item.Identifier = "Vault";
+
+                if (this.GetItemPerks(perksDataArray, item, out List<Item.Perk> perks))
+                {
+                    item.Perks = perks;
+                }
 
                 // Get needed data
                 item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
-
-                if (!string.IsNullOrEmpty(item.ItemInstanceId))
-                {
-                    lock (this.dropzoneBackingStore)
-                    {
-                        this.dropzoneBackingStore.TryAdd(item.ItemInstanceId, item);
-                    }
-                }
-                else
-                {
-                    lock (this.uninstancatedItems)
-                    {
-                        if (!this.uninstancatedItems.Contains(item))
-                        {
-                            this.uninstancatedItems.Add(item);
-                        }
-                    }
-                }
-
+                
+                this.AddItemToStore(item);
                 itemsLoaded++;
             }
 
@@ -931,6 +893,62 @@ public class ContentManager
         catch (Exception e)
         {
             this.logger.LogError($"GVM was unable to retrieve the client's vault: {e.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Gets the perks for the item associated with the item instance ID.
+    /// </summary>
+    /// <param name="perkData">Perk data received from bungie.</param>
+    /// <param name="item">Item to get the perks for.</param>
+    /// <param name="perks">The list of perks for the item.</param>
+    /// <returns>A Perk class constructed from the time.</returns>
+    private bool GetItemPerks(JsonElement perkData, Item item, out List<Item.Perk> perks)
+    {
+        perks = new List<Item.Perk>();
+        if (perkData.TryGetProperty(item.ItemInstanceId ?? string.Empty, out JsonElement itemPerks))
+        {
+            if (itemPerks.TryGetProperty("perks", out JsonElement perksArray))
+            {
+                foreach (var perk in perksArray.EnumerateArray())
+                {
+                    perks.Add(new Item.Perk(
+                        perk.GetProperty("perkHash").GetUInt32(),
+                        perk.GetProperty("iconPath").GetString(),
+                        perk.GetProperty("isActive").GetBoolean(),
+                        perk.GetProperty("visible").GetBoolean()));
+                }
+            }
+
+            return true;
+        }
+
+        Console.WriteLine($"Perk data not found for item instance: {item.ItemInstanceId}");
+        return false;
+    }
+
+    /// <summary>
+    /// Adds the item to the correct store in content manager.
+    /// </summary>
+    /// <param name="item">Item to add.</param>
+    private void AddItemToStore(Item item)
+    {
+        if (!string.IsNullOrEmpty(item.ItemInstanceId))
+        {
+            lock (this.dropzoneBackingStore)
+            {
+                this.dropzoneBackingStore.TryAdd(item.ItemInstanceId, item);
+            }
+        }
+        else
+        {
+            lock (this.uninstancatedItems)
+            {
+                if (!this.uninstancatedItems.Contains(item))
+                {
+                    this.uninstancatedItems.Add(item);
+                }
+            }
         }
     }
 
@@ -1069,5 +1087,15 @@ public class ContentManager
         }
 
         return 0;
+    }
+
+    /// <summary>
+    /// Sets the identifier of the item.
+    /// </summary>
+    /// <param name="item">Item to set identifier of.</param>
+    /// <param name="identifier">Identifier to set.</param>
+    private void SetIdentifier(Item item, string identifier)
+    {
+        this.dropzoneBackingStore[item.ItemInstanceId ?? string.Empty].Identifier = identifier;
     }
 }
