@@ -404,8 +404,12 @@ public class ContentManager
         this.cancellationTokenSource?.Dispose();
         this.transferTask?.Dispose();
 
+        while (this.recentlyHandledTransfers.Any())
+        {
+            Task.Delay(1000);
+        }
+
         this.recentlyHandledTransfers.StopAutoCleanup();
-        this.recentlyHandledTransfers.Clear();
     }
 
     /// <summary>

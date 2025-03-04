@@ -66,6 +66,15 @@ public class TimedDictionary<TKey, TValue>
     }
 
     /// <summary>
+    /// Checks if there are any keys in the dictionary.
+    /// </summary>
+    /// <returns>True if there are keys, False otherwise.</returns>
+    public bool Any()
+    {
+        return this.storage.Count > 0;
+    }
+
+    /// <summary>
     /// Cleans the dictionary for expired items.
     /// </summary>
     public void Cleanup()
