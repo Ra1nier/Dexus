@@ -25,30 +25,30 @@ public class ContentManager
     /// <summary>
     /// Logger for GVM.
     /// </summary>
-    private ILogger logger;
+    private readonly ILogger logger;
 
     /// <summary>
     /// User profile.
     /// </summary>
-    private Profile profile;
+    private readonly Profile profile;
 
     /// <summary>
     /// Request Server for GVM.
     /// </summary>
-    private RequestServer request;
+    private readonly RequestServer request;
 
     /// <summary>
     /// Manifest Server for GVM.
     /// </summary>
-    private ManifestServer manifest;
+    private readonly ManifestServer manifest;
 
     /// <summary>
     /// Snackbar Service for GVM.
     /// </summary>
-    private SnackbarService snackbar;
+    private readonly SnackbarService snackbar;
 
     // Content Manager Variables
-    private bool isInitialized = false;
+    private bool isInitialized;
 
     // Content Containers
     private Dictionary<string, Character> characters = new Dictionary<string, Character>();
@@ -461,7 +461,7 @@ public class ContentManager
         }
 
         // Equip the item.
-        Item itemBeingReplaced = this.DropzoneBackingStore.DistinctBy(i => i.Value.Identifier == $"{location}Equipped").First().Value ?? new Item();
+        Item itemBeingReplaced = this.DropzoneBackingStore.DistinctBy(i => i.Value.Identifier == $"{location}Equipped").First().Value;
         if (await this.request.ActionItem_Request_EquipItem(this.profile.MembershipType, item.ItemInstanceId ?? string.Empty, location))
         {
             this.SetIdentifier(itemBeingReplaced, location);
@@ -481,7 +481,7 @@ public class ContentManager
     /// <returns>True if the transfer operation was successful. False otherwise.</returns>
     private async Task<bool> Transfer(Item item, string origin, string destination)
     {
-        bool transferSuccess = false;
+        bool transferSuccess;
         if (origin.Contains("Equipped") || destination.Contains("Equipped"))
         {
             transferSuccess = await this.TransferEquipped(item, origin, destination);
@@ -519,17 +519,17 @@ public class ContentManager
 
         this.GenerateTransferData(transfer, out uint itemHash, out string itemID, out int stackSize);
 
-        if (destination == "Vault") // Character -> Vault
+        if (destination == "Vault")
         {
             // Transfer to Vault
             return await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID, stackSize, origin, true);
         }
-        else if (origin == "Vault") // Vault -> Character
+        else if (origin == "Vault")
         {
             // Transfer to Character
             return await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID, stackSize, destination, false);
         }
-        else // Character -> Character
+        else
         {
             // Transfer to Vault then to the Character
             bool firstTransfer = await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID, stackSize, origin, true);
@@ -544,7 +544,7 @@ public class ContentManager
             {
                 return true;
             }
-            else if (!secondTransfer) // If the second transfer failed return the item to the origin.
+            else if (!secondTransfer)
             {
                 this.snackbar.AddMessage($"Transfer of {this.Details[transfer.ItemHash].DisplayProperties.Name} failed. Returning the item to the origin.", "Warning");
                 bool returnSuccessful = await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID, stackSize, origin, false);
@@ -574,16 +574,16 @@ public class ContentManager
     private async Task<bool> TransferEquipped(Item transfer, string origin, string destination)
     {
         string trueDestination = destination.Replace("Equipped", string.Empty);
-        bool transferSuccess = false;
-        if (origin.Contains("Equipped") && destination.Contains("Equipped")) // Transfer of an equipped item to another characters equipment slot.
+        bool transferSuccess;
+        if (origin.Contains("Equipped") && destination.Contains("Equipped"))
         {
             transferSuccess = await this.HandelTransferOfEquippedItem(transfer, origin, destination);
         }
-        else if (origin.Contains("Equipped")) // Transfer of an equipped item to a different character.
+        else if (origin.Contains("Equipped"))
         {
             return await this.HandelTransferOfEquippedItem(transfer, origin, destination);
         }
-        else // Transfer of an item into a characters equipment slot.
+        else
         {
             transferSuccess = await this.TransferItem(transfer, origin, trueDestination);
         }
@@ -654,9 +654,9 @@ public class ContentManager
         {
             string charactersJson = await this.request.PlatformDestiny2_Request_ProfileContents("Characters", true);
             JsonDocument charactersContent = JsonDocument.Parse(charactersJson);
-            JsonElement characters = charactersContent.RootElement.GetProperty("Response").GetProperty("characters").GetProperty("data");
+            JsonElement charactersArray = charactersContent.RootElement.GetProperty("Response").GetProperty("characters").GetProperty("data");
 
-            foreach (JsonProperty characterJson in characters.EnumerateObject())
+            foreach (JsonProperty characterJson in charactersArray.EnumerateObject())
             {
                 if (characterJson.Value.ValueKind != JsonValueKind.Null)
                 {
@@ -874,7 +874,7 @@ public class ContentManager
 
                 // Get needed data
                 item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
-                
+
                 this.AddItemToStore(item);
                 itemsLoaded++;
             }
@@ -914,7 +914,7 @@ public class ContentManager
                 {
                     perks.Add(new Item.Perk(
                         perk.GetProperty("perkHash").GetUInt32(),
-                        perk.GetProperty("iconPath").GetString(),
+                        perk.GetProperty("iconPath").GetString() ?? string.Empty,
                         perk.GetProperty("isActive").GetBoolean(),
                         perk.GetProperty("visible").GetBoolean()));
                 }
@@ -977,16 +977,16 @@ public class ContentManager
         uint itemHash = item.ItemHash;
         if (!this.itemDetails.TryGetValue(itemHash, out _))
         {
-            var itemDetails = await this.GetItemDetails(itemHash);
+            var details = await this.GetItemDetails(itemHash);
 
-            if (itemDetails.Equals(new ItemDetails()))
+            if (details.Equals(new ItemDetails()))
             {
                 this.snackbar.AddMessage("GVM is unable to define an item.", "warning");
             }
 
             lock (this.itemDetails)
             {
-                this.itemDetails.Add(itemHash, itemDetails);
+                this.itemDetails.Add(itemHash, details);
             }
         }
     }
@@ -1077,16 +1077,14 @@ public class ContentManager
         }
 
         // Get needed data
-        if (instanceDataArray.TryGetProperty(instanceID, out JsonElement itemInstanceData) && itemInstanceData.TryGetProperty("primaryStat", out JsonElement primaryStat))
+        if (!instanceDataArray.TryGetProperty(instanceID, out JsonElement itemInstanceData) ||
+            !itemInstanceData.TryGetProperty("primaryStat", out JsonElement primaryStat))
         {
-            // Retrieve items power level and assign it to the item
-            if (primaryStat.TryGetProperty("value", out JsonElement powerLevel))
-            {
-                return powerLevel.GetInt32();
-            }
+            return 0;
         }
 
-        return 0;
+        // Retrieve items power level and assign it to the item
+        return primaryStat.TryGetProperty("value", out JsonElement powerLevel) ? powerLevel.GetInt32() : 0;
     }
 
     /// <summary>

@@ -2,8 +2,6 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-using MudBlazor;
-
 namespace GuardianServices;
 
 using System.Text.Json;
@@ -15,11 +13,11 @@ using MudBlazor;
 public class SnackbarService
 {
     // Contains all the queued messages.
-    private Queue<string> messages;
-    private Queue<string> severity;
-    private Queue<Action<SnackbarOptions>> config;
+    private readonly Queue<string> messages;
+    private readonly Queue<string> severity;
+    private readonly Queue<Action<SnackbarOptions>> config;
 
-    private List<string> levels = new List<string> { "Normal", "Info", "Success", "Warning", "Error" };
+    private readonly List<string> levels = ["Normal", "Info", "Success", "Warning", "Error"];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SnackbarService"/> class.
@@ -28,29 +26,30 @@ public class SnackbarService
     {
         this.messages = new Queue<string>();
         this.severity = new Queue<string>();
+        this.config = new Queue<Action<SnackbarOptions>>();
     }
 
     /// <summary>
     /// Gets the next message in the snackbar queue and dequeues it.
     /// </summary>
     /// <param name="message">The next message in the queue.</param>
-    /// <param name="severity">The associated severity.</param>
-    /// <param name="config">The config to use for the message.</param>
+    /// <param name="requestedSeverity">The associated severity.</param>
+    /// <param name="messageConfig">The config to use for the message.</param>
     /// <returns>True if a message can be returned. False otherwise.</returns>
-    public bool NextMessage(out string message, out string severity, out Action<SnackbarOptions> config)
+    public bool NextMessage(out string message, out string requestedSeverity, out Action<SnackbarOptions> messageConfig)
     {
         if (this.severity.Count > 0 && this.messages.Count > 0)
         {
             message = this.messages.Dequeue();
-            severity = this.severity.Dequeue();
-            config = this.config.Dequeue();
+            requestedSeverity = this.severity.Dequeue();
+            messageConfig = this.config.Dequeue();
 
             return true;
         }
 
         message = string.Empty;
-        severity = string.Empty;
-        config = (config) => { };
+        requestedSeverity = string.Empty;
+        messageConfig = (options) => { };
 
         return false;
     }
@@ -63,49 +62,42 @@ public class SnackbarService
     {
         this.messages.Enqueue(message);
         this.severity.Enqueue("Info");
-        this.config.Enqueue((config) => { });
+        this.config.Enqueue((options) => { });
     }
 
     /// <summary>
     /// Adds a message to the snackbar queue.
     /// </summary>
     /// <param name="message">The message to add to the queue.</param>
-    /// <param name="severity">The associated severity for the message.</param>
-    public void AddMessage(string message, string severity)
+    /// <param name="requestedSeverity">The associated severity for the message.</param>
+    public void AddMessage(string message, string requestedSeverity)
     {
         this.messages.Enqueue(message);
-        this.config.Enqueue((config) => { });
-        this.ExtractSeverity(severity);
+        this.config.Enqueue((options) => { });
+        this.ExtractSeverity(requestedSeverity);
     }
 
     /// <summary>
     /// Adds a message to the snackbar queue.
     /// </summary>
     /// <param name="message">The message to add to the queue.</param>
-    /// <param name="severity">The associated severity for the message.</param>
-    /// <param name="config">The config params to be used for the message.</param>
-    public void AddMessage(string message, string severity, Action<SnackbarOptions> config)
+    /// <param name="requestedSeverity">The associated severity for the message.</param>
+    /// <param name="messageConfig">The config params to be used for the message.</param>
+    public void AddMessage(string message, string requestedSeverity, Action<SnackbarOptions> messageConfig)
     {
         this.messages.Enqueue(message);
-        this.config.Enqueue(config);
-        this.ExtractSeverity(severity);
+        this.config.Enqueue(messageConfig);
+        this.ExtractSeverity(requestedSeverity);
     }
 
     /// <summary>
     /// Extracts and adds the severity to the queue. Normal will be queued instead if extract failed.
     /// </summary>
-    /// <param name="severity">The severity level.</param>
-    private void ExtractSeverity(string severity)
+    /// <param name="messageSeverity">The severity level.</param>
+    private void ExtractSeverity(string messageSeverity)
     {
-        severity = char.ToUpper(severity[0]) + severity.Substring(1);
-        if (this.levels.Contains(severity))
-        {
-            this.severity.Enqueue(severity);
-        }
-        else
-        {
-            this.severity.Enqueue("Normal");
-        }
+        messageSeverity = char.ToUpper(messageSeverity[0]) + messageSeverity[1..];
+        this.severity.Enqueue(this.levels.Contains(messageSeverity) ? messageSeverity : "Normal");
     }
 }
 
@@ -114,7 +106,7 @@ public class SnackbarService
 /// </summary>
 public class LoadingbarService
 {
-    private Dictionary<int, Loadingbar> loadingbars;
+    private readonly Dictionary<int, Loadingbar> loadingbars;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LoadingbarService"/> class.
@@ -148,10 +140,7 @@ public class LoadingbarService
     public void RemoveLoadingbar(string name)
     {
         int id = name.GetHashCode();
-        if (this.loadingbars.ContainsKey(id))
-        {
-            this.loadingbars.Remove(id);
-        }
+        this.loadingbars.Remove(id);
     }
 
     /// <summary>
@@ -204,12 +193,7 @@ public class LoadingbarService
     public int GetProgressValue(string name)
     {
         int id = name.GetHashCode();
-        if (this.loadingbars.ContainsKey(id))
-        {
-            return this.loadingbars[id].ProgressValue;
-        }
-
-        return 0;
+        return this.loadingbars.TryGetValue(id, out Loadingbar? loadingbar) ? loadingbar.ProgressValue : 0;
     }
 
     /// <summary>
@@ -220,12 +204,7 @@ public class LoadingbarService
     public int GetBufferValue(string name)
     {
         int id = name.GetHashCode();
-        if (this.loadingbars.ContainsKey(id))
-        {
-            return this.loadingbars[id].BufferValue;
-        }
-
-        return 0;
+        return this.loadingbars.TryGetValue(id, out Loadingbar? loadingbar) ? loadingbar.BufferValue : 0;
     }
 
     /// <summary>
@@ -236,12 +215,7 @@ public class LoadingbarService
     public string GetProgressText(string name)
     {
         int id = name.GetHashCode();
-        if (this.loadingbars.ContainsKey(id))
-        {
-            return this.loadingbars[id].ProgressText;
-        }
-
-        return string.Empty;
+        return this.loadingbars.TryGetValue(id, out Loadingbar? loadingbar) ? loadingbar.ProgressText : string.Empty;
     }
 
     /// <summary>
@@ -276,11 +250,11 @@ public class LoadingbarService
             {
                 if (value <= 100 && value >= 0)
                 {
-                    this.ProgressValue = value;
+                    this.progressValue = value;
                 }
                 else
                 {
-                    this.ProgressValue = 0;
+                    this.progressValue = 0;
                 }
             }
         }
@@ -324,8 +298,8 @@ public class SettingsService
     private readonly string dataFolderPath;
     private readonly string settingsPath;
 
-    // Contains all of the settings.
-    private Dictionary<int, bool> settings = new Dictionary<int, bool>();
+    // Contains all the settings.
+    private readonly Dictionary<int, bool> settings = new Dictionary<int, bool>();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SettingsService"/> class.
@@ -395,10 +369,7 @@ public class SettingsService
     {
         setting = setting.ToUpper();
         int settingHash = setting.GetHashCode();
-        if (this.settings.ContainsKey(settingHash))
-        {
-            this.settings.Remove(settingHash);
-        }
+        this.settings.Remove(settingHash);
     }
 
     /// <summary>
@@ -409,12 +380,7 @@ public class SettingsService
     public bool Check(string setting)
     {
         setting = setting.ToUpper();
-        if (this.settings.TryGetValue(setting.GetHashCode(), out bool value))
-        {
-            return value;
-        }
-
-        return false;
+        return this.settings.GetValueOrDefault(setting.GetHashCode(), false);
     }
 
     /// <summary>
@@ -449,16 +415,14 @@ public class SettingsService
     /// <param name="overwrite">If true the value of the setting will be overwritten if the setting exists already.</param>
     private void SetSetting(int settingHash, bool value, bool overwrite)
     {
-        if (this.settings.ContainsKey(settingHash))
+        if (this.settings.TryAdd(settingHash, value))
         {
-            if (overwrite)
-            {
-                this.settings[settingHash] = value;
-            }
+            return;
         }
-        else
+
+        if (overwrite)
         {
-            this.settings.Add(settingHash, value);
+            this.settings[settingHash] = value;
         }
     }
 
@@ -476,7 +440,8 @@ public class SettingsService
             }
 
             string json = File.ReadAllText(this.settingsPath);
-            Dictionary<int, bool> loadedSettings = JsonSerializer.Deserialize<Dictionary<int, bool>>(json) ?? new Dictionary<int, bool>();
+            Dictionary<int, bool> loadedSettings =
+                JsonSerializer.Deserialize<Dictionary<int, bool>>(json) ?? new Dictionary<int, bool>();
 
             foreach (KeyValuePair<int, bool> setting in loadedSettings)
             {

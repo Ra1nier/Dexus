@@ -5,7 +5,6 @@
 @using ContentManager
 @using GuardianVaultManager.Client.Componates
 
-@inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
 @inject ILogger<GVM> Logger
 @inject ISnackbar Snackbar
@@ -129,7 +128,7 @@ else
     public static ContentManager Content = new ContentManager();
 
     // GVM Variables
-    private bool initializationComplete = false;
+    private bool initializationComplete;
     private Dictionary<string, bool> localSettings = new Dictionary<string, bool>();
 
     /// <summary>
@@ -193,7 +192,7 @@ else
     /// </summary>
     private void InitializeSettings()
     {
-        localSettings = new Dictionary<string, bool> // TODO: Likely to get long. Replace with a settings file.
+        localSettings = new Dictionary<string, bool>
         {
             { "Weapon-Names", false },
             { "WeaponStyle-Tag", false },
@@ -235,16 +234,23 @@ else
     /// </summary>
     private void SnackbarProvider()
     {
-        new Thread(async () =>
+        new Thread(async void () =>
         {
-            while (true)
+            try
             {
-                await Task.Delay(1000);
-                while (Core.Snackbar.NextMessage(out string message, out string severity, out Action<SnackbarOptions> config))
+                while (true)
                 {
-                    Severity mode = (Severity)Enum.Parse(typeof(Severity), severity);
-                    Snackbar.Add(message, mode, config);
+                    await Task.Delay(1000);
+                    while (Core.Snackbar.NextMessage(out string message, out string severity, out Action<SnackbarOptions> config))
+                    {
+                        Severity mode = (Severity)Enum.Parse(typeof(Severity), severity);
+                        Snackbar.Add(message, mode, config);
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"An unknown error occured when executing the Snackbar Task that has shutdown the task: {e.Message}");
             }
         }).Start();
     }

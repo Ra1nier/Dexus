@@ -10,7 +10,7 @@
     {
         @if (Core.Settings.Check("WeaponStyle-Tag"))
         {
-            <div style="position: absolute; right: 0%; background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 2px 0px 10px; font-size: 12px; clip-path: polygon(0 0, 100% 0%, 100% 100%, 30% 100%);">@Item.Power</div>
+            <div style="position: absolute; right: 0; background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 2px 0 10px; font-size: 12px; clip-path: polygon(0 0, 100% 0%, 100% 100%, 30% 100%);">@Item.Power</div>
         }
         else
         {
@@ -27,11 +27,11 @@
 </MudCard>
 
 <!-- Popover for Info and Actions for the Item -->
-<MudPopover Open="@(activeItemId == itemModelID)" AnchorOrigin="Origin.TopCenter" TransformOrigin="Origin.BottomCenter">
-    <MudPaper Class="pa-4" Style="min-width: 250px; border-radius: 8px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);">
+<MudPopover Open="@(activeItemID == itemModelID)" AnchorOrigin="Origin.TopCenter" TransformOrigin="Origin.BottomCenter">
+    <MudPaper Class="pa-4" Style="min-width: 250px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <MudText Typo="Typo.h6">@Core.Content.Details[Item.ItemHash].DisplayProperties.Name</MudText>
-            <MudIconButton Icon="@Icons.Material.Outlined.Close" OnClick="()=>activeItemId = null" Size="Size.Small"/>
+            <MudIconButton Icon="@Icons.Material.Outlined.Close" OnClick="()=>activeItemID = null" Size="Size.Small"/>
         </div>
 
         <!-- Perk Details -->
@@ -92,7 +92,7 @@
     [Parameter] public required Core Core { get; set; }
 
     // Property Popover locks
-    private static Guid? activeItemId = null;
+    private static Guid? activeItemID = null;
     private Guid itemModelID = Guid.NewGuid();
 
     // Item variables
@@ -100,13 +100,13 @@
 
     private void TogglePopover(Guid itemId)
     {
-        if (activeItemId == itemId)
+        if (activeItemID == itemId)
         {
-            activeItemId = null; // TODO: Clicking the same item closes it, at least it is supposed to but it aint working
+            activeItemID = null; // TODO: Clicking the same item closes it, at least it is supposed to but it aint working
         }
         else
         {
-            activeItemId = itemId; // TODO: Clicking a different item switches the popover, at least it is supposed to but it aint working
+            activeItemID = itemId; // TODO: Clicking a different item switches the popover, at least it is supposed to but it aint working
         }
     }
 
@@ -116,7 +116,7 @@
     /// <param name="destination">Location to transfer the item to.</param>
     private async Task Transfer(string destination)
     {
-        if (!(await Core.ConfirmOAuthStatus()))
+        if (!(await Core.ConfirmOAuthStatus()) || !Core.Content.TransfersAllowed)
         {
             return;
         }
