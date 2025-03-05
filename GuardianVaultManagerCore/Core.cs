@@ -60,7 +60,7 @@ public class Core
         this.settings = new SettingsService();
         this.request = new RequestServer(this.logger, this.profile, this.oauthProfile);
         this.manifest = new ManifestServer(this.logger);
-        this.content = new ContentManager(this.logger, this.profile, this.request, this.manifest, this.snackbar);
+        this.content = new ContentManager(this.logger, this.profile, this.request, this.manifest, this.snackbar, this.loadingbars);
 
         // Setting Local Values
         this.loadingbars.GenerateLoadingbar("Main");

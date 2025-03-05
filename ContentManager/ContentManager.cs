@@ -47,6 +47,11 @@ public class ContentManager
     /// </summary>
     private readonly SnackbarService snackbar;
 
+    /// <summary>
+    /// Loadingbar service for GVM.
+    /// </summary>
+    private readonly LoadingbarService loadingbars;
+
     // Content Manager Variables
     private bool isInitialized;
 
@@ -78,6 +83,7 @@ public class ContentManager
         this.request = null!;
         this.manifest = null!;
         this.snackbar = null!;
+        this.loadingbars = null!;
     }
 
     /// <summary>
@@ -88,13 +94,15 @@ public class ContentManager
     /// <param name="request">GVM request server.</param>
     /// <param name="manifest">GVM manifest server.</param>
     /// <param name="snackbar">GVM snackbar provider.</param>
-    public ContentManager(ILogger logger, Profile profile, RequestServer request, ManifestServer manifest, SnackbarService snackbar)
+    /// <param name="loadingbars">GVM loadingbar service.</param>
+    public ContentManager(ILogger logger, Profile profile, RequestServer request, ManifestServer manifest, SnackbarService snackbar, LoadingbarService loadingbars)
     {
         this.logger = logger;
         this.profile = profile;
         this.request = request;
         this.manifest = manifest;
         this.snackbar = snackbar;
+        this.loadingbars = loadingbars;
     }
 
     /// <summary>
@@ -433,7 +441,7 @@ public class ContentManager
     private async Task LoadUserContents()
     {
         // Erase old information if needed.
-        if (this.dropzoneBackingStore.Any())
+        if (this.dropzoneBackingStore.Count != 0)
         {
             this.dropzoneBackingStore.Clear();
         }
