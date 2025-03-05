@@ -129,7 +129,7 @@ public class LoadingbarService
             return false;
         }
 
-        this.loadingbars.Add(id, new Loadingbar(name));
+        this.loadingbars.Add(id, new Loadingbar());
         return true;
     }
 
@@ -186,6 +186,28 @@ public class LoadingbarService
     }
 
     /// <summary>
+    /// Gets all values associated with the loadingbar.
+    /// </summary>
+    /// <param name="name">Loadingbar to get the values for.</param>
+    /// <param name="progressValue">Progress value of the loadingbar.</param>
+    /// <param name="bufferValue">Buffer value of the loadingbar.</param>
+    /// <param name="progressText">Progress text of the loadingbar.</param>
+    public void GetLoadingBar(string name, out int progressValue, out int bufferValue, out string progressText)
+    {
+        int id = name.GetHashCode();
+        if (this.loadingbars.TryGetValue(id, out Loadingbar? loadingbar))
+        {
+            progressValue = loadingbar.ProgressValue;
+            bufferValue = loadingbar.BufferValue;
+            progressText = loadingbar.ProgressText;
+        }
+
+        progressValue = 0;
+        bufferValue = 0;
+        progressText = string.Empty;
+    }
+
+    /// <summary>
     /// Gets the progress value of the loadingbar with the given name.
     /// </summary>
     /// <param name="name">The name of the loadingbar.</param>
@@ -223,8 +245,6 @@ public class LoadingbarService
     /// </summary>
     private class Loadingbar
     {
-        private string name;
-
         // Values for the progress bar.
         private int progressValue;
         private int bufferValue;
@@ -233,11 +253,10 @@ public class LoadingbarService
         /// <summary>
         /// Initializes a new instance of the <see cref="Loadingbar"/> class.
         /// </summary>
-        public Loadingbar(string name)
+        public Loadingbar()
         {
             this.progressValue = 0;
             this.bufferValue = 0;
-            this.name = name;
         }
 
         /// <summary>

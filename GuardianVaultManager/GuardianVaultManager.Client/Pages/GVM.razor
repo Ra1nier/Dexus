@@ -4,6 +4,7 @@
 @using GuardianVaultManagerCore
 @using ContentManager
 @using GuardianVaultManager.Client.Componates
+@using GuardianVaultManager.Client.Flairs.Loadingbars
 
 @inject NavigationManager Navigation
 @inject ILogger<GVM> Logger
@@ -14,14 +15,18 @@
 @if (Core.OAuthStatus == 2)
 {
     <!--Sign In Page-->
-    <MudContainer Class="justify-center d-flex flex-column align-items-center justify-content-center min-vh-100 bg-dark">
+    <MudContainer
+        Class="justify-center d-flex flex-column align-items-center justify-content-center min-vh-100 bg-dark">
         <MudCard Class="text-center" Elevation="10" Style="max-width: 400px;">
             <MudCardContent>
                 <MudText Typo="Typo.h5" GutterBottom>Guardian Vault Manager</MudText>
                 <MudText Typo="Typo.body1" Class="mb-4">
-                    Welcome to Guardian Vault Manager. Looks like we can't spy on your vault. Would you mind signing in so that we can harvest your data?
+                    Welcome to Guardian Vault Manager. Looks like we can't spy on your vault. Would you mind signing in
+                    so that we can harvest your data?
                 </MudText>
-                <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="HandleSignIn">Sign In to Bungie.com</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="HandleSignIn">Sign In to
+                    Bungie.com
+                </MudButton>
             </MudCardContent>
         </MudCard>
     </MudContainer>
@@ -40,11 +45,13 @@ else
                         <MudTabPanel Icon="@Icons.Material.Filled.Settings">
                             @foreach (string settingName in localSettings.Keys)
                             {
-                                <MudSwitch T=bool @bind-Value="localSettings[settingName]" Label=@settingName Color="Color.Success" />
+                                <MudSwitch T=bool @bind-Value="localSettings[settingName]" Label=@settingName
+                                           Color="Color.Success"/>
                             }
                         </MudTabPanel>
                     </MudTabs>
-                    <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="ApplySettingsWithRefresh" />
+                    <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Variant="Variant.Filled"
+                                   Color="Color.Primary" Size="Size.Large" OnClick="ApplySettingsWithRefresh"/>
                 </MudExpansionPanel>
             </MudPaper>
 
@@ -54,63 +61,71 @@ else
                 {
                     <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column justify-center">
                         <MudText Typo="Typo.h6" Class="mb-1 text-center">@character.Class</MudText>
-                        <MudImage ObjectFit=@ObjectFit.ScaleDown Src=@character.EmblemBackgroundPath Elevation="25" Class="rounded-lg" />
+                        <MudImage ObjectFit=@ObjectFit.ScaleDown Src=@character.EmblemBackgroundPath Elevation="25"
+                                  Class="rounded-lg"/>
                     </MudItem>
                 }
                 <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column justify-center">
                     <MudText Typo="Typo.h6" Class="mb-1 text-center">Vault</MudText>
-                    <MudImage ObjectFit=@ObjectFit.ScaleDown Height="55" Src="Resources/VaultEmblem.png" Elevation="25" Class="rounded-lg" />
+                    <MudImage ObjectFit=@ObjectFit.ScaleDown Height="55" Src="Resources/VaultEmblem.png" Elevation="25"
+                              Class="rounded-lg"/>
                 </MudItem>
             </MudGrid>
 
             <!-- Postmaster Section -->
-            <BucketList Items="Content.Postmaster.Values" Sorted="true" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
+            <BucketList Items="Content.Postmaster.Values" Sorted="true" Core=@Core
+                        RenderKey=@Content.ItemManagementRenderKey/>
 
             <!-- Kinetic Weapons Section-->
-            <ManagmentList Items="Content.KineticWeapons.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
+            <ManagmentList Items="Content.KineticWeapons.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
 
             <!-- Energy Weapons Section -->
-            <ManagmentList Items="Content.EnergyWeapons.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
+            <ManagmentList Items="Content.EnergyWeapons.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
 
             <!-- Power Weapons Section -->
-            <ManagmentList Items="Content.PowerWeapons.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
+            <ManagmentList Items="Content.PowerWeapons.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
 
             <!-- Helmets Section -->
-            <ManagmentList Items="Content.Helmets.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
+            <ManagmentList Items="Content.Helmets.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
 
             <!-- Gauntlets Section -->
-            <ManagmentList Items="Content.Gauntlets.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
+            <ManagmentList Items="Content.Gauntlets.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
 
             <!-- Chests Section -->
-            <ManagmentList Items="Content.Chests.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
+            <ManagmentList Items="Content.Chests.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
 
             <!-- Legs Section -->
-            <ManagmentList Items="Content.Legs.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
+            <ManagmentList Items="Content.Legs.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
 
             <!-- Class Items Section -->
-            <ManagmentList Items="Content.Skirts.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
+            <ManagmentList Items="Content.Skirts.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
 
             <!-- Accessories Section -->
-            <ManagmentList Items="Content.Accessories.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
+            <ManagmentList Items="Content.Accessories.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
 
             <!-- Consumables Section -->
-            <BucketList Items="Content.Consumables" Sorted="false" Core=@Core RenderKey=@Content.ItemManagementRenderKey />
+            <BucketList Items="Content.Consumables" Sorted="false" Core=@Core
+                        RenderKey=@Content.ItemManagementRenderKey/>
         </MudContainer>
     }
     else
     {
-        <!--Vault loading Page-->
+        <!-- Vault loading Page -->
         <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge" Class="d-flex flex-column gap-3 justify-center">
-            <div class="loader"></div>
-            <MudProgressLinear Color="Color.Error" Buffer="true" Value="@Core.Loadingbars.GetProgressValue("Main")" BufferValue="@Core.Loadingbars.GetBufferValue("Main")" Class="my-7">
-                @if (!string.IsNullOrEmpty(Core.Loadingbars.GetProgressText("Main")))
-                {
-                    <MudText Typo="Typo.subtitle1" Color="Color.Dark">
-                        <b>@Core.Loadingbars.GetProgressText("Main")</b>
-                    </MudText>
-                }
-            </MudProgressLinear>
+            @{
+                Core.Loadingbars.GetLoadingBar("Main", out int progressValue, out int bufferValue, out string progressText);
+                <MudProgressLinear Color="Color.Error" Buffer="true" Value="@progressValue" BufferValue="@bufferValue" Class="my-7">
+                    @if (!string.IsNullOrEmpty(progressText))
+                    {
+                        <MudText Typo="Typo.subtitle1" Color="Color.Dark">
+                            <b>@progressText</b>
+                        </MudText>
+                    }
+                </MudProgressLinear>
+            }
         </MudContainer>
+
+        // <FactoryLoader Text="Stealing all of your info from Bungie..." Scale=3/> Not working because I suck at css. The age-old problem of centering a div :(
     }
 }
 
@@ -267,4 +282,5 @@ else
             Navigation.NavigateTo(Core.OAuthProfile.ConstructAuthorizationURL().ToString(), true);
         }
     }
+
 }
