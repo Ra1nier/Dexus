@@ -348,6 +348,12 @@ public class ContentManager
         this.cancellationTokenSource = new CancellationTokenSource();
         CancellationToken token = this.cancellationTokenSource.Token;
 
+        // If transfers are already being processed return as to not overwrite the task.
+        if (this.transferTask != null && this.transferTask.Status == TaskStatus.Running)
+        {
+            return;
+        }
+
         this.logger.LogInformation("Transfer processing task was started. Content Manager will now handle transfer requests.");
         this.recentlyHandledTransfers.StartAutoCleanup(TimeSpan.FromSeconds(5));
         this.transferTask = Task.Run(
