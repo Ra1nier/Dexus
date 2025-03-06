@@ -39,6 +39,11 @@
             <MudCardContent Style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;">
                 @foreach (var perk in Item.Perks)
                 {
+                    if (!perk.IsVisible)
+                    {
+                        continue;
+                    }
+
                     string iconPath = $"https://www.bungie.net{perk.IconPath}";
                     <MudTooltip Text="Placeholder for perk name">
                         <MudIconButton Style="width: 80px; height: 80px;" OnClick="SelectPerk">

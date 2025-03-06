@@ -738,13 +738,20 @@ public class ContentManager
                 "CharacterEquipment",
                 "ItemInstances",
                 "ItemPerks",
+                "ItemStats",
+                "ItemSockets",
+                "ItemPlugStates",
+                "ItemPlugObjectives",
+                "ItemReusablePlugs",
             ];
             string equipmentContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
+            await File.WriteAllTextAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "FullItemComponents.json"), equipmentContentsJson);
 
             JsonDocument equipmentContents = JsonDocument.Parse(equipmentContentsJson);
             JsonElement equipmentArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("characterEquipment").GetProperty("data");
             JsonElement instanceDataArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
             JsonElement perksDataArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("perks").GetProperty("data");
+            JsonElement plugsDataArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("profilePlugSets").GetProperty("data").GetProperty("plugs");
 
             // Populate Inventories list
             int itemsLoaded = 0;
