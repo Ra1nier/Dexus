@@ -16,11 +16,6 @@ using RequestManager.Models;
 public class ManifestServer
 {
     /// <summary>
-    /// Base bungie URL.
-    /// </summary>
-    private readonly string baseUrl = "https://www.bungie.net";
-
-    /// <summary>
     /// Logger used to log actions.
     /// </summary>
     private readonly ILogger logger;
@@ -57,58 +52,20 @@ public class ManifestServer
     /// <returns>A WeaponDetails class representing the manifest details of the specific weapon.</returns>
     public async Task<ItemDetails> Manifest_Query_ItemDetails(uint itemHash)
     {
-        string connectionString = $"Data Source={this.ManifestPath};";
+        // Convert itemHash to manifest id and construct query.
+        int id = this.ConvertHashToID(itemHash);
+        string query = $"SELECT json FROM DestinyInventoryItemDefinition WHERE id = {id};";
 
-        try
+        // Execute Query and get response
+        (bool success, string json) = await this.QueryManifest(query);
+
+        if (!success)
         {
-            using (var connection = new SqliteConnection(connectionString))
-            {
-                await connection.OpenAsync();
-                this.logger.LogTrace($"QUERY MANIFEST: DestinyInventoryItemDefinition of ItemHash={itemHash}");
-
-                // Convert itemHash to signed int
-                int id = this.ConvertHashToID(itemHash);
-
-                string query = $@"
-                    SELECT json
-                    FROM DestinyInventoryItemDefinition
-                    WHERE id = @ID;";
-
-                using (var command = new SqliteCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@ID", id);
-
-                    // Execute the query
-                    using (var reader = await command.ExecuteReaderAsync())
-                    {
-                        if (await reader.ReadAsync())
-                        {
-                            string json = reader.GetString(0);
-
-                            var itemDetails = JsonSerializer.Deserialize<ItemDetails>(json);
-
-                            if (itemDetails == null)
-                            {
-                                throw new Exception($"Failed to deserialize weapon details for itemHash: {itemHash}");
-                            }
-
-                            itemDetails.DisplayProperties.Icon = $"{this.baseUrl}{itemDetails.DisplayProperties.Icon}";
-                            return itemDetails;
-                        }
-                        else
-                        {
-                            this.logger.LogError($"No data found for itemHash={itemHash} with ID={id}");
-                            return new ItemDetails();
-                        }
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            this.logger.LogError($"Error querying manifest: {ex.Message}");
+            this.logger.LogError($"No data found for ItemHash={itemHash} with ID={id}");
             return new ItemDetails();
         }
+
+        return JsonSerializer.Deserialize<ItemDetails>(json) ?? new ItemDetails();
     }
 
     /// <summary>
@@ -118,47 +75,19 @@ public class ManifestServer
     /// <returns>A JsonDocument that contains the definition for the requested bucket. An empty JsonDocument is returned if the bucket could not be found.</returns>
     public async Task<JsonDocument> Manifest_Query_BucketDefinition(uint bucketHash)
     {
-        string connectionString = $"Data Source={this.ManifestPath};";
-        try
+        // Convert itemHash to manifest id and construct query.
+        int id = this.ConvertHashToID(bucketHash);
+        string query = $"SELECT json FROM DestinyInventoryBucketDefinition WHERE id = {id};";
+
+        // Execute Query and get response
+        (bool success, string json) = await this.QueryManifest(query);
+
+        if (!success)
         {
-            using (var connection = new SqliteConnection(connectionString))
-            {
-                await connection.OpenAsync();
-                this.logger.LogTrace($"QUERY MANIFEST: DestinyInventoryBucketDefinition of BucketHash={bucketHash}");
-
-                int id = this.ConvertHashToID(bucketHash);
-
-                string query = $@"
-                    SELECT json
-                    FROM DestinyInventoryBucketDefinition
-                    WHERE id = @ID;";
-
-                using (var command = new SqliteCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@ID", id);
-
-                    // Execute the query
-                    using (var reader = await command.ExecuteReaderAsync())
-                    {
-                        if (await reader.ReadAsync())
-                        {
-                            string json = reader.GetString(0);
-                            return JsonDocument.Parse(json);
-                        }
-                        else
-                        {
-                            this.logger.LogError($"No data found for itemHash={bucketHash} with ID={id}");
-                            return JsonDocument.Parse("{}");
-                        }
-                    }
-                }
-            }
+            this.logger.LogError($"No data found for BucketHash={bucketHash} with ID={id}");
         }
-        catch (Exception ex)
-        {
-            this.logger.LogError($"Error querying manifest: {ex.Message}");
-            return JsonDocument.Parse("{}");
-        }
+
+        return JsonDocument.Parse(json);
     }
 
     /// <summary>
@@ -168,48 +97,75 @@ public class ManifestServer
     /// <returns>A JsonDocument of the character details. An empty JsonDocument is returned if the character could not be found.</returns>
     public async Task<JsonDocument> Manifest_Query_CharacterDetails(uint characterHash)
     {
+        // Convert characterHash to manifest id and construct query.
+        int id = this.ConvertHashToID(characterHash);
+        string query = $"SELECT json FROM DestinyClassDefinition WHERE id = {id};";
+
+        // Execute Query and get response
+        (bool success, string json) = await this.QueryManifest(query);
+
+        if (!success)
+        {
+            this.logger.LogError($"No data found for CharacterHash={characterHash} with ID={id}");
+        }
+
+        return JsonDocument.Parse(json);
+    }
+
+    /// <summary>
+    /// Queries the manifest for the associated weapon.
+    /// </summary>
+    /// <param name="perkHash">Item hash to query.</param>
+    /// <returns>A WeaponDetails class representing the manifest details of the specific weapon.</returns>
+    public async Task Manifest_Query_PerkDetails(uint perkHash)
+    {
+        // Convert itemHash to manifest id and construct query.
+        int id = this.ConvertHashToID(perkHash);
+        string query = $"SELECT json FROM DestinySandboxPerkDefinition WHERE id = {id};";
+
+        // Execute Query and get response
+        (bool success, string json) = await this.QueryManifest(query);
+
+        if (!success)
+        {
+            this.logger.LogError($"No data found for PerkHash={perkHash} with ID={id}");
+        }
+
+        this.logger.LogCritical(json);
+    }
+
+    /// <summary>
+    /// Executes the given query on the destiny 2 manifest DB.
+    /// </summary>
+    /// <param name="query">Query string to execute.</param>
+    /// <returns>A Tuple where Item1 is a bool indicating whether the associated JSON was found, and Item2 is a string containing the JSON.</returns>
+    private async Task<Tuple<bool, string>> QueryManifest(string query)
+    {
         string connectionString = $"Data Source={this.ManifestPath};";
 
         try
         {
-            using (var connection = new SqliteConnection(connectionString))
+            // Open DB connection
+            await using var connection = new SqliteConnection(connectionString);
+            await connection.OpenAsync();
+
+            // Build query command.
+            await using var command = new SqliteCommand(query, connection);
+
+            // Execute the query
+            await using var reader = await command.ExecuteReaderAsync();
+            if (!await reader.ReadAsync())
             {
-                await connection.OpenAsync();
-                this.logger.LogTrace($"QUERY MANIFEST: DestinyClassDefinition of CharacterHash={characterHash}");
-
-                int id = this.ConvertHashToID(characterHash);
-
-                string query = $@"
-                    SELECT json
-                    FROM DestinyClassDefinition
-                    WHERE id = @ID;";
-
-                using (var command = new SqliteCommand(query, connection))
-                {
-                    command.Parameters.AddWithValue("@ID", id);
-
-                    // Execute the query
-                    using (var reader = await command.ExecuteReaderAsync())
-                    {
-                        if (await reader.ReadAsync())
-                        {
-                            string json = reader.GetString(0);
-
-                            return JsonDocument.Parse(json);
-                        }
-                        else
-                        {
-                            this.logger.LogError($"No data found for CharacterHash={characterHash} with ID={id}");
-                            return JsonDocument.Parse("{}");
-                        }
-                    }
-                }
+                return new Tuple<bool, string>(false, "{}");
             }
+
+            string json = reader.GetString(0);
+            return new Tuple<bool, string>(true, json);
         }
         catch (Exception ex)
         {
             this.logger.LogError($"Error querying manifest: {ex.Message}");
-            return JsonDocument.Parse("{}");
+            return new Tuple<bool, string>(false, "{}");
         }
     }
 
