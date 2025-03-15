@@ -1,5 +1,5 @@
-using GuardianVaultManager.Client.Pages;
-using GuardianVaultManager.Components;
+using Nexus.Client.Pages;
+using Nexus.Components;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,6 +34,6 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(GuardianVaultManager.Client._Imports).Assembly);
+    .AddAdditionalAssemblies(typeof(Nexus.Client._Imports).Assembly);
 
 app.Run();

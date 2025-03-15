@@ -1,5 +1,5 @@
 ﻿@using ContentManager.Models
-@using GuardianVaultManagerCore
+@using NexusCore
 
 @if (Sorted)
 {
@@ -52,7 +52,7 @@ else
     [Parameter] public required IEnumerable<Item> Items { get; set; }
 
     /// <summary>
-    /// Core used by GVM.
+    /// Core used by GuardianVaultManager.
     /// </summary>
     [Parameter] public required Core Core { get; set; }
 

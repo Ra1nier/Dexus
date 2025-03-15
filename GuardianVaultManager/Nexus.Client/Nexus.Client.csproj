@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\GuardianVaultManagerCore\GuardianVaultManagerCore.csproj" />
+    <ProjectReference Include="..\..\NexusCore\NexusCore.csproj" />
     <ProjectReference Include="..\..\RequestManager\RequestManager.csproj" />
   </ItemGroup>
 

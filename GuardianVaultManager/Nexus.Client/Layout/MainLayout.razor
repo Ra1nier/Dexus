@@ -1,4 +1,4 @@
-﻿@using GuardianVaultManager.Client.Pages
+﻿@using Nexus.Client.Pages
 @using RequestManager.Models
 @inherits LayoutComponentBase
 
@@ -94,7 +94,7 @@
         refreshingContent = true;
         StateHasChanged();
 
-        await GVM.Content.RefreshUserContent();
+        await GuardianVaultManager.Content.RefreshUserContent();
 
         lastRefreshTime = DateTime.Now;
         refreshingContent = false;

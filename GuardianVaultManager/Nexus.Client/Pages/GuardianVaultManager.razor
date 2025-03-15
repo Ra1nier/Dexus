@@ -1,13 +1,12 @@
-﻿@page "/GVM"
+﻿@page "/GuardianVaultManager"
 @rendermode InteractiveServer
 
-@using GuardianVaultManagerCore
+@using NexusCore
 @using ContentManager
-@using GuardianVaultManager.Client.Componates
-@using GuardianVaultManager.Client.Flairs.Loadingbars
+@using Nexus.Client.Componates
 
 @inject NavigationManager Navigation
-@inject ILogger<GVM> Logger
+@inject ILogger<GuardianVaultManager> Logger
 @inject ISnackbar Snackbar
 
 <PageTitle>Guardian Vault Manager</PageTitle>
@@ -128,19 +127,19 @@ else
 }
 
 @code {
-    // GVM Objects
+    // GuardianVaultManager Objects
 
     /// <summary>
-    /// Holds the singleton instance of core that GVM uses.
+    /// Holds the singleton instance of core that GuardianVaultManager uses.
     /// </summary>
     public static Core Core = new Core();
 
     /// <summary>
-    /// Holds the singleton instance of Content Manager from Core that GVM uses.
+    /// Holds the singleton instance of Content Manager from Core that GuardianVaultManager uses.
     /// </summary>
     public static ContentManager Content = new ContentManager();
 
-    // GVM Variables
+    // GuardianVaultManager Variables
     private bool initializationComplete;
     private Dictionary<string, bool> localSettings = new Dictionary<string, bool>();
 
@@ -280,5 +279,4 @@ else
             Navigation.NavigateTo(Core.OAuthProfile.ConstructAuthorizationURL().ToString(), true);
         }
     }
-
 }

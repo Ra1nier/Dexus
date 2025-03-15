@@ -10,13 +10,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GuardianVaultManagerCore", "GuardianVaultManagerCore\GuardianVaultManagerCore.csproj", "{1CC49F40-9CCD-475D-9DA4-46C725D19023}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NexusCore", "NexusCore\NexusCore.csproj", "{1CC49F40-9CCD-475D-9DA4-46C725D19023}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientProfile", "ClientProfile\ClientProfile.csproj", "{2150A7B9-B7F5-4A01-8554-A142B4B0CB61}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GuardianVaultManager", "GuardianVaultManager\GuardianVaultManager\GuardianVaultManager.csproj", "{2985999C-3188-4ED6-AE40-D20DED60F1D1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus", "GuardianVaultManager\Nexus\Nexus.csproj", "{2985999C-3188-4ED6-AE40-D20DED60F1D1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GuardianVaultManager.Client", "GuardianVaultManager\GuardianVaultManager.Client\GuardianVaultManager.Client.csproj", "{578203EE-1083-48E4-ACB2-FD99A48C102D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Client", "GuardianVaultManager\Nexus.Client\Nexus.Client.csproj", "{578203EE-1083-48E4-ACB2-FD99A48C102D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RequestManager", "RequestManager\RequestManager.csproj", "{0B2E9CD0-C619-426C-B2CE-25352BC211CA}"
 EndProject

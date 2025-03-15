@@ -8,8 +8,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Data.Sqlite;
 using System.Text.Json;
 using SQLitePCL;
-using RequestManager.Models.ItemDetails;
-using RequestManager.Models.PerkDetails;
+using Models.ItemDetails;
+using Models.PerkDetails;
 
 /// <summary>
 /// Handles interactions with the Destiny 2 Manifest.

@@ -1,15 +1,19 @@
-# Guardian Vault Manager
+# Nexus Destiny 2 Manager
 
-Guardian Vault Manager (GVM) is a tool designed to help Destiny 2 players manage their in-game items efficiently. Similar to Destiny Item Manager (DIM), GVM offers a user-friendly interface to organize, transfer, and track your Destiny 2 inventory. This is really just a personal
+Nexus is a tool designed to help Destiny 2 players manage their in-game items efficiently. This is its current functionality but more is planned. Nexus offers a user-friendly interface to organize, transfer, and track your Destiny 2 inventory. This is really just a personal
 project to help me learn C#, .NET and Blazor.
 
 ## Features
 
+### Guardian Vault Manager
 - **Item Management**: Easily move items between your characters and vault.
 - **Loadout Creation**: Create and save loadouts for quick equipment changes. **Coming Soon TM**
 - **Item Search and Filters**: Quickly find items using powerful search and filtering options. **Coming Soon TM**
 - **Detailed Item Information**: View detailed stats and information for each item. **Coming Soon TM**
-- **Easily Customizable**: Customise GVM to make it ours. **Coming Soon TM**
+- **Easily Customizable**: Customise GVM to make it yours. **Coming Soon TM**
+
+### <i>More Managers on their way!</i>
+
 ## Getting Started
 
 ### Prerequisites

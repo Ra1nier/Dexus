@@ -2,7 +2,7 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-namespace GuardianVaultManagerCore;
+namespace NexusCore;
 
 using Microsoft.Extensions.Logging;
 using ClientProfile;
@@ -12,7 +12,7 @@ using ContentManager;
 using GuardianServices;
 
 /// <summary>
-/// Wraps the model of GuardianVaultManager in a single core application manager.
+/// Wraps the model of Nexus in a single core application manager.
 /// </summary>
 public class Core
 {
@@ -140,7 +140,7 @@ public class Core
     // Main Functionality
 
     /// <summary>
-    /// Starts the GuardianVaultManagerCore.
+    /// Starts the NexusCore.
     /// </summary>
     public async void StartCoreService()
     {
