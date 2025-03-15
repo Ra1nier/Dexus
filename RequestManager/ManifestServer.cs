@@ -8,7 +8,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Data.Sqlite;
 using System.Text.Json;
 using SQLitePCL;
-using RequestManager.Models;
+using RequestManager.Models.ItemDetails;
+using RequestManager.Models.PerkDetails;
 
 /// <summary>
 /// Handles interactions with the Destiny 2 Manifest.
@@ -117,7 +118,7 @@ public class ManifestServer
     /// </summary>
     /// <param name="perkHash">Item hash to query.</param>
     /// <returns>A WeaponDetails class representing the manifest details of the specific weapon.</returns>
-    public async Task Manifest_Query_PerkDetails(uint perkHash)
+    public async Task<PerkDetails> Manifest_Query_PerkDetails(uint perkHash)
     {
         // Convert itemHash to manifest id and construct query.
         int id = this.ConvertHashToID(perkHash);
@@ -129,9 +130,10 @@ public class ManifestServer
         if (!success)
         {
             this.logger.LogError($"No data found for PerkHash={perkHash} with ID={id}");
+            return new PerkDetails();
         }
 
-        this.logger.LogCritical(json);
+        return JsonSerializer.Deserialize<PerkDetails>(json) ?? new PerkDetails();
     }
 
     /// <summary>

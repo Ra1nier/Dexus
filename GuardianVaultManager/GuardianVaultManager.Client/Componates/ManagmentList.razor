@@ -86,7 +86,7 @@
             transferBucket = Core.Content.Characters.FirstOrDefault(x => x.Value.CharacterId == destination.Replace("Equipped", string.Empty)).Value.Class ?? destination;
         }
 
-        Core.Snackbar.AddMessage($"Transferring {Core.Content.Details[transfer.ItemHash].DisplayProperties.Name} to {transferBucket}.", "Info");
+        Core.Snackbar.AddMessage($"Transferring {Core.Content.ItemDetails[transfer.ItemHash].DisplayProperties.Name} to {transferBucket}.", "Info");
 
         string itemID = Core.Content.QueueTransfer(transfer, origin, destination);
 
@@ -98,7 +98,7 @@
         if (Core.Content.GetTransferStatus(itemID) == 0)
         {
             RenderKey = Guid.NewGuid();
-            Core.Snackbar.AddMessage($"Transfer of {Core.Content.Details[transfer.ItemHash].DisplayProperties.Name} to {transferBucket} was Successful.", "Success");
+            Core.Snackbar.AddMessage($"Transfer of {Core.Content.ItemDetails[transfer.ItemHash].DisplayProperties.Name} to {transferBucket} was Successful.", "Success");
         }
 
         this.StateHasChanged();

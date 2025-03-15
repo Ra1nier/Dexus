@@ -5,7 +5,7 @@
 
 <!-- Main Display -->
 <MudCard Style="width: 80px; height: 80px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; position: relative;" Elevation="4" @onclick="() => TogglePopover(itemModelID)">
-    <MudCardMedia Image="@Core.Content.Details[Item.ItemHash].DisplayProperties.Icon" alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
+    <MudCardMedia Image="@Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Icon" alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
     @if (Item.Power != 0)
     {
         @if (Core.Settings.Check("WeaponStyle-Tag"))
@@ -21,7 +21,7 @@
     @if (Core.Settings.Check("Weapon-Names"))
     {
         <MudCardContent Style="text-align: center; padding: 4px;">
-            <MudText Typo="Typo.body2" Style="font-size: 10px;">@Core.Content.Details[Item.ItemHash].DisplayProperties.Name</MudText>
+            <MudText Typo="Typo.body2" Style="font-size: 10px;">@Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name</MudText>
         </MudCardContent>
     }
 </MudCard>
@@ -30,7 +30,7 @@
 <MudPopover Open="@(activeItemID == itemModelID)" AnchorOrigin="Origin.TopCenter" TransformOrigin="Origin.BottomCenter">
     <MudPaper Class="pa-4" Style="min-width: 250px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <MudText Typo="Typo.h6">@Core.Content.Details[Item.ItemHash].DisplayProperties.Name</MudText>
+            <MudText Typo="Typo.h6">@Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name</MudText>
             <MudIconButton Icon="@Icons.Material.Outlined.Close" OnClick="()=>activeItemID = null" Size="Size.Small"/>
         </div>
 
@@ -45,7 +45,7 @@
                     }
 
                     string iconPath = $"https://www.bungie.net{perk.IconPath}";
-                    <MudTooltip Text="Placeholder for perk name">
+                    <MudTooltip Text=@Core.Content.PerkDetails[perk.PerkHash].DisplayProperties.Name>
                         <MudIconButton Style="width: 80px; height: 80px;" OnClick="SelectPerk">
                             <img src="@iconPath" alt="Perk Icon" style="width: 100%; height: 100%; object-fit: contain;" />
                         </MudIconButton>
@@ -129,7 +129,7 @@
         string origin = Item.Identifier ?? string.Empty;
 
         string characterName = Core.Content.Characters.FirstOrDefault(x => x.Value.CharacterId == destination).Value.Class ?? destination;
-        Core.Snackbar.AddMessage($"Transferring {Core.Content.Details[Item.ItemHash].DisplayProperties.Name} to {characterName}.", "Info");
+        Core.Snackbar.AddMessage($"Transferring {Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name} to {characterName}.", "Info");
 
         string itemID = Core.Content.QueueTransfer(Item, origin, destination);
 
@@ -140,7 +140,7 @@
 
         if (Core.Content.GetTransferStatus(itemID) == 0)
         {
-            Core.Snackbar.AddMessage($"Transfer of {Core.Content.Details[Item.ItemHash].DisplayProperties.Name} to {characterName} was Successful.", "Success");
+            Core.Snackbar.AddMessage($"Transfer of {Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name} to {characterName} was Successful.", "Success");
         }
 
         this.StateHasChanged();
@@ -156,11 +156,11 @@
             return;
         }
 
-        Core.Snackbar.AddMessage($"Pulling {Core.Content.Details[Item.ItemHash].DisplayProperties.Name} from Postmaster.", "Info");
+        Core.Snackbar.AddMessage($"Pulling {Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name} from Postmaster.", "Info");
 
         if (await Core.Content.PullFromPostmaster(this.Item))
         {
-            Core.Snackbar.AddMessage($"Successfully pulled {Core.Content.Details[Item.ItemHash].DisplayProperties.Name} from Postmaster.", "Success");
+            Core.Snackbar.AddMessage($"Successfully pulled {Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name} from Postmaster.", "Success");
         }
     }
 

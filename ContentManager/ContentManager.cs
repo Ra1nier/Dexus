@@ -9,7 +9,8 @@ using GuardianServices;
 using Microsoft.Extensions.Logging;
 using Models;
 using RequestManager;
-using RequestManager.Models;
+using RequestManager.Models.ItemDetails;
+using RequestManager.Models.PerkDetails;
 using System.Text.Json;
 
 /// <summary>
@@ -59,7 +60,10 @@ public class ContentManager
     private Dictionary<string, Character> characters = new Dictionary<string, Character>();
     private Dictionary<string, Item> dropzoneBackingStore = new Dictionary<string, Item>();
     private List<Item> uninstancatedItems = new List<Item>();
+
+    // Content Detail Dictionaries.
     private Dictionary<uint, ItemDetails> itemDetails = new Dictionary<uint, ItemDetails>();
+    private Dictionary<uint, PerkDetails> perkDetails = new Dictionary<uint, PerkDetails>();
 
     // Content Management Containers
     private Queue<TransferInfo> queuedTransfers = new Queue<TransferInfo>();
@@ -266,9 +270,14 @@ public class ContentManager
     public List<Item> UninstantiatedItems { get => this.uninstancatedItems; }
 
     /// <summary>
-    /// Gets the Details List.
+    /// Gets the Item Details List.
     /// </summary>
-    public Dictionary<uint, ItemDetails> Details { get => this.itemDetails; }
+    public Dictionary<uint, ItemDetails> ItemDetails { get => this.itemDetails; }
+    
+    /// <summary>
+    /// Gets the Perk Details List.
+    /// </summary>
+    public Dictionary<uint, PerkDetails> PerkDetails { get => this.perkDetails; }
 
     /// <summary>
     /// Gets a value indicating whether if transfers are currently being handled.
@@ -463,7 +472,7 @@ public class ContentManager
     /// Equips the item to the provided character.
     /// </summary>
     /// <param name="item">Item to equip.</param>
-    /// <param name="location">Character id of the items location.</param>
+    /// <param name="location">Character id of the item location.</param>
     /// <returns>True if the transfer operation was successful. False otherwise.</returns>
     private async Task<bool> Equip(Item item, string location)
     {
@@ -560,14 +569,14 @@ public class ContentManager
             }
             else if (!secondTransfer)
             {
-                this.snackbar.AddMessage($"Transfer of {this.Details[transfer.ItemHash].DisplayProperties.Name} failed. Returning the item to the origin.", "Warning");
+                this.snackbar.AddMessage($"Transfer of {this.ItemDetails[transfer.ItemHash].DisplayProperties.Name} failed. Returning the item to the origin.", "Warning");
                 bool returnSuccessful = await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID, stackSize, origin, false);
 
                 if (!returnSuccessful)
                 {
                     this.SetIdentifier(transfer, "Vault");
                     this.snackbar.AddMessage(
-                        $"Transfer failed. {this.Details[transfer.ItemHash].DisplayProperties.Name} " +
+                        $"Transfer failed. {this.ItemDetails[transfer.ItemHash].DisplayProperties.Name} " +
                         "has ended up in the Vault as GVM was unable to return it.", "Warning");
                 }
 
@@ -623,7 +632,7 @@ public class ContentManager
         string trueDestination = destination.Replace("Equipped", string.Empty);
 
         Dictionary<string, Item> charactersItemBucket = this.DropzoneBackingStore.Where(b => b.Value.Bucket == item.Bucket).Where(i => i.Value.Identifier == trueOrigin).ToDictionary(i => i.Key, i => i.Value);
-        if (charactersItemBucket.Any())
+        if (!charactersItemBucket.Any())
         {
             this.snackbar.AddMessage("Character has no items to to replace the equipped item. Transfer another weapon into your inventory to fix this.", "Warning");
             return false; // TODO: Not the best solution. Could pull item from vault to equip, but I am too lazy.
@@ -677,7 +686,7 @@ public class ContentManager
                     var characterDetails = characterJson.Value;
 
                     // Deserialize character details
-                    var character = JsonSerializer.Deserialize<Character>(characterDetails);
+                    var character = characterDetails.Deserialize<Character>();
 
                     if (character != null)
                     {
@@ -985,17 +994,19 @@ public class ContentManager
         {
             await this.QueryManifestForDetails(item);
             await this.QueryManifestForBuckets(item);
+            await this.QueryManifestForPerkDetails(item);
         }
     }
 
     /// <summary>
-    /// Creates a dictionary for the clients weapons.
+    /// Creates a Item Details for the clients weapon and adds it to the Item Details list.
     /// </summary>
     /// <param name="item">Item to get information for.</param>
     /// <returns>Task representing the operation.</returns>
     private async Task QueryManifestForDetails(Item item)
     {
         uint itemHash = item.ItemHash;
+
         if (!this.itemDetails.TryGetValue(itemHash, out _))
         {
             var details = await this.GetItemDetails(itemHash);
@@ -1038,19 +1049,59 @@ public class ContentManager
     }
 
     /// <summary>
+    /// Creates Perk Details for the weapon's perks and adds them to the Perk Details list.
+    /// </summary>
+    /// <param name="item">Item to get information for.</param>
+    /// <returns>Task representing the operation.</returns>
+    private async Task QueryManifestForPerkDetails(Item item)
+    {
+        if (item?.Perks == null)
+        {
+            return;
+        }
+
+        var perks = item.Perks;
+
+        if (perks.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var perk in perks)
+        {
+            uint perkHash = perk.PerkHash;
+
+            if (this.perkDetails.TryGetValue(perkHash, out _))
+            {
+                continue;
+            }
+
+            var details = await this.GetPerkDetails(perkHash);
+            if (details.Equals(new PerkDetails()))
+            {
+                this.snackbar.AddMessage("GVM is unable to define a perk.", "warning");
+            }
+
+            lock (this.perkDetails)
+            {
+                this.perkDetails.Add(perkHash, details);
+            }
+        }
+    }
+
+    /// <summary>
     /// Gets the details of the itemHash provided.
     /// </summary>
     /// <param name="itemHash">ItemHash to use in the search.</param>
-    /// <returns>The URL for the photo.</returns>
+    /// <returns>An ItemDetails containing the info from the manifest.</returns>
     private async Task<ItemDetails> GetItemDetails(uint itemHash)
     {
-        ItemDetails details;
-        details = await this.manifest.Manifest_Query_ItemDetails(itemHash);
+        ItemDetails details = await this.manifest.Manifest_Query_ItemDetails(itemHash);
 
         if (details.Equals(new ItemDetails()))
         {
             details = await this.request.PlatformDestiny2_Request_ItemDefinition(itemHash);
-            this.logger.LogError($"GVM could not find any ItemDetails for the itemHash={itemHash} in both the manifest or from Bungie.");
+            this.logger.LogError($"GVM could not find any ItemDetails for the itemHash={itemHash} in the manifest or and has attempted to get it from Bungie.");
         }
 
         return details;
@@ -1084,6 +1135,23 @@ public class ContentManager
         }
 
         return string.Empty;
+    }
+
+    /// <summary>
+    /// Gets the details of the perkHash provided.
+    /// </summary>
+    /// <param name="perkHash">ItemHash to use in the search.</param>
+    /// <returns>A PerkDetails containing the info from the manifest.</returns>
+    private async Task<PerkDetails> GetPerkDetails(uint perkHash)
+    {
+        PerkDetails details = await this.manifest.Manifest_Query_PerkDetails(perkHash);
+
+        if (details.Equals(new PerkDetails()))
+        {
+            this.logger.LogError($"GVM could not find any ItemDetails for the perkHash={perkHash} in the manifest.");
+        }
+
+        return details;
     }
 
     /// <summary>
