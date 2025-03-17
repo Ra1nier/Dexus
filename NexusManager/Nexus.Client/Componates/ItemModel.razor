@@ -1,100 +1,111 @@
 ﻿@using ContentManager.Models
 @using NexusCore
 
-@inject NavigationManager NavManager
-
 <!-- Main Display -->
-<MudCard Style="width: 80px; height: 80px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; position: relative;" Elevation="4" @onclick="() => TogglePopover(itemModelID)">
-    <MudCardMedia Image="@Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Icon" alt="Weapon" Style="width: 100%; height: 100%; object-fit: cover;" />
+<MudCard
+    Style="width: 80px; height: 80px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; position: relative;"
+    Elevation="4" @onclick="() => TogglePopover(itemModelID)">
+    <MudCardMedia Image="@Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Icon" alt="Weapon"
+                  Style="width: 100%; height: 100%; object-fit: cover;"/>
     @if (Item.Power != 0)
     {
-        @if (Core.Settings.Check("WeaponStyle-Tag"))
-        {
-            <div style="position: absolute; right: 0; background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 2px 0 10px; font-size: 12px; clip-path: polygon(0 0, 100% 0%, 100% 100%, 30% 100%);">@Item.Power</div>
-        }
-        else
-        {
-            <div style="position: absolute; top: 4px; right: 4px; background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 6px; font-size: 12px; border-radius: 4px;">@Item.Power</div>
-        }
-    }
-
-    @if (Core.Settings.Check("Weapon-Names"))
-    {
-        <MudCardContent Style="text-align: center; padding: 4px;">
-            <MudText Typo="Typo.body2" Style="font-size: 10px;">@Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name</MudText>
-        </MudCardContent>
+        <div style="position: absolute; top: 4px; right: 4px; background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 6px; font-size: 12px; border-radius: 4px;">@Item.Power</div>
     }
 </MudCard>
 
 <!-- Popover for Info and Actions for the Item -->
-<MudPopover Open="@(activeItemID == itemModelID)" AnchorOrigin="Origin.TopCenter" TransformOrigin="Origin.BottomCenter">
-    <MudPaper Class="pa-4" Style="min-width: 250px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);">
+@if (!string.IsNullOrEmpty(Item.ItemInstanceId))
+{
+    <MudPopover Open=@(activeItemID == itemModelID) AnchorOrigin="Origin.TopCenter"
+            TransformOrigin="Origin.BottomCenter">
+    <MudPaper Class="pa-3" Style="min-width: 280px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);">
+        
+        <!-- Header with Name and Close Button -->
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <MudText Typo="Typo.h6">@Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name</MudText>
-            <MudIconButton Icon="@Icons.Material.Outlined.Close" OnClick="()=>activeItemID = null" Size="Size.Small"/>
+            <MudText Typo="Typo.h6" Style="flex-grow: 1;">@Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name</MudText>
+            <MudIconButton Icon="@Icons.Material.Outlined.Close" OnClick="()=>activeItemID = null" Size="Size.Small" />
         </div>
-
-        <!-- Perk Details -->
-        <MudCard Class="mt-2" Style="border: none; box-shadow: none; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px;">
-            <MudCardContent Style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;">
-                @foreach (var perk in Item.Perks)
-                {
-                    if (!perk.IsVisible)
+        
+        <!-- Perk Details Placeholder -->
+        <div class="mt-2" style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr; gap: 4px;">
+            <div style="grid-column: span 1; background: rgba(255,255,255,0.1); padding: 8px; text-align: center;">Archetype</div> <!-- This is where the weapons archetype will be placed -->
+            <div style="grid-column: span 4; background: rgba(255,255,255,0.05); padding: 8px;">Perks</div> <!-- This is where the perk columns will go -->
+            <div style="grid-column: span 1; background: rgba(255,255,255,0.05); padding: 8px;">Masterwork</div> <!-- This is where the masterwork will go -->
+        </div>
+        
+        <!-- Weapon Stats Placeholder -->
+        <MudExpansionPanel Text="Weapon Stats" MaxHeight="150">
+            <MudList T="string">
+                <MudListItem Text="Inbox" Icon="@Icons.Material.Filled.Inbox" />
+                <MudListItem Text="Sent" Icon="@Icons.Material.Filled.Send" />
+                <MudListItem Text="Drafts" Disabled="true" IconColor="Color.Info" Icon="@Icons.Material.Filled.Drafts" />
+                <MudDivider />
+                <MudListItem Text="Trash" SecondaryText="Removed e-mails" />
+                <MudListItem Text="Spam" SecondaryText="E-mails from common providers" />
+            </MudList>
+        </MudExpansionPanel>
+        
+        <!-- Transfer and Postmaster Actions -->
+        <div class="mt-2" style="display: flex; justify-content: space-between; gap: 8px;">
+            @if (Item.Bucket == "Lost Items")
+            {
+                <MudButton Color="Color.Warning" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.KeyboardDoubleArrowDown"
+                           OnClick="() => PullFromPostmaster()" Style="flex-grow: 1;">
+                    Pull From Postmaster
+                </MudButton>
+            }
+            else
+            {
+                <div style="flex-grow: 1; display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; padding: 10px">
+                    @foreach (Character character in Core.Content.Characters.Values.Where(c => c.CharacterId != Item.Identifier?.Replace("Equipped", string.Empty)))
                     {
-                        continue;
+                        string iconPath = $"/Resources/{character.Class}_Emblem.jpg";
+        
+                        <MudTooltip Text=@character.Class>
+                            <MudIconButton Disabled="@processing" Tag=@character.CharacterId
+                                           OnClick="() => Transfer(character.CharacterId ?? string.Empty)"
+                                           Variant="Variant.Filled" Color="Color.Primary"
+                                           Style="width: 48px; height: 48px; overflow: hidden; padding: 0; background: transparent;">
+                                <img src="@iconPath" alt="@character.Class Emblem"
+                                     style="width: 100%; height: 100%; object-fit: cover;" />
+                            </MudIconButton>
+                        </MudTooltip>
                     }
-
-                    string iconPath = $"https://www.bungie.net{perk.IconPath}";
-                    <MudTooltip Text=@Core.Content.PerkDetails[perk.PerkHash].DisplayProperties.Name>
-                        <MudIconButton Style="width: 80px; height: 80px;" OnClick="SelectPerk">
-                            <img src="@iconPath" alt="Perk Icon" style="width: 100%; height: 100%; object-fit: contain;" />
-                        </MudIconButton>
-                    </MudTooltip>
-                }
-            </MudCardContent>
-        </MudCard>
-
-        <!-- Transfer Menu -->
-        <MudMenu Icon="@Icons.Material.Outlined.IosShare" ActivationEvent="@MouseEvent.MouseOver" Class="mx-2 mt-2">
-            <ChildContent>
-                @foreach (Character character in Core.Content.Characters.Values.Where(c => c.CharacterId != Item.Identifier))
-                {
-                    <MudButton Disabled="@processing" Tag=@character.CharacterId OnClick="() => Transfer(character.CharacterId ?? string.Empty)" Variant="Variant.Filled" Color="Color.Primary" Class="mb-1">
-                        @if (processing)
-                        {
-                            <MudProgressCircular Size="Size.Small" Indeterminate="true" />
-                            <MudText Class="ms-2">Transferring...</MudText>
-                        }
-                        else
-                        {
-                            <MudText>@character.Class</MudText>
-                        }
-                    </MudButton>
-                }
-            </ChildContent>
-        </MudMenu>
-
-        <!-- Pull From Postmaster -->
-        @if (Item.Bucket == "Lost Items")
-        {
-            <MudButton Color="Color.Warning" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.KeyboardDoubleArrowDown" OnClick="() => PullFromPostmaster()" Class="mt-2">
-                Pull From Postmaster
-            </MudButton>
-        }
+                    
+                    @if (Item.Identifier != "Vault")
+                    {
+                        string vault = "Vault";
+        
+                        <MudTooltip Text="@vault">
+                            <MudIconButton Disabled="@processing" Tag=@vault
+                                           OnClick="() => Transfer(vault)"
+                                           Variant="Variant.Filled" Color="Color.Primary"
+                                           Style="width: 48px; height: 48px; overflow: hidden; padding: 0; background: transparent;">
+                                <img src="/Resources/VaultEmblem.png" alt="Vault Emblem"
+                                     style="width: 100%; height: 100%; object-fit: cover;" />
+                            </MudIconButton>
+                        </MudTooltip>
+                    }
+                </div>
+            }
+        </div>
     </MudPaper>
 </MudPopover>
-
+}
 
 @code {
+
     /// <summary>
     /// The Item to be represented by this model.
     /// </summary>
-    [Parameter] public required Item Item { get; set; }
+    [Parameter]
+    public required Item Item { get; set; }
 
     /// <summary>
     /// Singleton instance of the Core service.
     /// </summary>
-    [Parameter] public required Core Core { get; set; }
+    [Parameter]
+    public required Core Core { get; set; }
 
     // Property Popover locks
     private static Guid? activeItemID = null;
@@ -173,7 +184,7 @@
         {
             return;
         }
-        
+
         // TODO: Add functionality to change an items perk in Content Manager.
         return;
     }
