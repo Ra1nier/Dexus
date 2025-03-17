@@ -67,7 +67,9 @@ public class ContentManager
 
     // Content Management Containers
     private Queue<TransferInfo> queuedTransfers = new Queue<TransferInfo>();
-    private TimedDictionary<string, bool> recentlyHandledTransfers = new TimedDictionary<string, bool>(TimeSpan.FromSeconds(10));
+
+    private TimedDictionary<string, bool> recentlyHandledTransfers =
+        new TimedDictionary<string, bool>(TimeSpan.FromSeconds(10));
 
     // Content Tasks
     private Task? transferTask;
@@ -93,13 +95,14 @@ public class ContentManager
     /// <summary>
     /// Initializes a new instance of the <see cref="ContentManager"/> class.
     /// </summary>
-    /// <param name="logger">GVM Logger.</param>
-    /// <param name="profile">GVM user profile.</param>
-    /// <param name="request">GVM request server.</param>
-    /// <param name="manifest">GVM manifest server.</param>
-    /// <param name="snackbar">GVM snackbar provider.</param>
-    /// <param name="loadingbars">GVM loadingbar service.</param>
-    public ContentManager(ILogger logger, Profile profile, RequestServer request, ManifestServer manifest, SnackbarService snackbar, LoadingbarService loadingbars)
+    /// <param name="logger">Nexus Logger.</param>
+    /// <param name="profile">Nexus user profile.</param>
+    /// <param name="request">Nexus request server.</param>
+    /// <param name="manifest">Nexus manifest server.</param>
+    /// <param name="snackbar">Nexus snackbar provider.</param>
+    /// <param name="loadingbars">Nexus loadingbar service.</param>
+    public ContentManager(ILogger logger, Profile profile, RequestServer request, ManifestServer manifest,
+        SnackbarService snackbar, LoadingbarService loadingbars)
     {
         this.logger = logger;
         this.profile = profile;
@@ -119,7 +122,11 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> KineticWeapons
     {
-        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Kinetic Weapons").ToDictionary(i => i.Key, i => i.Value); }
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Kinetic Weapons")
+                .ToDictionary(i => i.Key, i => i.Value);
+        }
     }
 
     /// <summary>
@@ -127,7 +134,11 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> EnergyWeapons
     {
-        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Energy Weapons").ToDictionary(i => i.Key, i => i.Value); }
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Energy Weapons")
+                .ToDictionary(i => i.Key, i => i.Value);
+        }
     }
 
     /// <summary>
@@ -135,7 +146,11 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> PowerWeapons
     {
-        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Power Weapons").ToDictionary(i => i.Key, i => i.Value); }
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Power Weapons")
+                .ToDictionary(i => i.Key, i => i.Value);
+        }
     }
 
     /// <summary>
@@ -143,7 +158,11 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> Helmets
     {
-        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Helmet").ToDictionary(i => i.Key, i => i.Value); }
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Helmet")
+                .ToDictionary(i => i.Key, i => i.Value);
+        }
     }
 
     /// <summary>
@@ -151,7 +170,11 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> Gauntlets
     {
-        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Gauntlets").ToDictionary(i => i.Key, i => i.Value); }
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Gauntlets")
+                .ToDictionary(i => i.Key, i => i.Value);
+        }
     }
 
     /// <summary>
@@ -159,7 +182,11 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> Chests
     {
-        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Chest Armor").ToDictionary(i => i.Key, i => i.Value); }
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Chest Armor")
+                .ToDictionary(i => i.Key, i => i.Value);
+        }
     }
 
     /// <summary>
@@ -167,7 +194,11 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> Legs
     {
-        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Leg Armor").ToDictionary(i => i.Key, i => i.Value); }
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Leg Armor")
+                .ToDictionary(i => i.Key, i => i.Value);
+        }
     }
 
     /// <summary>
@@ -175,7 +206,11 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> Skirts
     {
-        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Class Armor").ToDictionary(i => i.Key, i => i.Value); }
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Class Armor")
+                .ToDictionary(i => i.Key, i => i.Value);
+        }
     }
 
     /// <summary>
@@ -194,7 +229,8 @@ public class ContentManager
                 "Accessories"
             ];
 
-            return this.dropzoneBackingStore.Where(i => buckets.Contains(i.Value.Bucket)).ToDictionary(i => i.Key, i => i.Value);
+            return this.dropzoneBackingStore.Where(i => buckets.Contains(i.Value.Bucket))
+                .ToDictionary(i => i.Key, i => i.Value);
         }
     }
 
@@ -203,7 +239,11 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> Postmaster
     {
-        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Lost Items").ToDictionary(i => i.Key, i => i.Value); }
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Lost Items")
+                .ToDictionary(i => i.Key, i => i.Value);
+        }
     }
 
     /// <summary>
@@ -211,7 +251,11 @@ public class ContentManager
     /// </summary>
     public Dictionary<string, Item> Engrams
     {
-        get { return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Engrams").ToDictionary(i => i.Key, i => i.Value); }
+        get
+        {
+            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Engrams")
+                .ToDictionary(i => i.Key, i => i.Value);
+        }
     }
 
     /// <summary>
@@ -228,7 +272,8 @@ public class ContentManager
                 "Quests"
             ];
 
-            return this.dropzoneBackingStore.Where(i => buckets.Contains(i.Value.Bucket)).ToDictionary(i => i.Key, i => i.Value);
+            return this.dropzoneBackingStore.Where(i => buckets.Contains(i.Value.Bucket))
+                .ToDictionary(i => i.Key, i => i.Value);
         }
     }
 
@@ -273,7 +318,7 @@ public class ContentManager
     /// Gets the Item Details List.
     /// </summary>
     public Dictionary<uint, ItemDetails> ItemDetails { get => this.itemDetails; }
-    
+
     /// <summary>
     /// Gets the Perk Details List.
     /// </summary>
@@ -317,7 +362,8 @@ public class ContentManager
     {
         if (!this.isInitialized)
         {
-            this.logger.LogWarning("Content Manager has not been initialized. It must be initialized before user contents can be refreshed.");
+            this.logger.LogWarning(
+                "Content Manager has not been initialized. It must be initialized before user contents can be refreshed.");
             return;
         }
 
@@ -371,37 +417,41 @@ public class ContentManager
             return;
         }
 
-        this.logger.LogInformation("Transfer processing task was started. Content Manager will now handle transfer requests.");
+        this.logger.LogInformation(
+            "Transfer processing task was started. Content Manager will now handle transfer requests.");
         this.recentlyHandledTransfers.StartAutoCleanup(TimeSpan.FromSeconds(5));
         this.transferTask = Task.Run(
             async () =>
-        {
-            try
             {
-                while (true)
+                try
                 {
-                    token.ThrowIfCancellationRequested();
-
-                    while (this.queuedTransfers.Count > 0)
+                    while (true)
                     {
-                        TransferInfo transfer = this.queuedTransfers.Dequeue();
-                        bool transferSuccess = await this.Transfer(transfer.Item, transfer.Origin, transfer.Destination);
+                        token.ThrowIfCancellationRequested();
 
-                        this.recentlyHandledTransfers.Add(transfer.Item.ItemInstanceId ?? string.Empty, transferSuccess);
+                        while (this.queuedTransfers.Count > 0)
+                        {
+                            TransferInfo transfer = this.queuedTransfers.Dequeue();
+                            bool transferSuccess =
+                                await this.Transfer(transfer.Item, transfer.Origin, transfer.Destination);
+
+                            this.recentlyHandledTransfers.Add(transfer.Item.ItemInstanceId ?? string.Empty,
+                                transferSuccess);
+                        }
+
+                        await Task.Delay(100, token);
                     }
-
-                    await Task.Delay(100, token);
                 }
-            }
-            catch (OperationCanceledException)
-            {
-                this.logger.LogInformation("Transfer processing task was canceled. Content Manager will not handle anymore transfer requests.");
-            }
-            catch (Exception e)
-            {
-                this.logger.LogError(e, "Error occurred while processing transfers.");
-            }
-        }, token);
+                catch (OperationCanceledException)
+                {
+                    this.logger.LogInformation(
+                        "Transfer processing task was canceled. Content Manager will not handle anymore transfer requests.");
+                }
+                catch (Exception e)
+                {
+                    this.logger.LogError(e, "Error occurred while processing transfers.");
+                }
+            }, token);
     }
 
     /// <summary>
@@ -435,12 +485,15 @@ public class ContentManager
         if (this.profile.MembershipType == null)
         {
             this.logger.LogCritical("MembershipType is null. Unable to transfer item.");
-            this.snackbar.AddMessage("Something went wrong. GVM is unable to access your bungie data. Transfer cannot be completed. Try logging back in to solve this issue.", "Error");
+            this.snackbar.AddMessage(
+                "Something went wrong. GVM is unable to access your bungie data. Transfer cannot be completed. Try logging back in to solve this issue.",
+                "Error");
             return false;
         }
 
         this.itemManagementRenderKey = Guid.NewGuid();
-        return await this.request.ActionItem_Request_PullFromPostmaster(this.profile.MembershipType, item.ItemHash, item.ItemInstanceId ?? string.Empty, item.Quantity, item.Identifier ?? string.Empty);
+        return await this.request.ActionItem_Request_PullFromPostmaster(this.profile.MembershipType, item.ItemHash,
+            item.ItemInstanceId ?? string.Empty, item.Quantity, item.Identifier ?? string.Empty);
     }
 
     /// <summary>
@@ -479,13 +532,17 @@ public class ContentManager
         if (this.profile.MembershipType == null)
         {
             this.logger.LogCritical("MembershipType is null. Unable to transfer item.");
-            this.snackbar.AddMessage("Something went wrong. GVM is unable to access your bungie data. Equip cannot be completed. Try logging back in to solve this issue.", "Error");
+            this.snackbar.AddMessage(
+                "Something went wrong. GVM is unable to access your bungie data. Equip cannot be completed. Try logging back in to solve this issue.",
+                "Error");
             return false;
         }
 
         // Equip the item.
-        Item itemBeingReplaced = this.DropzoneBackingStore.DistinctBy(i => i.Value.Identifier == $"{location}Equipped").First().Value;
-        if (await this.request.ActionItem_Request_EquipItem(this.profile.MembershipType, item.ItemInstanceId ?? string.Empty, location))
+        Item itemBeingReplaced = this.DropzoneBackingStore.DistinctBy(i => i.Value.Identifier == $"{location}Equipped")
+            .First().Value;
+        if (await this.request.ActionItem_Request_EquipItem(this.profile.MembershipType,
+                item.ItemInstanceId ?? string.Empty, location))
         {
             this.SetIdentifier(itemBeingReplaced, location);
             this.SetIdentifier(item, $"{location}Equipped");
@@ -536,7 +593,9 @@ public class ContentManager
         if (this.profile.MembershipType == null)
         {
             this.logger.LogCritical("MembershipType is null. Unable to transfer item.");
-            this.snackbar.AddMessage("Something went wrong. GVM is unable to access your bungie data. Transfer cannot be completed. Try logging back in to solve this issue.", "Error");
+            this.snackbar.AddMessage(
+                "Something went wrong. GVM is unable to access your bungie data. Transfer cannot be completed. Try logging back in to solve this issue.",
+                "Error");
             return false;
         }
 
@@ -545,22 +604,26 @@ public class ContentManager
         if (destination == "Vault")
         {
             // Transfer to Vault
-            return await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID, stackSize, origin, true);
+            return await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID,
+                stackSize, origin, true);
         }
         else if (origin == "Vault")
         {
             // Transfer to Character
-            return await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID, stackSize, destination, false);
+            return await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID,
+                stackSize, destination, false);
         }
         else
         {
             // Transfer to Vault then to the Character
-            bool firstTransfer = await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID, stackSize, origin, true);
+            bool firstTransfer = await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType,
+                itemHash, itemID, stackSize, origin, true);
 
             bool secondTransfer = false;
             if (firstTransfer)
             {
-                secondTransfer = await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID, stackSize, destination, false);
+                secondTransfer = await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType,
+                    itemHash, itemID, stackSize, destination, false);
             }
 
             if (firstTransfer && secondTransfer)
@@ -569,8 +632,11 @@ public class ContentManager
             }
             else if (!secondTransfer)
             {
-                this.snackbar.AddMessage($"Transfer of {this.ItemDetails[transfer.ItemHash].DisplayProperties.Name} failed. Returning the item to the origin.", "Warning");
-                bool returnSuccessful = await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID, stackSize, origin, false);
+                this.snackbar.AddMessage(
+                    $"Transfer of {this.ItemDetails[transfer.ItemHash].DisplayProperties.Name} failed. Returning the item to the origin.",
+                    "Warning");
+                bool returnSuccessful = await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType,
+                    itemHash, itemID, stackSize, origin, false);
 
                 if (!returnSuccessful)
                 {
@@ -631,10 +697,16 @@ public class ContentManager
         string trueOrigin = origin.Replace("Equipped", string.Empty);
         string trueDestination = destination.Replace("Equipped", string.Empty);
 
-        Dictionary<string, Item> charactersItemBucket = this.DropzoneBackingStore.Where(b => b.Value.Bucket == item.Bucket).Where(i => i.Value.Identifier == trueOrigin).ToDictionary(i => i.Key, i => i.Value);
+        // Get all items eligible to replace equipped item
+        Dictionary<string, Item> charactersItemBucket = this.DropzoneBackingStore
+            .Where(b => b.Value.Bucket == item.Bucket).Where(i => i.Value.Identifier == trueOrigin)
+            .ToDictionary(i => i.Key, i => i.Value);
+
         if (!charactersItemBucket.Any())
         {
-            this.snackbar.AddMessage("Character has no items to to replace the equipped item. Transfer another weapon into your inventory to fix this.", "Warning");
+            this.snackbar.AddMessage(
+                "Character has no items to to replace the equipped item. Transfer another weapon into your inventory to fix this.",
+                "Warning");
             return false; // TODO: Not the best solution. Could pull item from vault to equip, but I am too lazy.
         }
 
@@ -645,11 +717,9 @@ public class ContentManager
         {
             return await this.TransferItem(item, trueOrigin, trueDestination);
         }
-        else
-        {
-            this.snackbar.AddMessage("GVM was unable to equip a different item to replace the item you wanted to transfer.", "Warning");
-        }
 
+        this.snackbar.AddMessage("GVM was unable to equip a different item to replace the item you wanted to transfer.",
+            "Warning");
         return false;
     }
 
@@ -677,7 +747,8 @@ public class ContentManager
         {
             string charactersJson = await this.request.PlatformDestiny2_Request_ProfileContents("Characters", true);
             JsonDocument charactersContent = JsonDocument.Parse(charactersJson);
-            JsonElement charactersArray = charactersContent.RootElement.GetProperty("Response").GetProperty("characters").GetProperty("data");
+            JsonElement charactersArray = charactersContent.RootElement.GetProperty("Response")
+                .GetProperty("characters").GetProperty("data");
 
             foreach (JsonProperty characterJson in charactersArray.EnumerateObject())
             {
@@ -747,20 +818,22 @@ public class ContentManager
                 "CharacterEquipment",
                 "ItemInstances",
                 "ItemPerks",
-                "ItemStats",
                 "ItemSockets",
-                "ItemPlugStates",
-                "ItemPlugObjectives",
-                "ItemReusablePlugs",
             ];
             string equipmentContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
-            await File.WriteAllTextAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "FullItemComponents.json"), equipmentContentsJson);
+            await File.WriteAllTextAsync(
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "FullItemComponents.json"),
+                equipmentContentsJson);
 
             JsonDocument equipmentContents = JsonDocument.Parse(equipmentContentsJson);
-            JsonElement equipmentArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("characterEquipment").GetProperty("data");
-            JsonElement instanceDataArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
-            JsonElement perksDataArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("perks").GetProperty("data");
-            JsonElement plugsDataArray = equipmentContents.RootElement.GetProperty("Response").GetProperty("profilePlugSets").GetProperty("data").GetProperty("plugs");
+            JsonElement equipmentArray = equipmentContents.RootElement.GetProperty("Response")
+                .GetProperty("characterEquipment").GetProperty("data");
+            JsonElement instanceDataArray = equipmentContents.RootElement.GetProperty("Response")
+                .GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
+            JsonElement perksDataArray = equipmentContents.RootElement.GetProperty("Response")
+                .GetProperty("itemComponents").GetProperty("perks").GetProperty("data");
+            JsonElement socketsDataArray = equipmentContents.RootElement.GetProperty("Response")
+                .GetProperty("characterPlugSets").GetProperty("data");
 
             // Populate Inventories list
             int itemsLoaded = 0;
@@ -768,7 +841,8 @@ public class ContentManager
             {
                 if (character.CharacterId != null)
                 {
-                    JsonElement characterInventory = equipmentArray.GetProperty(character.CharacterId).GetProperty("items");
+                    JsonElement characterInventory =
+                        equipmentArray.GetProperty(character.CharacterId).GetProperty("items");
 
                     foreach (JsonElement itemJson in characterInventory.EnumerateArray())
                     {
@@ -817,12 +891,16 @@ public class ContentManager
                 "ItemInstances",
                 "ItemPerks",
             ];
-            string inventoriesContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
+            string inventoriesContentsJson =
+                await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
 
             JsonDocument inventoriesContents = JsonDocument.Parse(inventoriesContentsJson);
-            JsonElement inventoriesArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("characterInventories").GetProperty("data");
-            JsonElement instanceDataArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
-            JsonElement perksDataArray = inventoriesContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("perks").GetProperty("data");
+            JsonElement inventoriesArray = inventoriesContents.RootElement.GetProperty("Response")
+                .GetProperty("characterInventories").GetProperty("data");
+            JsonElement instanceDataArray = inventoriesContents.RootElement.GetProperty("Response")
+                .GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
+            JsonElement perksDataArray = inventoriesContents.RootElement.GetProperty("Response")
+                .GetProperty("itemComponents").GetProperty("perks").GetProperty("data");
 
             // Populate Inventories list
             int itemsLoaded = 0;
@@ -830,7 +908,8 @@ public class ContentManager
             {
                 if (character.CharacterId != null)
                 {
-                    JsonElement characterInventory = inventoriesArray.GetProperty(character.CharacterId).GetProperty("items");
+                    JsonElement characterInventory =
+                        inventoriesArray.GetProperty(character.CharacterId).GetProperty("items");
 
                     foreach (JsonElement itemJson in characterInventory.EnumerateArray())
                     {
@@ -886,9 +965,12 @@ public class ContentManager
             string vaultContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
 
             JsonDocument vaultContents = JsonDocument.Parse(vaultContentsJson);
-            JsonElement vaultArray = vaultContents.RootElement.GetProperty("Response").GetProperty("profileInventory").GetProperty("data").GetProperty("items");
-            JsonElement instanceDataArray = vaultContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
-            JsonElement perksDataArray = vaultContents.RootElement.GetProperty("Response").GetProperty("itemComponents").GetProperty("perks").GetProperty("data");
+            JsonElement vaultArray = vaultContents.RootElement.GetProperty("Response").GetProperty("profileInventory")
+                .GetProperty("data").GetProperty("items");
+            JsonElement instanceDataArray = vaultContents.RootElement.GetProperty("Response")
+                .GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
+            JsonElement perksDataArray = vaultContents.RootElement.GetProperty("Response").GetProperty("itemComponents")
+                .GetProperty("perks").GetProperty("data");
 
             // Populate Vault list
             int itemsLoaded = 0;
@@ -936,6 +1018,12 @@ public class ContentManager
     private bool GetItemPerks(JsonElement perkData, Item item, out List<Item.Perk> perks)
     {
         perks = new List<Item.Perk>();
+
+        if (string.IsNullOrEmpty(item.ItemInstanceId))
+        {
+            return false;
+        }
+
         if (perkData.TryGetProperty(item.ItemInstanceId ?? string.Empty, out JsonElement itemPerks))
         {
             if (itemPerks.TryGetProperty("perks", out JsonElement perksArray))
@@ -948,12 +1036,11 @@ public class ContentManager
                         perk.GetProperty("isActive").GetBoolean(),
                         perk.GetProperty("visible").GetBoolean()));
                 }
-            }
 
-            return true;
+                return true;
+            }
         }
 
-        Console.WriteLine($"Perk data not found for item instance: {item.ItemInstanceId}");
         return false;
     }
 
@@ -1101,7 +1188,8 @@ public class ContentManager
         if (details.Equals(new ItemDetails()))
         {
             details = await this.request.PlatformDestiny2_Request_ItemDefinition(itemHash);
-            this.logger.LogError($"GVM could not find any ItemDetails for the itemHash={itemHash} in the manifest or and has attempted to get it from Bungie.");
+            this.logger.LogError(
+                $"GVM could not find any ItemDetails for the itemHash={itemHash} in the manifest or and has attempted to get it from Bungie.");
         }
 
         return details;
@@ -1117,17 +1205,17 @@ public class ContentManager
         JsonDocument bucketDefinition = await this.manifest.Manifest_Query_BucketDefinition(bucketHash);
 
         // Validate if the JSON is empty
-        if (bucketDefinition.RootElement.ValueKind == JsonValueKind.Object && bucketDefinition.RootElement.TryGetProperty("displayProperties", out JsonElement displayProperties))
+        if (bucketDefinition.RootElement.ValueKind == JsonValueKind.Object &&
+            bucketDefinition.RootElement.TryGetProperty("displayProperties", out JsonElement displayProperties))
         {
             // Validate if the "name" property exists in "displayProperties"
             if (displayProperties.TryGetProperty("name", out JsonElement nameElement))
             {
                 return nameElement.GetString() ?? string.Empty;
             }
-            else
-            {
-                this.logger.LogWarning($"Bucket Definition found, but 'name' property is missing for bucketHash={bucketHash}");
-            }
+
+            this.logger.LogWarning(
+                $"Bucket Definition found, but 'name' property is missing for bucketHash={bucketHash}");
         }
         else
         {

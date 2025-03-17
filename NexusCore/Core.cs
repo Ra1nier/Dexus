@@ -26,6 +26,8 @@ public class Core
     private RequestServer request;
     private ManifestServer manifest;
     private ContentManager content;
+
+    // Core services
     private SnackbarService snackbar;
     private LoadingbarService loadingbars;
     private SettingsService settings;
@@ -51,13 +53,15 @@ public class Core
         });
         this.logger = loggerFactory.CreateLogger<Core>();
 
-        // Create local instances of libraries
-        this.profile = new Profile();
-        this.oauthProfile = new OAuthProfile();
-        this.oauth = new OAuthServer(this.logger, this.oauthProfile);
+        // Start instances of core services
         this.snackbar = new SnackbarService();
         this.loadingbars = new LoadingbarService();
         this.settings = new SettingsService();
+
+        // Start local instances of libraries needed by core
+        this.profile = new Profile();
+        this.oauthProfile = new OAuthProfile();
+        this.oauth = new OAuthServer(this.logger, this.oauthProfile);
         this.request = new RequestServer(this.logger, this.profile, this.oauthProfile);
         this.manifest = new ManifestServer(this.logger);
         this.content = new ContentManager(this.logger, this.profile, this.request, this.manifest, this.snackbar, this.loadingbars);

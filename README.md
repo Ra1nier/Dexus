@@ -1,4 +1,4 @@
-# Nexus Destiny 2 Manager
+# Nexus Manager
 
 Nexus is a tool designed to help Destiny 2 players manage their in-game items efficiently. This is its current functionality but more is planned. Nexus offers a user-friendly interface to organize, transfer, and track your Destiny 2 inventory. This is really just a personal
 project to help me learn C#, .NET and Blazor.

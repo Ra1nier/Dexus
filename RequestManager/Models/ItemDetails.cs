@@ -218,6 +218,18 @@ public class SocketEntry
 {
     [JsonPropertyName("socketTypeHash")]
     public long SocketTypeHash { get; set; }
+
+    [JsonPropertyName("singleInitialItemHash")]
+    public long SingleInitialItemHash { get; set; }
+
+    [JsonPropertyName("reusablePlugItems")]
+    public List<PlugItem> ReusablePlugItems { get; set; }
+}
+
+public class PlugItem
+{
+    [JsonPropertyName("plugItemHash")]
+    public long PlugItemHash { get; set; }
 }
 
 public class InvestmentStat
