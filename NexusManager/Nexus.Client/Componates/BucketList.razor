@@ -8,10 +8,12 @@
             @foreach (var character in Core.Content.Characters.Values)
             {
                 <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
-                    <MudDropZone T="Item" Identifier=@character.CharacterId Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="height: 100%; width: 100%;">
+                    <MudDropZone T="Item" Identifier=@character.CharacterId
+                                 Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1"
+                                 Style="height: 100%; width: 100%;">
                         @foreach (var item in Items.Where(i => i.Identifier == character.CharacterId))
                         {
-                            <ItemModel Item=@item Core=@Core />
+                            <ItemModel Item=@item Core=@Core/>
                         }
                     </MudDropZone>
                 </MudItem>
@@ -20,7 +22,9 @@
             <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
                 @if ((Items.Count(x => x.Identifier == "Vault")) > 0)
                 {
-                    <MudDropZone T="Item" Identifier="Vault" Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1" Style="min-width: 50%; height: 100%;" />
+                    <MudDropZone T="Item" Identifier="Vault"
+                                 Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1"
+                                 Style="min-width: 50%; height: 100%;"/>
                 }
             </MudItem>
         </MudGrid>
@@ -29,35 +33,45 @@
 else
 {
     <MudPaper Class="d-flex flex-column gap-2" @key="RenderKey">
-        <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
-            <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-row">
+        <MudGrid Class="d-flex flex-wrap gap-2" Justify="Justify.SpaceBetween" Style="padding: 25px">
+            <MudDropZone T="Item"
+                         Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1"
+                         Style="height: 100%; width: 100%;">
                 @foreach (var item in Items)
                 {
-                    <ItemModel Item=@item Core=@Core />
+                    <MudItem Class="d-flex flex-column">
+                        <ItemModel Item=@item Core=@Core/>
+                    </MudItem>
                 }
-            </MudItem>
+            </MudDropZone>
         </MudGrid>
     </MudPaper>
 }
 
 @code {
+
     /// <summary>
     /// Render key that determines if the content in the bucket list needs to be refreshed.
     /// </summary>
-    [Parameter] public required Guid RenderKey { get; set; }
+    [Parameter]
+    public required Guid RenderKey { get; set; }
 
     /// <summary>
     /// Items to display in the bucket list.
     /// </summary>
-    [Parameter] public required IEnumerable<Item> Items { get; set; }
+    [Parameter]
+    public required IEnumerable<Item> Items { get; set; }
 
     /// <summary>
     /// Core used by GuardianVaultManager.
     /// </summary>
-    [Parameter] public required Core Core { get; set; }
+    [Parameter]
+    public required Core Core { get; set; }
 
     /// <summary>
     /// A bool value used to determine if the items should be sorted by character.
     /// </summary>
-    [Parameter] public required bool Sorted { get; set; }
+    [Parameter]
+    public required bool Sorted { get; set; }
+
 }
