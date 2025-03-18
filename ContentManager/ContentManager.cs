@@ -539,8 +539,7 @@ public class ContentManager
         }
 
         // Equip the item.
-        Item itemBeingReplaced = this.DropzoneBackingStore.DistinctBy(i => i.Value.Identifier == $"{location}Equipped")
-            .First().Value;
+        Item itemBeingReplaced = this.DropzoneBackingStore.Where(i => i.Value.Identifier == $"{location}Equipped").Select(i => i.Value).FirstOrDefault() ?? new Item();
         if (await this.request.ActionItem_Request_EquipItem(this.profile.MembershipType,
                 item.ItemInstanceId ?? string.Empty, location))
         {
