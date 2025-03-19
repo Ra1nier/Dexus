@@ -95,12 +95,12 @@ public class ContentManager
     /// <summary>
     /// Initializes a new instance of the <see cref="ContentManager"/> class.
     /// </summary>
-    /// <param name="logger">Nexus Logger.</param>
-    /// <param name="profile">Nexus user profile.</param>
-    /// <param name="request">Nexus request server.</param>
-    /// <param name="manifest">Nexus manifest server.</param>
-    /// <param name="snackbar">Nexus snackbar provider.</param>
-    /// <param name="loadingbars">Nexus loadingbar service.</param>
+    /// <param name="logger">Dexus Logger.</param>
+    /// <param name="profile">Dexus user profile.</param>
+    /// <param name="request">Dexus request server.</param>
+    /// <param name="manifest">Dexus manifest server.</param>
+    /// <param name="snackbar">Dexus snackbar provider.</param>
+    /// <param name="loadingbars">Dexus loadingbar service.</param>
     public ContentManager(ILogger logger, Profile profile, RequestServer request, ManifestServer manifest,
         SnackbarService snackbar, LoadingbarService loadingbars)
     {

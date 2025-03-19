@@ -1,11 +1,11 @@
-# Nexus Manager
+# Dexus
 
-Nexus is a tool designed to help Destiny 2 players manage their in-game items efficiently. This is its current functionality but more is planned. Nexus offers a user-friendly interface to organize, transfer, and track your Destiny 2 inventory. This is really just a personal
+Dexus is a tool designed to help Destiny 2 players manage multiple aspects of the game through different "Managers" all accessible through this Destiny Nexus ;). <i>Better names appreciated lol.</i> This is really just a personal
 project to help me learn C#, .NET and Blazor.
 
 ## Features
 
-### Guardian Vault Manager
+### Dexus Vault
 - **Item Management**: Easily move items between your characters and vault.
 - **Loadout Creation**: Create and save loadouts for quick equipment changes. **Coming Soon TM**
 - **Item Search and Filters**: Quickly find items using powerful search and filtering options. **Coming Soon TM**
@@ -27,7 +27,7 @@ of including my own API key in the project or running a backend server to route 
 
 - Clone the repository into your IDE of choice and create a JSON file at the following location:
 ```angular2html
-&#123;Solution Location&#125;/GuardianVaultManager/GuardianVaultManager/bin/Debug/net9.0/OAuthProfile
+(Dexus Solution Directory)/Dexus/Dexus/bin/Debug/net9.0/OAuthProfile
 ```
 - Then make a JSON file called "UserBungieAPITokens" and input the following Bungie API information with this format:
 ```

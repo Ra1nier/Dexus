@@ -2,7 +2,7 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-namespace NexusCore;
+namespace DexusCore;
 
 using Microsoft.Extensions.Logging;
 using ClientProfile;
@@ -12,7 +12,7 @@ using ContentManager;
 using GuardianServices;
 
 /// <summary>
-/// Wraps the model of Nexus in a single core application manager.
+/// Wraps the model of Dexus in a single core application manager.
 /// </summary>
 public class Core
 {
@@ -144,7 +144,7 @@ public class Core
     // Main Functionality
 
     /// <summary>
-    /// Starts the NexusCore.
+    /// Starts the DexusCore.
     /// </summary>
     public async void StartCoreService()
     {
