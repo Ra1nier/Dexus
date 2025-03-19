@@ -1,7 +1,27 @@
-﻿
-<MudNavMenu>
-    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-    <MudNavLink Href="DexusVaultManager" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Dexus Vault</MudNavLink>
-</MudNavMenu>
+﻿<MudToolBar Class="w-full d-flex justify-center">
+    <MudNavMenu Class="d-flex gap-4 mud-navmenu">
+        <!-- Main Menu Nav link -->
+        <MudNavLink Href="" Match="NavLinkMatch.All">
+            <MudText Typo="Typo.h5" Class="ml-3 text-center">Dexus</MudText>
+        </MudNavLink>
+        
+        <!-- Managers Nav links -->
+        <MudNavLink Href="DexusVaultManager" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Dexus Vault</MudNavLink>
+    </MudNavMenu>
+</MudToolBar>
+<style>
+    .mud-navmenu {
+        display: flex;
+        gap: 20px;
+    }
 
+    .mud-navmenu a {
+        padding: 8px 16px;
+        border-radius: 8px;
+        transition: background 0.2s ease-in-out;
+    }
 
+    .mud-navmenu a:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+</style>

@@ -7,10 +7,12 @@
 <MudSnackbarProvider/>
 <MudLayout>
     <MudAppBar Elevation="1">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
-                       OnClick="@((e) => DrawerToggle())"/>
-        <MudText Typo="Typo.h5" Class="ml-3">Dexus</MudText>
+        <!-- Left Side of app bar -->
+        <NavMenu />
+        
         <MudSpacer/>
+        
+        <!-- Right side of app bar -->
         @if (refreshingContent)
         {
             <MudProgressCircular Size="Size.Medium" Indeterminate="true"/>
@@ -26,13 +28,12 @@
         <MudIconButton Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" Edge="Edge.End"
                        OnClick="@AccountDrawerToggle"/>
     </MudAppBar>
-    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
-        <NavMenu/>
-    </MudDrawer>
+
     <MudMainContent Class="mt-16 pa-4">
         @Body
     </MudMainContent>
 </MudLayout>
+
 
 
 <div id="blazor-error-ui">
@@ -119,31 +120,31 @@
 
     private readonly PaletteDark _darkPalette = new()
     {
-        Primary = "#7e6fff",
-        Surface = "#1e1e2d",
-        Background = "#1a1a27",
-        BackgroundGray = "#151521",
-        AppbarText = "#92929f",
-        AppbarBackground = "rgba(26,26,39,0.8)",
-        DrawerBackground = "#1a1a27",
-        ActionDefault = "#74718e",
-        ActionDisabled = "#9999994d",
-        ActionDisabledBackground = "#605f6d4d",
-        TextPrimary = "#b2b0bf",
-        TextSecondary = "#92929f",
-        TextDisabled = "#ffffff33",
-        DrawerIcon = "#92929f",
-        DrawerText = "#92929f",
-        GrayLight = "#2a2833",
-        GrayLighter = "#1e1e2d",
+        Primary = "#4C9EEB",
+        Surface = "#1A1A1A", // Deep dark gray instead of navy
+        Background = "#181818", // Softer dark gray instead of pure black
+        BackgroundGray = "#1E1E1E",
+        AppbarText = "#E0E0E0",
+        AppbarBackground = "rgba(26, 26, 26, 0.8)",
+        DrawerBackground = "#181818",
+        ActionDefault = "#A0A0B0",
+        ActionDisabled = "#555555",
+        ActionDisabledBackground = "#333333",
+        TextPrimary = "#E0E0E0",
+        TextSecondary = "#A0A0B0",
+        TextDisabled = "#555555",
+        DrawerIcon = "#E0E0E0",
+        DrawerText = "#E0E0E0",
+        GrayLight = "#262626",
+        GrayLighter = "#303030",
         Info = "#4a86ff",
-        Success = "#3dcb6c",
-        Warning = "#ffb545",
-        Error = "#ff3f5f",
-        LinesDefault = "#33323e",
-        TableLines = "#33323e",
-        Divider = "#292838",
-        OverlayLight = "#1e1e2d80",
+        Success = "#00BFA6",
+        Warning = "#FFB545",
+        Error = "#FF3F5F",
+        LinesDefault = "#252525",
+        TableLines = "#252525",
+        Divider = "#252525",
+        OverlayLight = "#18181880",
     };
 
     /// <summary>
