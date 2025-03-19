@@ -1,0 +1,213 @@
+﻿@using GuardianServices.Models
+@using DexusCore
+
+<!-- Main Display -->
+<MudCard
+    Style="width: 80px; height: 80px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; position: relative;"
+    Elevation="4" @onclick="() => TogglePopover(itemModelID)">
+    @{ string iconPath = $"https://www.bungie.net{@Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Icon}"; }
+    <MudCardMedia Image="@iconPath" alt="Weapon"
+                  Style="width: 100%; height: 100%; object-fit: cover;"/>
+    @if (Item.Power != 0)
+    {
+        <div
+            style="position: absolute; top: 4px; right: 4px; background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 6px; font-size: 12px; border-radius: 4px;">@Item.Power</div>
+    }
+    else if (@Item.Quantity != 1)
+    {
+        <div style="position: absolute; top: 4px; right: 4px; background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 6px; font-size: 12px; border-radius: 4px;">@Item.Quantity.ToString()</div>
+    }
+</MudCard>
+
+<!-- Popover for Info and Actions for the Item -->
+@if (!string.IsNullOrEmpty(Item.ItemInstanceId))
+{
+    <MudPopover Open=@(activeItemID == itemModelID) AnchorOrigin="Origin.TopCenter"
+                TransformOrigin="Origin.BottomCenter">
+        <MudPaper Class="pa-3" Style="min-width: 280px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);">
+
+            <!-- Header with Name and Close Button -->
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <MudText Typo="Typo.h6"
+                         Style="flex-grow: 1;">@Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name</MudText>
+                <MudIconButton Icon="@Icons.Material.Outlined.Close" OnClick="()=>activeItemID = null"
+                               Size="Size.Small"/>
+            </div>
+
+            <!-- Perk Details Placeholder -->
+            <div class="mt-2" style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr; gap: 4px;">
+                <div style="grid-column: span 1; background: rgba(255,255,255,0.1); padding: 8px; text-align: center;">
+                    Archetype
+                </div> <!-- This is where the weapons archetype will be placed -->
+                <div style="grid-column: span 4; background: rgba(255,255,255,0.05); padding: 8px;">Perks</div>
+                
+                @foreach (var plug in Item.Sockets.Plugs)
+                {
+                    
+                }
+                
+                <!-- This is where the perk columns will go -->
+                <div style="grid-column: span 1; background: rgba(255,255,255,0.05); padding: 8px;">Masterwork</div>
+                <!-- This is where the masterwork will go -->
+            </div>
+
+            <!-- Weapon Stats Placeholder -->
+            <MudExpansionPanel Text="Weapon Stats" MaxHeight="150">
+                <MudList T="string">
+                    <MudListItem Text="Inbox" Icon="@Icons.Material.Filled.Inbox"/>
+                    <MudListItem Text="Sent" Icon="@Icons.Material.Filled.Send"/>
+                    <MudListItem Text="Drafts" Disabled="true" IconColor="Color.Info"
+                                 Icon="@Icons.Material.Filled.Drafts"/>
+                    <MudDivider/>
+                    <MudListItem Text="Trash" SecondaryText="Removed e-mails"/>
+                    <MudListItem Text="Spam" SecondaryText="E-mails from common providers"/>
+                </MudList>
+            </MudExpansionPanel>
+
+            <!-- Transfer and Postmaster Actions -->
+            <div class="mt-2" style="display: flex; justify-content: space-between; gap: 8px;">
+                @if (Item.Bucket == "Lost Items")
+                {
+                    <MudButton Color="Color.Warning" Variant="Variant.Filled"
+                               StartIcon="@Icons.Material.Filled.KeyboardDoubleArrowDown"
+                               OnClick="() => PullFromPostmaster()" Style="flex-grow: 1;">
+                        Pull From Postmaster
+                    </MudButton>
+                }
+                else
+                {
+                    <div
+                        style="flex-grow: 1; display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; padding: 10px">
+                        @foreach (Character character in Core.Content.Characters.Values.Where(c => c.CharacterId != Item.Identifier?.Replace("Equipped", string.Empty)))
+                        {
+                            string iconPath = $"/Resources/{character.Class}_Emblem.jpg";
+
+                            <MudTooltip Text=@character.Class>
+                                <MudIconButton Disabled="@processing" Tag=@character.CharacterId
+                                               OnClick="() => Transfer(character.CharacterId ?? string.Empty)"
+                                               Variant="Variant.Filled" Color="Color.Primary"
+                                               Style="width: 48px; height: 48px; overflow: hidden; padding: 0; background: transparent;">
+                                    <img src="@iconPath" alt="@character.Class Emblem"
+                                         style="width: 100%; height: 100%; object-fit: cover;"/>
+                                </MudIconButton>
+                            </MudTooltip>
+                        }
+
+                        @if (Item.Identifier != "Vault")
+                        {
+                            string vault = "Vault";
+
+                            <MudTooltip Text="@vault">
+                                <MudIconButton Disabled="@processing" Tag=@vault
+                                               OnClick="() => Transfer(vault)"
+                                               Variant="Variant.Filled" Color="Color.Primary"
+                                               Style="width: 48px; height: 48px; overflow: hidden; padding: 0; background: transparent;">
+                                    <img src="/Resources/VaultEmblem.png" alt="Vault Emblem"
+                                         style="width: 100%; height: 100%; object-fit: cover;"/>
+                                </MudIconButton>
+                            </MudTooltip>
+                        }
+                    </div>
+                }
+            </div>
+        </MudPaper>
+    </MudPopover>
+}
+
+@code {
+
+    /// <summary>
+    /// The Item to be represented by this model.
+    /// </summary>
+    [Parameter]
+    public required Item Item { get; set; }
+
+    /// <summary>
+    /// Singleton instance of the Core service.
+    /// </summary>
+    [Parameter]
+    public required Core Core { get; set; }
+
+    // Property Popover locks
+    private static Guid? activeItemID = null;
+    private Guid itemModelID = Guid.NewGuid();
+
+    // Item variables
+    bool processing = false;
+
+    private void TogglePopover(Guid itemId)
+    {
+        if (activeItemID == itemId)
+        {
+            activeItemID = null; // TODO: Clicking the same item closes it, at least it is supposed to but it aint working
+        }
+        else
+        {
+            activeItemID = itemId; // TODO: Clicking a different item switches the popover, at least it is supposed to but it aint working
+        }
+    }
+
+    /// <summary>
+    /// Transfers the item being represented to the destination provided.
+    /// </summary>
+    /// <param name="destination">Location to transfer the item to.</param>
+    private async Task Transfer(string destination)
+    {
+        if (!(await Core.ConfirmOAuthStatus()) || !Core.Content.TransfersAllowed)
+        {
+            return;
+        }
+
+        string origin = Item.Identifier ?? string.Empty;
+
+        string characterName = Core.Content.Characters.FirstOrDefault(x => x.Value.CharacterId == destination).Value.Class ?? destination;
+        Core.Snackbar.AddMessage($"Transferring {Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name} to {characterName}.", "Info");
+
+        string itemID = Core.Content.QueueTransfer(Item, origin, destination);
+
+        while (Core.Content.GetTransferStatus(itemID) == 2)
+        {
+            await Task.Delay(100);
+        }
+
+        if (Core.Content.GetTransferStatus(itemID) == 0)
+        {
+            Core.Snackbar.AddMessage($"Transfer of {Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name} to {characterName} was Successful.", "Success");
+        }
+
+        this.StateHasChanged();
+    }
+
+    /// <summary>
+    /// Pulls the item from postmaster.
+    /// </summary>
+    private async Task PullFromPostmaster()
+    {
+        if (!(await Core.ConfirmOAuthStatus()))
+        {
+            return;
+        }
+
+        Core.Snackbar.AddMessage($"Pulling {Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name} from Postmaster.", "Info");
+
+        if (await Core.Content.PullFromPostmaster(this.Item))
+        {
+            Core.Snackbar.AddMessage($"Successfully pulled {Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name} from Postmaster.", "Success");
+        }
+    }
+
+    /// <summary>
+    /// Selects the perk oon the item.
+    /// </summary>
+    private async Task SelectPerk()
+    {
+        if (!(await Core.ConfirmOAuthStatus()))
+        {
+            return;
+        }
+
+        // TODO: Add functionality to change an items perk in Content Manager.
+        return;
+    }
+
+}
