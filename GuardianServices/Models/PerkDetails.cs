@@ -1,4 +1,4 @@
-namespace RequestManager.Models.PerkDetails;
+namespace GuardianServices.Models.PerkDetails;
 
 using System;
 using System.Collections.Generic;

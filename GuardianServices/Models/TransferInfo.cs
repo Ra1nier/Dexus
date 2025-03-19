@@ -2,17 +2,17 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-namespace ContentManager.Models;
+namespace GuardianServices.Models;
 
 /// <summary>
 /// Contains information about a queued transfer.
 /// </summary>
-internal class TransferInfo
+public class TransferInfo
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="TransferInfo"/> class.
     /// </summary>
-    /// <param name="item">Item to transfer</param>
+    /// <param name="item">Item to transfer.</param>
     /// <param name="origin">Where the item is.</param>
     /// <param name="destination">Where the item should go.</param>
     public TransferInfo(Item item, string origin, string destination)

@@ -1,4 +1,4 @@
-﻿namespace RequestManager.Models.ItemDetails;
+﻿namespace GuardianServices.Models.ItemDetails;
 
 using System.Text.Json.Serialization;
 public class ItemDetails

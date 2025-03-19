@@ -2,10 +2,9 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-namespace ContentManager.Models;
+namespace GuardianServices.Models;
 
 using System.Text.Json.Serialization;
-using System.Runtime.Serialization;
 
 /// <summary>
 /// Object that represents an item in destiny 2.
