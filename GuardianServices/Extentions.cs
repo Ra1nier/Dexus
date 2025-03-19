@@ -45,6 +45,7 @@ public static class ListExtensions
                 printedString += component.ToString() + ",";
             }
         }
+
         return printedString.TrimEnd(',', ' ');
     }
 }
