@@ -102,6 +102,12 @@ public class Item
     public List<Perk> Perks { get; set; }
 
     /// <summary>
+    /// Gets or sets the sockets for the item.
+    /// </summary>
+    [JsonIgnore]
+    public ItemSockets Sockets { get; set; }
+
+    /// <summary>
     /// Gets or sets the identifier.
     /// </summary>
     [JsonIgnore]

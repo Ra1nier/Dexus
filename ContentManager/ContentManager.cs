@@ -560,7 +560,9 @@ public class ContentManager
         }
 
         // Equip the item.
-        Item itemBeingReplaced = this.DropzoneBackingStore.Where(i => i.Value.Identifier == $"{location}Equipped").Select(i => i.Value).FirstOrDefault() ?? new Item();
+        Item itemBeingReplaced =
+            this.DropzoneBackingStore.Where(i => i.Value.Identifier == $"{location}Equipped").Select(i => i.Value)
+                .FirstOrDefault() ?? new Item();
         if (await this.request.ActionItem_Request_EquipItem(this.profile.MembershipType,
                 item.ItemInstanceId ?? string.Empty, location))
         {
@@ -851,7 +853,8 @@ public class ContentManager
             JsonElement instanceDataArray = equipmentContents.RootElement.GetProperty("Response")
                 .GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
             JsonElement perksDataArray = equipmentContents.RootElement.GetProperty("Response")
-                .GetProperty("itemComponents").GetProperty("perks").GetProperty("data"); // TODO: Likely not needed anymore but keeping just in case
+                .GetProperty("itemComponents").GetProperty("perks")
+                .GetProperty("data"); // TODO: Likely not needed anymore but keeping just in case
             JsonElement plugsDataArray = equipmentContents.RootElement.GetProperty("Response")
                 .GetProperty("itemComponents").GetProperty("reusablePlugs").GetProperty("data");
 
@@ -866,17 +869,7 @@ public class ContentManager
 
                     foreach (JsonElement itemJson in characterInventory.EnumerateArray())
                     {
-                        Item item = itemJson.Deserialize<Item>() ?? new Item();
-                        item.Identifier = $"{character.CharacterId}Equipped";
-
-                        if (this.GetItemPerks(perksDataArray, item, out List<Item.Perk> perks))
-                        {
-                            item.Perks = perks;
-                        }
-
-                        // Get needed data
-                        item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
-
+                        Item item = this.BuildItem(itemJson, $"{character.CharacterId}Equipped", perksDataArray, plugsDataArray, instanceDataArray);
                         this.AddItemToStore(item);
                         itemsLoaded++;
                     }
@@ -910,6 +903,7 @@ public class ContentManager
                 "CharacterInventories",
                 "ItemInstances",
                 "ItemPerks",
+                "ItemReusablePlugs",
             ];
             string inventoriesContentsJson =
                 await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
@@ -921,6 +915,8 @@ public class ContentManager
                 .GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
             JsonElement perksDataArray = inventoriesContents.RootElement.GetProperty("Response")
                 .GetProperty("itemComponents").GetProperty("perks").GetProperty("data");
+            JsonElement plugsDataArray = inventoriesContents.RootElement.GetProperty("Response")
+                .GetProperty("itemComponents").GetProperty("reusablePlugs").GetProperty("data");
 
             // Populate Inventories list
             int itemsLoaded = 0;
@@ -933,17 +929,7 @@ public class ContentManager
 
                     foreach (JsonElement itemJson in characterInventory.EnumerateArray())
                     {
-                        Item item = itemJson.Deserialize<Item>() ?? new Item();
-                        item.Identifier = character.CharacterId;
-
-                        if (this.GetItemPerks(perksDataArray, item, out List<Item.Perk> perks))
-                        {
-                            item.Perks = perks;
-                        }
-
-                        // Get needed data
-                        item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
-
+                        Item item = this.BuildItem(itemJson, character.CharacterId, perksDataArray, plugsDataArray, instanceDataArray);
                         this.AddItemToStore(item);
                         itemsLoaded++;
                     }
@@ -981,6 +967,7 @@ public class ContentManager
                 "ProfileInventories",
                 "ItemInstances",
                 "ItemPerks",
+                "ItemReusablePlugs",
             ];
             string vaultContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
 
@@ -991,22 +978,14 @@ public class ContentManager
                 .GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
             JsonElement perksDataArray = vaultContents.RootElement.GetProperty("Response").GetProperty("itemComponents")
                 .GetProperty("perks").GetProperty("data");
+            JsonElement plugsDataArray = vaultContents.RootElement.GetProperty("Response")
+                .GetProperty("itemComponents").GetProperty("reusablePlugs").GetProperty("data");
 
             // Populate Vault list
             int itemsLoaded = 0;
             foreach (JsonElement itemElement in vaultArray.EnumerateArray())
             {
-                Item item = itemElement.Deserialize<Item>() ?? new Item();
-                item.Identifier = "Vault";
-
-                if (this.GetItemPerks(perksDataArray, item, out List<Item.Perk> perks))
-                {
-                    item.Perks = perks;
-                }
-
-                // Get needed data
-                item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
-
+                Item item = this.BuildItem(itemElement, "Vault", perksDataArray, plugsDataArray, instanceDataArray);
                 this.AddItemToStore(item);
                 itemsLoaded++;
             }
@@ -1029,6 +1008,36 @@ public class ContentManager
     }
 
     /// <summary>
+    /// Builds an Item based on the provided data.
+    /// </summary>
+    /// <param name="itemJson">The base item data from bungie.</param>
+    /// <param name="itemIdentifier">Where the item is located.</param>
+    /// <param name="perksDataArray">Data for all the items perks.</param>
+    /// <param name="plugsDataArray">Data for all the items plugs.</param>
+    /// <param name="instanceDataArray">Data for all the items instance data.</param>
+    /// <returns>The Item object that was built.</returns>
+    private Item BuildItem(JsonElement itemJson, string itemIdentifier, JsonElement perksDataArray, JsonElement plugsDataArray, JsonElement instanceDataArray)
+    {
+        Item item = itemJson.Deserialize<Item>() ?? new Item();
+        item.Identifier = itemIdentifier;
+
+        if (this.GetItemPerks(perksDataArray, item, out List<Item.Perk> perks))
+        {
+            item.Perks = perks;
+        }
+
+        if (this.GetItemSockets(plugsDataArray, item, out ItemSockets sockets))
+        {
+            item.Sockets = sockets;
+        }
+
+        // Get needed data
+        item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
+
+        return item;
+    }
+
+    /// <summary>
     /// Gets the perks for the item associated with the item instance ID.
     /// </summary>
     /// <param name="perkData">Perk data received from bungie.</param>
@@ -1044,7 +1053,7 @@ public class ContentManager
             return false;
         }
 
-        if (perkData.TryGetProperty(item.ItemInstanceId ?? string.Empty, out JsonElement itemPerks))
+        if (perkData.TryGetProperty(item.ItemInstanceId, out JsonElement itemPerks))
         {
             if (itemPerks.TryGetProperty("perks", out JsonElement perksArray))
             {
@@ -1059,6 +1068,30 @@ public class ContentManager
 
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Gets the Items Sockets and the Sockets perks for the item from the provided data.
+    /// </summary>
+    /// <param name="socketData">JsonElement containing all the socket information.</param>
+    /// <param name="item">Item to get the sockets for.</param>
+    /// <param name="sockets">An ItemSockets object for the item.</param>
+    /// <returns>True the socket data was found for the Item. False otherwise.</returns>
+    private bool GetItemSockets(JsonElement socketData, Item item, out ItemSockets sockets)
+    {
+        sockets = new ItemSockets();
+        if (string.IsNullOrEmpty(item.ItemInstanceId))
+        {
+            return false;
+        }
+
+        if (socketData.TryGetProperty(item.ItemInstanceId, out JsonElement itemSockets))
+        {
+            sockets = itemSockets.Deserialize<ItemSockets>() ?? new ItemSockets();
+            return true;
         }
 
         return false;
