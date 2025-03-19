@@ -8,8 +8,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Data.Sqlite;
 using System.Text.Json;
 using SQLitePCL;
-using Models.ItemDetails;
-using Models.PerkDetails;
+using GuardianServices.Models.ItemDetails;
+using GuardianServices.Models.PerkDetails;
 
 /// <summary>
 /// Handles interactions with the Destiny 2 Manifest.
@@ -116,15 +116,15 @@ public class ManifestServer
     /// <summary>
     /// Queries the manifest for the associated weapon.
     /// </summary>
-    /// <param name="perkHash">Item hash to query.</param>
+    /// <param name="perkHash">Perk hash to query.</param>
     /// <returns>A WeaponDetails class representing the manifest details of the specific weapon.</returns>
     public async Task<PerkDetails> Manifest_Query_PerkDetails(uint perkHash)
     {
         // Convert itemHash to manifest id and construct query.
         int id = this.ConvertHashToID(perkHash);
+        this.logger.LogInformation($"Getting Perk Details for PerkHash={id}");
         string query = $"SELECT json FROM DestinySandboxPerkDefinition WHERE id = {id};";
 
-        // Execute Query and get response
         (bool success, string json) = await this.QueryManifest(query);
 
         if (!success)
@@ -134,6 +134,28 @@ public class ManifestServer
         }
 
         return JsonSerializer.Deserialize<PerkDetails>(json) ?? new PerkDetails();
+    }
+    
+    /// <summary>
+    /// Queries the manifest for the associated weapon.
+    /// </summary>
+    /// <param name="plugHash">Plug hash to query.</param>
+    /// <returns>A WeaponDetails class representing the manifest details of the specific weapon.</returns>
+    public async Task<string> Manifest_Query_PlugDetails(uint plugHash)
+    {
+        // Convert itemHash to manifest id and construct query.
+        int id = this.ConvertHashToID(plugHash);
+        this.logger.LogInformation($"Getting Perk Details for PlugHash={id}");
+        string query = $"SELECT json FROM DestinySandboxPerkDefinition WHERE id = {id};";
+
+        (bool success, string json) = await this.QueryManifest(query);
+
+        if (!success)
+        {
+            this.logger.LogError($"No data found for PerkHash={plugHash} with ID={id}");
+        }
+
+        return json;
     }
 
     /// <summary>
