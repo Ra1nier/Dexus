@@ -81,6 +81,7 @@ else
 
             <!-- Power Weapons Section -->
             <ManagmentList Items="Content.PowerWeapons.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
+@using GuardianServices.Models.ItemDetails
 
             <!-- Helmets Section -->
             <ManagmentList Items="Content.Helmets.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
@@ -101,7 +102,7 @@ else
             <ManagmentList Items="Content.Accessories.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
 
             <!-- Consumables Section -->
-            <BucketList Items="Content.Consumables" Sorted="false" Core=@Core
+            <BucketList Items="Content.UninstantiatedItems" Sorted="false" Core=@Core
                         RenderKey=@Content.ItemManagementRenderKey/>
         </MudContainer>
     }
