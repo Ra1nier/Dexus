@@ -6,11 +6,11 @@ namespace ContentManager;
 
 using ClientProfile;
 using GuardianServices;
+using GuardianServices.Models;
+using GuardianServices.Models.ItemDetails;
+using GuardianServices.Models.PerkDetails;
 using Microsoft.Extensions.Logging;
-using Models;
 using RequestManager;
-using RequestManager.Models.ItemDetails;
-using RequestManager.Models.PerkDetails;
 using System.Text.Json;
 
 /// <summary>
@@ -373,6 +373,21 @@ public class ContentManager
     }
 
     /// <summary>
+    /// Returns the items details from the itemDetails list without the threat of a runtime error (Might be a massive lie).
+    /// </summary>
+    /// <param name="itemHash">Item hash for the item.</param>
+    /// <returns>The ItemDetails object from the list if found. Else and empty ItemDetails.</returns>
+    public ItemDetails Define(uint itemHash)
+    {
+        if (this.itemDetails.TryGetValue(itemHash, out var itemDetails))
+        {
+            return itemDetails;
+        }
+
+        return new ItemDetails();
+    }
+
+    /// <summary>
     /// Adds the request to the list of transfers.
     /// </summary>
     /// <param name="item">Item to transfer.</param>
@@ -497,7 +512,7 @@ public class ContentManager
     }
 
     /// <summary>
-    /// Performs all tasks related to loading the users content.
+    /// Performs all tasks related to loading or refreshing the users content.
     /// </summary>
     /// <returns>A Task representing the operation.</returns>
     private async Task LoadUserContents()
@@ -517,7 +532,13 @@ public class ContentManager
         ];
         await Task.WhenAll(contentTasks);
 
+        // Fetch item information on the items bucket, details, and other key information
         await this.FetchItemInformation(this.dropzoneBackingStore.Values.ToList());
+        await this.FetchItemInformation(this.UninstantiatedItems);
+
+        // Construct Each item's plug information
+
+        // Inform all dependents that information from the DBS has changed
         this.itemManagementRenderKey = Guid.NewGuid();
     }
 
@@ -817,7 +838,7 @@ public class ContentManager
                 "CharacterEquipment",
                 "ItemInstances",
                 "ItemPerks",
-                "ItemSockets",
+                "ItemReusablePlugs",
             ];
             string equipmentContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
             await File.WriteAllTextAsync(
@@ -830,9 +851,9 @@ public class ContentManager
             JsonElement instanceDataArray = equipmentContents.RootElement.GetProperty("Response")
                 .GetProperty("itemComponents").GetProperty("instances").GetProperty("data");
             JsonElement perksDataArray = equipmentContents.RootElement.GetProperty("Response")
-                .GetProperty("itemComponents").GetProperty("perks").GetProperty("data");
-            JsonElement socketsDataArray = equipmentContents.RootElement.GetProperty("Response")
-                .GetProperty("characterPlugSets").GetProperty("data");
+                .GetProperty("itemComponents").GetProperty("perks").GetProperty("data"); // TODO: Likely not needed anymore but keeping just in case
+            JsonElement plugsDataArray = equipmentContents.RootElement.GetProperty("Response")
+                .GetProperty("itemComponents").GetProperty("reusablePlugs").GetProperty("data");
 
             // Populate Inventories list
             int itemsLoaded = 0;
@@ -1078,7 +1099,9 @@ public class ContentManager
         this.logger.LogInformation("Getting Clients Item Information.");
         foreach (Item item in items)
         {
+            // This needs to be done first as other operations below depend on this being completed.
             await this.QueryManifestForDetails(item);
+
             await this.QueryManifestForBuckets(item);
             await this.QueryManifestForPerkDetails(item);
         }
@@ -1095,7 +1118,7 @@ public class ContentManager
 
         if (!this.itemDetails.TryGetValue(itemHash, out _))
         {
-            var details = await this.GetItemDetails(itemHash);
+            var details = await this.GetItemDetailsFromManifest(itemHash);
 
             if (details.Equals(new ItemDetails()))
             {
@@ -1180,7 +1203,7 @@ public class ContentManager
     /// </summary>
     /// <param name="itemHash">ItemHash to use in the search.</param>
     /// <returns>An ItemDetails containing the info from the manifest.</returns>
-    private async Task<ItemDetails> GetItemDetails(uint itemHash)
+    private async Task<ItemDetails> GetItemDetailsFromManifest(uint itemHash)
     {
         ItemDetails details = await this.manifest.Manifest_Query_ItemDetails(itemHash);
 
