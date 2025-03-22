@@ -2,7 +2,11 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
+using GuardianServices.Models.ItemDetails;
+
 namespace GuardianServices;
+
+using GuardianServices.Models;
 
 /// <summary>
 /// Provides Extensions to the List class.
@@ -47,5 +51,59 @@ public static class ListExtensions
         }
 
         return printedString.TrimEnd(',', ' ');
+    }
+}
+
+/// <summary>
+/// Defines a list of extensions for the Item class.
+/// </summary>
+public static class ItemExtensions
+{
+    /// <summary>
+    /// Determines if the item associated with the itemInstanceID provided is a weapon.
+    /// </summary>
+    /// <param name="item">Item to check.</param>
+    /// <returns>True if the item is a weapon. False if not or the item was not found.</returns>
+    public static bool IsWeapon(this Item item)
+    {
+        string[] weaponDef = ["Kinetic Weapons", "Energy Weapons", "Power Weapons"];
+        return weaponDef.Contains(item.Bucket);
+    }
+
+    /// <summary>
+    /// Determines if the item associated with the itemInstanceID provided is armor.
+    /// </summary>
+    /// <param name="item">Item to check.</param>
+    /// <returns>True if the item is armor. False if not or the item was not found.</returns>
+    public static bool IsArmor(this Item item)
+    {
+        string[] armorDef = ["Helmet", "Gauntlets", "Chest Armor", "Leg Armor", "Class Armor"];
+        return armorDef.Contains(item.Bucket);
+    }
+
+    /// <summary>
+    /// Determines if the item associated with the itemInstanceID provided is a Unit. Unit means the item is neither a Weapon nor Armor.
+    /// </summary>
+    /// <param name="item">Item to check.</param>
+    /// <returns>True if the item is a Unit. False if not or the item was not found.</returns>
+    public static bool IsUnit(this Item item)
+    {
+        return (!item.IsWeapon()) && (!item.IsArmor());
+    }
+}
+
+/// <summary>
+/// Defines a list of extensions for the ItemDetails class.
+/// </summary>
+public static class ItemDetailsExtensions
+{
+    /// <summary>
+    /// Determines if the item associated with an itemHash is an exotic item.
+    /// </summary>
+    /// <param name="itemDetails">ItemDetails to check.</param>
+    /// <returns>True if the item is Exotic. False if not or the item's details were not found.</returns>
+    public static bool IsExotic(this ItemDetails itemDetails)
+    {
+        return itemDetails.Inventory.TierType == 6;
     }
 }
