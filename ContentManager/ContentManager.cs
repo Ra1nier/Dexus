@@ -63,7 +63,7 @@ public class ContentManager
 
     // Content Detail Dictionaries.
     private Dictionary<uint, ItemDetails> itemDetails = new Dictionary<uint, ItemDetails>();
-    private Dictionary<uint, PerkDetails> perkDetails = new Dictionary<uint, PerkDetails>();
+    private Dictionary<uint, ItemDetails> perkDetails = new Dictionary<uint, ItemDetails>();
 
     // Content Management Containers
     private Queue<TransferInfo> queuedTransfers = new Queue<TransferInfo>();
@@ -322,7 +322,7 @@ public class ContentManager
     /// <summary>
     /// Gets the Perk Details List.
     /// </summary>
-    public Dictionary<uint, PerkDetails> PerkDetails { get => this.perkDetails; }
+    public Dictionary<uint, ItemDetails> PerkDetails { get => this.perkDetails; }
 
     /// <summary>
     /// Gets a value indicating whether if transfers are currently being handled.
@@ -535,8 +535,6 @@ public class ContentManager
         // Fetch item information on the items bucket, details, and other key information
         await this.FetchItemInformation(this.dropzoneBackingStore.Values.ToList());
         await this.FetchItemInformation(this.UninstantiatedItems);
-
-        // Construct Each item's plug information
 
         // Inform all dependents that information from the DBS has changed
         this.itemManagementRenderKey = Guid.NewGuid();
@@ -869,7 +867,8 @@ public class ContentManager
 
                     foreach (JsonElement itemJson in characterInventory.EnumerateArray())
                     {
-                        Item item = this.BuildItem(itemJson, $"{character.CharacterId}Equipped", perksDataArray, plugsDataArray, instanceDataArray);
+                        Item item = this.BuildItem(itemJson, $"{character.CharacterId}Equipped", perksDataArray,
+                            plugsDataArray, instanceDataArray);
                         this.AddItemToStore(item);
                         itemsLoaded++;
                     }
@@ -929,7 +928,8 @@ public class ContentManager
 
                     foreach (JsonElement itemJson in characterInventory.EnumerateArray())
                     {
-                        Item item = this.BuildItem(itemJson, character.CharacterId, perksDataArray, plugsDataArray, instanceDataArray);
+                        Item item = this.BuildItem(itemJson, character.CharacterId, perksDataArray, plugsDataArray,
+                            instanceDataArray);
                         this.AddItemToStore(item);
                         itemsLoaded++;
                     }
@@ -1016,7 +1016,8 @@ public class ContentManager
     /// <param name="plugsDataArray">Data for all the items plugs.</param>
     /// <param name="instanceDataArray">Data for all the items instance data.</param>
     /// <returns>The Item object that was built.</returns>
-    private Item BuildItem(JsonElement itemJson, string itemIdentifier, JsonElement perksDataArray, JsonElement plugsDataArray, JsonElement instanceDataArray)
+    private Item BuildItem(JsonElement itemJson, string itemIdentifier, JsonElement perksDataArray,
+        JsonElement plugsDataArray, JsonElement instanceDataArray)
     {
         Item item = itemJson.Deserialize<Item>() ?? new Item();
         item.Identifier = itemIdentifier;
@@ -1197,36 +1198,39 @@ public class ContentManager
     /// <returns>Task representing the operation.</returns>
     private async Task QueryManifestForPerkDetails(Item item)
     {
-        if (item?.Perks == null)
+        if (item?.Sockets == null)
         {
             return;
         }
 
-        var perks = item.Perks;
+        var sockets = item.Sockets.Plugs;
 
-        if (perks.Count == 0)
+        if (sockets.Count == 0)
         {
             return;
         }
 
-        foreach (var perk in perks)
+        foreach (var plugs in sockets.Values)
         {
-            uint perkHash = perk.PerkHash;
-
-            if (this.perkDetails.TryGetValue(perkHash, out _))
+            foreach (var perk in plugs)
             {
-                continue;
-            }
+                uint perkHash = perk.PlugItemHash;
 
-            var details = await this.GetPerkDetails(perkHash);
-            if (details.Equals(new PerkDetails()))
-            {
-                this.snackbar.AddMessage("GVM is unable to define a perk.", "warning");
-            }
+                if (this.perkDetails.TryGetValue(perkHash, out _))
+                {
+                    continue;
+                }
 
-            lock (this.perkDetails)
-            {
-                this.perkDetails.Add(perkHash, details);
+                var details = await this.GetItemDetailsFromManifest(perkHash);
+                if (details.Equals(new ItemDetails()))
+                {
+                    this.snackbar.AddMessage("GVM is unable to define a perk.", "warning");
+                }
+
+                lock (this.perkDetails)
+                {
+                    this.perkDetails.Add(perkHash, details);
+                }
             }
         }
     }

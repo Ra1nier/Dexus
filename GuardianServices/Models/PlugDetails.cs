@@ -6,13 +6,13 @@ using System.Text.Json.Serialization;
 public class ItemSockets
 {
     [JsonPropertyName("plugs")]
-    public Dictionary<string, List<Plug>> Plugs { get; set; } = new();
+    public Dictionary<int, List<Plug>> Plugs { get; set; } = new();
 }
 
 public class Plug
 {
     [JsonPropertyName("plugItemHash")]
-    public ulong PlugItemHash { get; set; }
+    public uint PlugItemHash { get; set; }
 
     [JsonPropertyName("canInsert")]
     public bool CanInsert { get; set; }
