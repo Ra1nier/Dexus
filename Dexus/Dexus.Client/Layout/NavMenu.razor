@@ -1,27 +1,38 @@
-﻿<MudToolBar Class="w-full d-flex justify-center">
-    <MudNavMenu Class="d-flex gap-4 mud-navmenu">
-        <!-- Main Menu Nav link -->
-        <MudNavLink Href="" Match="NavLinkMatch.All">
-            <MudText Typo="Typo.h5" Class="ml-3 text-center">Dexus</MudText>
+﻿<MudToolBar Class="w-full d-flex justify-between px-4 py-2 shadow-md">
+    <!-- Branding -->
+    <MudNavLink Href="" Match="NavLinkMatch.All" Class="dexus-brand">
+        <MudText Typo="Typo.h4" Class="font-bold text-primary">Dexus</MudText>
+    </MudNavLink>
+
+    <!-- Navigation Links -->
+    <MudNavMenu Class="d-flex gap-6 mud-navmenu">
+        <MudNavLink Href="DexusVaultManager" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">
+            Dexus Vault
         </MudNavLink>
-        
-        <!-- Managers Nav links -->
-        <MudNavLink Href="DexusVaultManager" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Dexus Vault</MudNavLink>
     </MudNavMenu>
 </MudToolBar>
+
 <style>
     .mud-navmenu {
         display: flex;
-        gap: 20px;
+        align-items: center;
     }
 
     .mud-navmenu a {
-        padding: 8px 16px;
-        border-radius: 8px;
-        transition: background 0.2s ease-in-out;
+        padding: 10px 16px;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: background 0.3s ease, transform 0.2s ease;
     }
 
     .mud-navmenu a:hover {
         background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .dexus-brand {
+        text-decoration: none;
+        display: flex;
+        align-items: center;
     }
 </style>
