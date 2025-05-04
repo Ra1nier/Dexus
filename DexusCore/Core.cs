@@ -1,7 +1,6 @@
 ﻿// <copyright file="Core.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
-
 namespace DexusCore;
 
 using Microsoft.Extensions.Logging;
@@ -102,7 +101,7 @@ public class Core
     public OAuthProfile OAuthProfile => this.oauthProfile;
 
     /// <summary>
-    /// Gets a value indicating whether OAuth has been completed. 0 = Fully Completed, 1 = Refresh Needed, 2 = AOuth Not Completed.
+    /// Gets a value indicating whether OAuth has been completed. 0 = Fully Completed, 1 = Refresh Needed, 2 = OAuth Not Completed, 3 = No OAuth Keys Provided.
     /// </summary>
     public int OAuthStatus
     {
@@ -113,7 +112,7 @@ public class Core
 
         private set
         {
-            if (value < 0 || value > 2)
+            if (value < 0 || value > 3)
             {
                 this.oAuthStatus = 2;
             }
@@ -148,6 +147,11 @@ public class Core
     /// </summary>
     public async void StartCoreService()
     {
+        if (!this.oauthProfile.LoadUserAPIKeys() || this.OAuthStatus == 3)
+        {
+            return;
+        }
+
         if (!await this.SignIn())
         {
             this.logger.LogError("Could not sign the client in. Sign In Failed");
@@ -170,6 +174,24 @@ public class Core
             this.OAuthStatus = 0;
 
             return await this.ConfirmOAuthStatus();
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Informs the OAuthProfile of the users inputed API keys.
+    /// </summary>
+    /// <param name="apiKey">User provided API key.</param>
+    /// <param name="clientId">User provided Client ID key.</param>
+    /// <param name="clientSecret">User provided Client Secret key.</param>
+    /// <returns>True if completed successfully, False otherwise.</returns>
+    public bool SetOAuthKeys(string apiKey, string clientId, string clientSecret)
+    {
+        if (this.oauthProfile.ConstructUserAPIFile(apiKey, clientId, clientSecret))
+        {
+            this.OAuthStatus = 2;
+            return true;
         }
 
         return false;

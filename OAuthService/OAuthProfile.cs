@@ -18,12 +18,12 @@ public class OAuthProfile
     private readonly string userTokenFileLocation;
 
     // OAuth Variables
-    private readonly string apikey;
-    private readonly string clientID;
-    private readonly string clientSecret;
     private readonly string state;
     private readonly string authorizationURL = "https://www.bungie.net/en/OAuth/Authorize";
     private readonly string tokenEndpoint = "https://www.bungie.net/Platform/App/OAuth/Token/";
+    private string apiKey = string.Empty;
+    private string clientID = string.Empty;
+    private string clientSecret = string.Empty;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OAuthProfile"/> class.
@@ -37,15 +37,14 @@ public class OAuthProfile
         this.dataFolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "OAuthProfile");
         this.userTokenFileLocation = Path.Combine(this.dataFolderPath, "UserBungieAPITokens.json");
 
-        // Store keys from secrets file
-        this.LoadUserAPIKeys(out this.apikey, out this.clientID, out this.clientSecret);
+        // Profile Configuration
         this.state = this.GenerateRandomStateValue();
     }
 
     /// <summary>
     /// Gets the API key for GuardianVaultManger given by Bungie.
     /// </summary>
-    public string API_Key => this.apikey;
+    public string API_Key => this.apiKey;
 
     /// <summary>
     /// Gets the Client ID for GuardianVaultManger given by Bungie.
@@ -96,6 +95,50 @@ public class OAuthProfile
     }
 
     /// <summary>
+    /// Constructs the User's API File based on the user provided keys.
+    /// </summary>
+    /// <param name="apiKey">API to use for Bungie's API.</param>
+    /// <param name="clientID">Client ID of the User.</param>
+    /// <param name="clientSecret">Client Secret of the user.</param>
+    /// <returns>True if completed successfully, False otherwise.</returns>
+    public bool ConstructUserAPIFile(string apiKey, string clientID, string clientSecret)
+    {
+        try
+        {
+            string jsonString = $"{{\"BungieAPIKeys\":{{\"API_Key\":\"{apiKey}\",\"Client_ID\":\"{clientID}\",\"Client_Secret\":\"{clientSecret}\"}}";
+            File.WriteAllText(this.userTokenFileLocation, jsonString);
+
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Loads the API Keys provided by the user.
+    /// </summary>
+    /// <returns>True if completed successfully, False otherwise.</returns>
+    public bool LoadUserAPIKeys()
+    {
+        try
+        {
+            var apiKeys = JsonDocument.Parse(File.ReadAllText(this.userTokenFileLocation)).RootElement.GetProperty("BungieAPIKeys");
+
+            this.apiKey = apiKeys.GetProperty("API_Key").ToString();
+            this.clientID = apiKeys.GetProperty("Client_ID").ToString();
+            this.clientSecret = apiKeys.GetProperty("Client_Secret").ToString();
+
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Generates a random state value to be used in Authorization URI creation.
     /// </summary>
     /// <returns>The state string.</returns>
@@ -110,27 +153,5 @@ public class OAuthProfile
         }
 
         return builder.ToString();
-    }
-
-    /// <summary>
-    /// Loads the API Keys provided by the user.
-    /// </summary>
-    /// <param name="apiKey">The API key given by the user.</param>
-    /// <param name="clientID">The Client ID given by the user.</param>
-    /// <param name="clientSecret">The Client Secret given by the user.</param>
-    private void LoadUserAPIKeys(out string apiKey, out string clientID, out string clientSecret)
-    {
-        try
-        {
-            var apiKeys = JsonDocument.Parse(File.ReadAllText(this.userTokenFileLocation)).RootElement.GetProperty("BungieAPIKeys");
-
-            apiKey = apiKeys.GetProperty("API_Key").ToString();
-            clientID = apiKeys.GetProperty("Client_ID").ToString();
-            clientSecret = apiKeys.GetProperty("Client_Secret").ToString();
-        }
-        catch (Exception e)
-        {
-            throw new Exception($"GVM was unable to read the user provided API keys: {e.Message}");
-        }
     }
 }
