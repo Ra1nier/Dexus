@@ -174,7 +174,7 @@ public class Profile
     {
         try
         {
-            string jsonString = $"{{\"MembershipID\":\"{destinyMembershipID:O}\",\"MembershipType\":\"{membershipType:O}\"}}";
+            string jsonString = $"{{\"MembershipID\":\"{destinyMembershipID}\",\"MembershipType\":\"{membershipType}\"}}";
 
             File.WriteAllText(this.destinyMembershipsFileLocation, jsonString);
 
