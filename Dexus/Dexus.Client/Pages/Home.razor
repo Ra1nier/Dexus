@@ -24,9 +24,16 @@
     /// <param name="firstRender">Indicates whether this is the first render of the webpage.</param>
     protected async override void OnAfterRender(bool firstRender)
     {
+        if (Core.OAuthStatus == 3)
+        {
+            Navigation.NavigateTo("/DexusAccount");
+            return;
+        }
+        
         if (Core.OAuthStatus == 2)
         {
             Navigation.NavigateTo("/SignIn");
+            return;
         }
 
         if (Core.OAuthStatus == 1)

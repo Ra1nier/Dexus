@@ -1,0 +1,74 @@
+@page "/DexusAccount"
+
+@using MudBlazor
+
+@inject NavigationManager Navigation
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="m-4 p-4">
+    <MudPaper Class="p-4" Elevation="3" Style="border-radius: 12px;">
+        <MudText Typo="Typo.h4" Class="mb-3">Account</MudText>
+
+        <MudTabs Rounded="true" Centered="false">
+            <MudTabPanel Text="General">
+                <MudGrid>
+                    <!-- Left Side: Avatar -->
+                    <MudItem xs="12" md="4">
+                        <MudPaper Class="p-4" Style="border-radius: 10px;">
+                            <MudText Typo="Typo.subtitle1">Public Profile</MudText>
+                            <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="mt-2">
+                                <MudAvatar Size="Size.Large" Variant="Variant.Outlined" Color="Color.Info" />
+                                <MudButton Variant="Variant.Text" Color="Color.Error">Delete Picture</MudButton>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+
+                    <!-- Right Side: Form -->
+                    <MudItem xs="12" md="8">
+                        <MudPaper Class="p-4" Style="border-radius: 10px;">
+                            <MudText Typo="Typo.subtitle1">Profile Details</MudText>
+                            <MudGrid Class="mt-2">
+                                <MudItem xs="12" md="6">
+                                    <MudTextField T="string" Label="First Name" Variant="Variant.Outlined" />
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudTextField T="string" Label="Last Name" Variant="Variant.Outlined" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField T="string" Label="Job Title" Variant="Variant.Outlined" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField T="string" Label="Email" Variant="Variant.Outlined" ReadOnly="true" />
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Don't worry, we shall not spam!</MudText>
+                                </MudItem>
+                                <MudItem xs="12" Class="d-flex justify-end mt-4">
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary">Save Changes</MudButton>
+                                </MudItem>
+                            </MudGrid>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Notifications">
+                <MudText>Notifications settings go here...</MudText>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Security">
+                <MudText>Security settings go here...</MudText>
+            </MudTabPanel>
+        </MudTabs>
+    </MudPaper>
+</MudContainer>
+
+
+@code {
+    private void EditProfile()
+    {
+       // TODO: Profile Editor.
+    }
+
+    private void Logout()
+    {
+        // TODO: Logout Logic
+    }
+}
