@@ -1,23 +1,15 @@
 ﻿@page "/callback"
 
+@using Dexus.Client.Flairs.DialogBoxes
 @using Microsoft.AspNetCore.WebUtilities
 @using DexusCore
 
 @inject NavigationManager Navigation
 @inject ILogger<Callback> Logger;
+@inject IDialogService DialogService;
 @inject Core Core;
 
 <style>
-    /* Center the container */
-    .center-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    text-align: center;
-    }
-
     /* Loader styles */
     .loader {
     width: 32px;
@@ -65,13 +57,17 @@
 </style>
 
 <!-- Centered container -->
-<div class="center-container">
-    <h3>Processing your sign-in...</h3>
-    <div class="loader"></div>
-</div>
+<MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex flex-column align-center justify-center min-vh-100 px-6">
+    <MudPaper Elevation="6" Class="p-6 text-center" Style="border-radius: 16px; max-width: 480px; width: 100%; padding: 24px;">
+        <MudText Typo="Typo.h5" Class="mb-2" Color="Color.Primary">@message</MudText>
+        <div class="loader my-4"></div>
+        <MudText Typo="Typo.caption" Color="Color.Secondary">Please do not close this window.</MudText>
+    </MudPaper>
+</MudContainer>
 
 @code {
     private static bool _oauthCalled = false;
+    private string message = string.Empty;
 
     /// <summary>
     /// Activates after the component has been rendered.
@@ -85,17 +81,25 @@
         {
             _oauthCalled = true; // Ensure this logic runs only once
 
+            UpdateMessage("Welcome to Dexus. We are processing your sign in with Bungie. This should only take a moment."); 
+
             var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
             var queryParams = QueryHelpers.ParseQuery(uri.Query);
 
             if (queryParams.TryGetValue("state", out var state))
             {
                 if (Core.OAuthProfile.State != state)
+                {
                     Core.Snackbar.AddMessage("Bungie did not return the correct state. This means something went wrong with Bungie Authorization.");
+                    UpdateMessage("Something went wrong with Authorization..."); 
+                    await OpenMessageDialog("Incorrect State Value.", "Something went wrong with Bungie Authorization. Bungie returned the incorrect state value. All this means is that authorization cannot continue safely. Try restarting Dexus to resolve this issue.");
+                }
             }
             else
             {
                 Core.Snackbar.AddMessage("Bungie did not return a state value. This means something went wrong with Bungie Authorization.");
+                UpdateMessage("Something went wrong with Authorization..."); 
+                await OpenMessageDialog("No State Value Given.", "Something went wrong with Bungie Authorization. Bungie did not return a state value. All this means is that authorization cannot continue safely. Try restarting Dexus to resolve this issue.");
             }
 
             if (queryParams.TryGetValue("code", out var codeValue))
@@ -107,23 +111,49 @@
                     Logger.LogDebug("Code retrieved. Starting Sign In");
                     Core.StartOAuth(code);
 
-                    // Wait for OAuth to be completed before rerouting user to the home page.
+                    // Wait for OAuth to be completed before rerouting the user to the account page.
                     while (Core.OAuthStatus != 0)
                     {
                         await Task.Delay(500);
                     }
+                    
+                    UpdateMessage("Welcome to Dexus. Authorization completed successfully! Redirecting you back to the account page..."); 
 
-                    Navigation.NavigateTo("/");
+                    await Task.Delay(1000);
+                    Navigation.NavigateTo("/DexusAccount?signInRedirect=true&inputTokenRedirect=false");
                 }
                 else
                 {
                     Logger.LogError("Code was retrieved but is null or empty.");
+                    UpdateMessage("Something went wrong with Authorization..."); 
+                    await OpenMessageDialog("No Valid Code Given.", "Something went wrong with Bungie Authorization. Bungie did not return a valid authorization code. All this means is that dexus was unable to authorize with Bungie. Try restarting Dexus to resolve this issue.");
                 }
             }
             else
             {
                 Logger.LogError("Code was not retrieved from Bungie.");
+                UpdateMessage("Something went wrong with Authorization..."); 
+                await OpenMessageDialog("No Code Given.", "Something went wrong with Bungie Authorization. Bungie did not return an authorization code. All this means is that dexus was unable to authorize with Bungie. Try restarting Dexus to resolve this issue.");
             }
         }
+    }
+
+    private void UpdateMessage(string message)
+    {
+        this.message = message;
+        StateHasChanged();
+    }
+    
+    private Task OpenMessageDialog(string title, string message)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        
+        var parameters = new DialogParameters
+        {
+            { nameof(MessageDialog.Title), title },
+            { nameof(MessageDialog.Message), message }
+        };
+
+        return DialogService.ShowAsync<MessageDialog>(title, parameters, options);
     }
 }
