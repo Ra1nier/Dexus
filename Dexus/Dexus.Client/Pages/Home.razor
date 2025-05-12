@@ -43,12 +43,19 @@
     }
 
     /// <summary>
-    /// When page loads or reloads fetch load all important information.
+    /// When page loads or reloads.
     /// </summary>
     protected override void OnInitialized()
     {
     }
     
+    /// <summary>
+    /// Opens a warning dialog with the given title and message. If the user accepts the dialog, the given action will be invoked.
+    /// </summary>
+    /// <param name="title">Title of the dialog.</param>
+    /// <param name="message">Message body.</param>
+    /// <param name="action">A Lambda/Action that should be invoked.</param>
+    /// <returns>A Task representing the dialog.</returns>
     private async Task OpenWarningDialog(string title, string message, Action action)
     {
         var parameters = new DialogParameters
@@ -68,6 +75,12 @@
         }
     }
     
+    /// <summary>
+    /// Opens a message dialog with the given title and message.
+    /// </summary>
+    /// <param name="title">Title of the dialog.</param>
+    /// <param name="message">Message body.</param>
+    /// <returns>A Task representing the dialog.</returns>
     private Task OpenMessageDialog(string title, string message)
     {
         var options = new DialogOptions { CloseOnEscapeKey = true };

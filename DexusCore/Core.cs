@@ -129,14 +129,18 @@ public class Core
     /// </summary>
     public async void StartCoreService()
     {
-        if (!this.oauthProfile.LoadUserAPIKeys() || this.OAuthStatus == 3)
+        if (!this.oauthProfile.LoadUserAPIKeys())
         {
+            this.logger.LogError("Could not load the user's api keys.");
             return;
         }
 
+        this.OAuthStatus = 2;
+
         if (!await this.SignIn())
         {
-            this.logger.LogError("Could not sign the client in. Sign In Failed");
+            this.logger.LogError("Could not sign the client in. Sign In Failed.");
+            return;
         }
 
         this.GetDestiny2Manifest();
@@ -173,9 +177,14 @@ public class Core
         if (this.oauthProfile.ConstructUserAPIFile(apiKey, clientId, clientSecret))
         {
             this.OAuthStatus = 2;
+            this.logger.LogInformation("OAuth Keys have been set.");
+
+            this.oauthProfile.LoadUserAPIKeys();
+
             return true;
         }
 
+        this.logger.LogInformation("OAuth Keys could not be set.");
         return false;
     }
 

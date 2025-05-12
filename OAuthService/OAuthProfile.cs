@@ -112,11 +112,22 @@ public class OAuthProfile
     /// <returns>True if completed successfully, False otherwise.</returns>
     public bool ConstructUserAPIFile(string apiKey, string clientID, string clientSecret)
     {
+        this.EnsureDataFolderExists();
+
         try
         {
-            string jsonString = $"{{\"BungieAPIKeys\":{{\"API_Key\":\"{apiKey}\",\"Client_ID\":\"{clientID}\",\"Client_Secret\":\"{clientSecret}\"}}";
-            File.WriteAllText(this.userTokenFileLocation, jsonString);
+            var obj = new
+            {
+                BungieAPIKeys = new
+                {
+                    API_Key = apiKey,
+                    Client_ID = clientID,
+                    Client_Secret = clientSecret,
+                },
+            };
 
+            string json = JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(this.userTokenFileLocation, json);
             return true;
         }
         catch (Exception)
@@ -162,5 +173,16 @@ public class OAuthProfile
         }
 
         return builder.ToString();
+    }
+
+    /// <summary>
+    /// Ensures that the data folder exists.
+    /// </summary>
+    private void EnsureDataFolderExists()
+    {
+        if (!Directory.Exists(this.dataFolderPath))
+        {
+            Directory.CreateDirectory(this.dataFolderPath);
+        }
     }
 }
