@@ -1,0 +1,193 @@
+@page "/DexusAccount"
+
+@using DexusCore
+@using Dexus.Client.Flairs.DialogBoxes
+@using MudBlazor
+
+@inject NavigationManager Navigation
+@inject ILogger<DexusAccount> Logger
+@inject IDialogService DialogService
+@inject Core Core;
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="m-4 p-4">
+    <MudPaper Class="p-4 m-4" Elevation="3" Style="border-radius: 12px; margin: 24px; padding: 24px;">
+        <MudText Typo="Typo.h4" Class="mb-3">User Profile</MudText>
+
+        <MudTabs Rounded="true" Centered="false" @bind-ActivePanelIndex="activeTabIndex">
+            
+            <!-- User profile details -->
+            <MudTabPanel Text="General">
+                <MudGrid>
+                    <!-- Avatar -->
+                    <MudItem xs="12" md="4">
+                        <MudPaper Class="p-4" Style="border-radius: 10px;">
+                            <MudText Typo="Typo.subtitle1">Dexus Profile</MudText>
+                            <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="mt-2">
+                                <MudAvatar Size="Size.Large" Variant="Variant.Outlined" Color="Color.Info"/> <!-- TODO : Use the users bungie profile pic here -->
+                                <!-- TODO : Maybe include some player stats or bungie account details -->
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+
+                    <!-- Details -->
+                    <MudItem xs="12" md="8">
+                        <MudPaper Class="p-4" Style="border-radius: 10px;">
+                            <MudText Typo="Typo.subtitle1">Profile Details</MudText>
+                            <MudGrid Class="mt-2">
+                                <MudItem xs="12" md="6">
+                                    <MudTextField T="string" Label="First Name" Variant="Variant.Outlined"/>
+                                </MudItem>
+                                <MudItem xs="12" md="6">
+                                    <MudTextField T="string" Label="Last Name" Variant="Variant.Outlined"/>
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField T="string" Label="Job Title" Variant="Variant.Outlined"/>
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField T="string" Label="Email" Variant="Variant.Outlined" ReadOnly="true"/>
+                                </MudItem>
+                                <MudItem xs="12" Class="d-flex justify-end mt-4">
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary">Save Changes</MudButton>
+                                </MudItem>
+                            </MudGrid>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <!-- User API Tokens tab -->
+            <MudTabPanel Text="API Tokens">
+                <MudItem xs="12" md="8" Style="margin: 24px; padding: 24px;">
+                    <MudPaper Class="p-4" Style="border-radius: 10px; margin: 24px; padding: 24px;">
+                        <MudText Typo="Typo.subtitle1">Bungie API Tokens</MudText>
+                        <MudGrid Class="mt-2">
+                            <MudItem xs="12">
+                                <MudTextField T="string" Label="API Key" Variant="Variant.Outlined" Placeholder=@Core.OAuthProfile.API_Key />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField T="string" Label="Client ID" Variant="Variant.Outlined" Placeholder=@Core.OAuthProfile.Client_ID />
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudTextField T="string" Label="Client Secret" Variant="Variant.Outlined" Placeholder=@Core.OAuthProfile.Client_Secret />
+                            </MudItem>
+                            <MudItem xs="12" Class="d-flex justify-end mt-4">
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary">Save Changes</MudButton>
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+                </MudItem>
+            </MudTabPanel>
+
+            <!-- Bungie Account Sign-In -->
+            <MudTabPanel Text="Bungie Account">
+                <MudPaper Class="p-4 mx-auto" Style="border-radius: 12px; max-width: 600px;">
+                    <MudText Typo="Typo.h5" Class="mb-2">Bungie Sign-In</MudText>
+                    @if (Core.OAuthStatus == 0)
+                    {
+                        <MudAlert Severity="Severity.Success" Class="mb-4">
+                            You are signed in with Bungie. Your access tokens are active.
+                        </MudAlert>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@Icons.Material.Filled.Logout"
+                                   OnClick="Logout">
+                            Sign Out
+                        </MudButton>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body1" Class="mb-3 text-muted">
+                            You need to sign in with your Bungie.net account to access Destiny 2 profile data.
+                        </MudText>
+                        <MudStack AlignItems="AlignItems.Center" Spacing="2" Style="padding: 24px;margin: 24px; border-radius: 10px;">
+                            <MudAvatar Size="Size.Large" Color="Color.Info">
+                                <MudIcon Color="Color.Dark" Icon="@Icons.Material.Filled.Lock" Size="Size.Large" />
+                            </MudAvatar>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                       OnClick="HandleSignIn" StartIcon="@Icons.Material.Filled.Login">
+                                Sign In with Bungie
+                            </MudButton>
+                        </MudStack>
+                    }
+                </MudPaper>
+            </MudTabPanel>
+        </MudTabs>
+    </MudPaper>
+</MudContainer>
+
+
+@code {
+
+    /// <summary>
+    /// Indicates whether the user has ben redirected to the Account page because they need to sign in.
+    /// </summary>
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "signInRedirect")]
+    public required bool SignIn { get; set; }
+    
+    /// <summary>
+    /// Indicates whether the user has ben redirected to the Account page because they need to sign in.
+    /// </summary>
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "inputTokenRedirect")]
+    public required bool InputTokens { get; set; }
+    
+    // Account page specifics
+    private int activeTabIndex = 0;
+    
+    /// <summary>
+    /// Runs when the age is initializing.
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        if (InputTokens)
+        {
+            activeTabIndex = 1;
+        }
+        
+        if (SignIn)
+        {
+            activeTabIndex = 2;
+        }
+    }
+
+    private void EditProfile()
+    {
+       // TODO: Profile Editor.
+    }
+
+    private void Logout()
+    {
+        // TODO: Logout Logic
+    }
+    
+    /// <summary>
+    /// Starts the Sign-In process at Bungie.
+    /// </summary>
+    private void HandleSignIn()
+    {
+        if (Core.OAuthStatus == 3)
+        {
+            OpenMessageDialog("You can not Sign In yet!", "There are no API Keys that Dexus can access yet. You must provide the API keys in the \"API Tokens\" Tab.");
+            return;
+        }
+        
+        Logger.LogDebug("Sign In Started");
+
+        if (Core.OAuthStatus > 0)
+        {
+            Navigation.NavigateTo(Core.OAuthProfile.ConstructAuthorizationURL().ToString(), true);
+        }
+    }
+
+    private Task OpenMessageDialog(string title, string message)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        
+        var parameters = new DialogParameters
+        {
+            { nameof(MessageDialog.Title), title },
+            { nameof(MessageDialog.Message), message }
+        };
+
+        return DialogService.ShowAsync<MessageDialog>("Sign In Warning", parameters, options);
+    }
+}

@@ -1,0 +1,33 @@
+@inject IDialogService DialogService
+
+<MudDialog>
+    <TitleContent>
+        <MudText>@Title</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>@Message</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance? MudDialog { get; set; }
+
+    /// <summary>
+    /// The title for the dialog box.
+    /// </summary>
+    [Parameter] public required string Title { get; set; }
+    
+    /// <summary>
+    /// Message the Dialog should display.
+    /// </summary>
+    [Parameter] public required string Message { get; set; }
+
+    private void Submit() => MudDialog?.Close(DialogResult.Ok(true));
+
+    private void Cancel() => MudDialog?.Cancel();
+}

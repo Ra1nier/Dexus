@@ -67,27 +67,9 @@ public class Core
 
         // Setting Local Values
         this.loadingbars.GenerateLoadingbar("Main");
+        this.OAuthStatus = 3;
 
         this.StartCoreService();
-    }
-
-    /// <summary>
-    /// Gets the singleton instance of the Core.
-    /// </summary>
-    public static Core Instance
-    {
-        get
-        {
-            lock (instance)
-            {
-                if (instance == null)
-                {
-                    instance = new Core();
-                }
-
-                return instance;
-            }
-        }
     }
 
     /// <summary>
@@ -114,7 +96,7 @@ public class Core
         {
             if (value < 0 || value > 3)
             {
-                this.oAuthStatus = 2;
+                this.oAuthStatus = 3;
             }
             else
             {
@@ -257,27 +239,26 @@ public class Core
     }
 
     /// <summary>
-    /// Gets the Destiny 2 manifest from bungie.
-    /// </summary>
-    public async void GetDestiny2Manifest()
-    {
-        this.manifest.ManifestPath = await this.request.Destiny2Manifest_Request_GetCurrentManifest();
-    }
-
-    /// <summary>
     /// Checks and confirms whether the user's access and refresh token are still valid. If not, it will refresh the access token.
     /// </summary>
     /// <returns>True if the access token can be used. False otherwise.</returns>
     public async Task<bool> ConfirmOAuthStatus()
     {
-        // Check if the refresh token is expired and if so start the OAuth process
+        // Check if the API keys are valid. If not, set the OAuth status to 3 and return false.
+        if (!this.OAuthProfile.HasValidAPIKeys())
+        {
+            this.OAuthStatus = 3;
+            return false;
+        }
+
+        // Check if the refresh token is expired, and if so, start the OAuth process
         if (this.CheckExpiry(this.profile.RefreshTokenExpireDate))
         {
             this.OAuthStatus = 2;
             return false;
         }
 
-        // Check if access token is expired and if so refresh the user tokens
+        // Check if the access token is expired and if so, refresh the user tokens
         if (this.CheckExpiry(this.profile.AccessTokenExpireDate))
         {
             this.OAuthStatus = 1;
@@ -285,6 +266,14 @@ public class Core
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Gets the Destiny 2 manifest from bungie.
+    /// </summary>
+    private async void GetDestiny2Manifest()
+    {
+        this.manifest.ManifestPath = await this.request.Destiny2Manifest_Request_GetCurrentManifest();
     }
 
     /// <summary>

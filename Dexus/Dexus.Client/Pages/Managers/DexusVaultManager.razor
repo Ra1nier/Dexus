@@ -4,10 +4,13 @@
 @using DexusCore
 @using ContentManager
 @using Dexus.Client.Componates
+@using Dexus.Client.Flairs.DialogBoxes
 
 @inject NavigationManager Navigation
 @inject ILogger<DexusVaultManager> Logger
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject Core Core;
 
 <PageTitle>Dexus Vault Manager</PageTitle>
 
@@ -15,7 +18,25 @@
 @if (initializationComplete)
 {
     <!--Main Vault Manager-->
-    <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge" Class="d-flex flex-column gap-3">
+    <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge" Class="d-flex flex-column gap-3 position-relative">
+        
+        <!-- Refresh Content Button -->
+        @if (isRefreshing)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="position-absolute"
+                               Style="top: 16px; right: 16px; z-index: 1000;" />
+        }
+        else
+        {
+            <MudTooltip Text="Refresh Vault Data">
+                <MudFab StartIcon="@Icons.Material.Filled.Refresh"
+                        Color="Color.Primary"
+                        Class="position-absolute"
+                        Style="top: 16px; right: 16px; z-index: 1000;"
+                        OnClick="RefreshUserContent" />
+            </MudTooltip>
+        }
+
         <!--Guardian Manager Settings-->
         <MudPaper Style="overflow:hidden; position:relative;">
             <MudExpansionPanel Text="Manager Settings" MaxHeight="150">
@@ -111,11 +132,6 @@ else
 @code 
 {
     /// <summary>
-    /// Holds the singleton instance of core that Dexus uses.
-    /// </summary>
-    public static Core Core = new Core();
-
-    /// <summary>
     /// Holds the singleton instance of Content Manager from Core that Dexus uses.
     /// </summary>
     public static ContentManager Content = new ContentManager();
@@ -123,6 +139,7 @@ else
     // DexusVaultManager Variables
     private bool initializationComplete;
     private Dictionary<string, bool> localSettings = new Dictionary<string, bool>();
+    private bool isRefreshing = false;
 
     /// <summary>
     /// Handles the first render of the webpage.
@@ -135,15 +152,20 @@ else
             return;
         }
         
-        if (Core.OAuthStatus == 2)
+        switch (Core.OAuthStatus)
         {
-            Navigation.NavigateTo("/SignIn");
-        }
-
-        if (Core.OAuthStatus != 0)
-        {
-            if (!await Core.ConfirmOAuthStatus())
-                Navigation.NavigateTo("/SignIn");
+            case 3:
+                await OpenWarningDialog("No API Tokens.", "Dexus does not have any saved API Tokens for Bungie. DexusVaultManager cannot be used without them. Would you like to be redirected to a page where they can be inputted?", () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=false&inputTokenRedirect=true"); });
+                return;
+            case 2:
+                await OpenWarningDialog("Not Authorized with Bungie.", "You have not authorized Dexus to access your Bungie information or authorization has expired. DexusVaultManager is unable to access your inventory and vault details. Would you like to be redirected to the sign in page?", () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=true&inputTokenRedirect=false"); });
+                return;
+            case 1:
+            {
+                if (!await Core.ConfirmOAuthStatus())
+                    await OpenWarningDialog("Not Authorized with Bungie.", "You have not authorized Dexus to access your Bungie information or authorization has expired. DexusVaultManager is unable to access your inventory and vault details. Would you like to be redirected to the sign in page?", () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=true&inputTokenRedirect=false"); });
+                break;
+            }
         }
 
         if (!initializationComplete)
@@ -162,7 +184,6 @@ else
     /// </summary>
     protected async override void OnInitialized()
     {
-        Core = Core.Instance;
         Content = Core.Content;
 
         // Refresh user content
@@ -175,13 +196,18 @@ else
         await Core.ConfirmOAuthStatus();
         SnackbarProvider();
     }
-
+    
     /// <summary>
-    /// Refreshes the users content manager.
+    /// Requests that Content Manager starts a refresh of the user data.
     /// </summary>
     public async Task RefreshUserContent()
     {
+        isRefreshing = true;
+        StateHasChanged();
+
         await Content.RefreshUserContent();
+
+        isRefreshing = false;
         StateHasChanged();
     }
 
@@ -251,5 +277,37 @@ else
                 Logger.LogError($"An unknown error occured when executing the Snackbar Task that has shutdown the task: {e.Message}");
             }
         }).Start();
+    }
+    
+    private async Task OpenWarningDialog(string title, string message, Action action)
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(WarningDialog.Title), title },
+            { nameof(WarningDialog.Message), message }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+        var dialog = await DialogService.ShowAsync<WarningDialog>(title, parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            action.Invoke();
+        }
+    }
+    
+    private Task OpenMessageDialog(string title, string message)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        
+        var parameters = new DialogParameters
+        {
+            { nameof(MessageDialog.Title), title },
+            { nameof(MessageDialog.Message), message }
+        };
+
+        return DialogService.ShowAsync<MessageDialog>(title, parameters, options);
     }
 }

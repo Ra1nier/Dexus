@@ -1,0 +1,33 @@
+@inject IDialogService DialogService
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@Title</MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <MudText>@Message</MudText>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Error" OnClick="Confirm">Continue</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance? MudDialog { get; set; }
+
+    /// <summary>
+    /// The title for the dialog box.
+    /// </summary>
+    [Parameter] public string Title { get; set; } = "Warning";
+    
+    /// <summary>
+    /// Message the Dialog should display.
+    /// </summary>
+    [Parameter] public string Message { get; set; } = "Are you sure you want to proceed?";
+
+    private void Cancel() => MudDialog?.Cancel();
+    private void Confirm() => MudDialog?.Close(DialogResult.Ok(true));
+}

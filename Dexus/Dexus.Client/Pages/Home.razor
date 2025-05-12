@@ -1,8 +1,12 @@
 ﻿@page "/"
+@rendermode InteractiveServer
 
 @using DexusCore
+@using Dexus.Client.Flairs.DialogBoxes
 
 @inject NavigationManager Navigation
+@inject IDialogService DialogService
+@inject Core Core
 
 <PageTitle>Dexus</PageTitle>
 
@@ -14,32 +18,27 @@
 @code
 {
     /// <summary>
-    /// Holds the singleton instance of core that Dexus uses.
-    /// </summary>
-    private static Core Core = new Core();
-    
-    /// <summary>
     /// Handles the first render of the webpage.
     /// </summary>
     /// <param name="firstRender">Indicates whether this is the first render of the webpage.</param>
-    protected async override void OnAfterRender(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (Core.OAuthStatus == 3)
-        {
-            Navigation.NavigateTo("/DexusAccount");
-            return;
-        }
+        if (!firstRender) return;
         
-        if (Core.OAuthStatus == 2)
+        switch (Core.OAuthStatus)
         {
-            Navigation.NavigateTo("/SignIn");
-            return;
-        }
-
-        if (Core.OAuthStatus == 1)
-        {
-            if (!await Core.ConfirmOAuthStatus())
-                Navigation.NavigateTo("/SignIn");
+            case 3:
+                await OpenWarningDialog("No API Tokens.", "Dexus does not have any saved API Tokens for Bungie. Would you like to be redirected to a page where they can be inputted?", () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=false&inputTokenRedirect=true"); });
+                return;
+            case 2:
+                await OpenWarningDialog("Not Authorized with Bungie.", "You have not authorized Dexus to access your Bungie information or authorization has expired. Would you like to be redirected to the sign in page?", () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=true&inputTokenRedirect=false"); });
+                return;
+            case 1:
+            {
+                if (!await Core.ConfirmOAuthStatus())
+                    await OpenWarningDialog("Not Authorized with Bungie.", "You have not authorized Dexus to access your Bungie information or authorization has expired. Would you like to be redirected to the sign in page?", () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=true&inputTokenRedirect=false"); });
+                break;
+            }
         }
     }
 
@@ -48,6 +47,37 @@
     /// </summary>
     protected override void OnInitialized()
     {
-        Core = Core.Instance;
+    }
+    
+    private async Task OpenWarningDialog(string title, string message, Action action)
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(WarningDialog.Title), title },
+            { nameof(WarningDialog.Message), message }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+        var dialog = await DialogService.ShowAsync<WarningDialog>(title, parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            action.Invoke();
+        }
+    }
+    
+    private Task OpenMessageDialog(string title, string message)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        
+        var parameters = new DialogParameters
+        {
+            { nameof(MessageDialog.Title), title },
+            { nameof(MessageDialog.Message), message }
+        };
+
+        return DialogService.ShowAsync<MessageDialog>(title, parameters, options);
     }
 }

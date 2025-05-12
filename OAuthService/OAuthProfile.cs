@@ -72,6 +72,15 @@ public class OAuthProfile
     public string Token_Endpoint => this.tokenEndpoint;
 
     /// <summary>
+    /// Checks if the user has provided API Keys.
+    /// </summary>
+    /// <returns>True if all API keys exist, False otherwise.</returns>
+    public bool HasValidAPIKeys()
+    {
+        return !string.IsNullOrEmpty(this.apiKey) && !string.IsNullOrEmpty(this.clientID) && !string.IsNullOrEmpty(this.clientSecret);
+    }
+
+    /// <summary>
     /// Constructs a Authorization URL from the OAuthProfile.
     /// </summary>
     /// <returns>The Authorization URI.</returns>
