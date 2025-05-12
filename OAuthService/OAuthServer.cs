@@ -37,6 +37,7 @@ public class OAuthServer
         this.logger.LogInformation("Bungie OAuth server started.");
 
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, this.profile.Token_Endpoint);
+        request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.profile.Client_ID}");
 
         string tokens = await this.ExchangeForTokenAsync(request, authorizationCode);
 
@@ -60,6 +61,7 @@ public class OAuthServer
         this.logger.LogInformation("Sending Access Token Refresh Request.");
 
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, this.profile.Token_Endpoint);
+        request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.profile.Client_ID}");
 
         // Add form parameters for the POST body
         var formData = new Dictionary<string, string>
@@ -134,6 +136,7 @@ public class OAuthServer
 
         request.Method = HttpMethod.Post;
         request.Content = content;
+        request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.profile.Client_ID}");
 
         try
         {

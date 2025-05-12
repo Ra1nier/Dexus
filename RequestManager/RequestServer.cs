@@ -55,6 +55,7 @@ public class RequestServer
         // Add headers
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
+        request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
         // Send request
         try
@@ -134,6 +135,7 @@ public class RequestServer
         // Add headers
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
+        request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
         // Send request
         try
@@ -186,6 +188,7 @@ public class RequestServer
         // Add headers
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
+        request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
         // Send request
         try
@@ -234,6 +237,7 @@ public class RequestServer
         // Add headers
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
+        request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
         // Send request
         try
@@ -287,6 +291,7 @@ public class RequestServer
         // Add headers
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
+        request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
         // Send request
         try
@@ -349,6 +354,7 @@ public class RequestServer
         // Add headers
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
+        request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
         // Send request
         try
@@ -403,6 +409,7 @@ public class RequestServer
         // Add headers
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
+        request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
         // Send request
         try
@@ -461,6 +468,7 @@ public class RequestServer
         // Add headers
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
+        request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
         // Send request
         try
@@ -500,6 +508,7 @@ public class RequestServer
 
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
+        request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
         try
         {
@@ -611,6 +620,7 @@ public class RequestServer
         // Add headers
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
+        request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
         // Send request
         try
@@ -652,8 +662,12 @@ public class RequestServer
     {
         try
         {
-            // Request manifest file
-            HttpResponseMessage manifestResponse = await this.client.GetAsync(filePath);
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
+
+            // Send the request
+            using HttpResponseMessage manifestResponse = await this.client.SendAsync(request);
+
             if (!manifestResponse.IsSuccessStatusCode)
             {
                 string errorResponse = await manifestResponse.Content.ReadAsStringAsync();
@@ -688,8 +702,12 @@ public class RequestServer
     {
         try
         {
-            // Request manifest file
-            HttpResponseMessage manifestResponse = await this.client.GetAsync(url);
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
+
+            // Send the request
+            using HttpResponseMessage manifestResponse = await this.client.SendAsync(request);
+
             if (!manifestResponse.IsSuccessStatusCode)
             {
                 string errorResponse = await manifestResponse.Content.ReadAsStringAsync();
@@ -704,7 +722,7 @@ public class RequestServer
                 await manifestFileStream.CopyToAsync(fileStream);
             }
 
-            // Extract the manifest zip file
+            // Extract and clean up
             ZipFile.ExtractToDirectory(zipFilePath, filePath, overwriteFiles: true);
             File.Delete(zipFilePath);
 
