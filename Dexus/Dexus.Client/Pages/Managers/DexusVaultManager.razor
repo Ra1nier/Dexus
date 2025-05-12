@@ -8,7 +8,6 @@
 
 @inject NavigationManager Navigation
 @inject ILogger<DexusVaultManager> Logger
-@inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject Core Core;
 
@@ -194,7 +193,6 @@ else
 
         // Final Checks
         await Core.ConfirmOAuthStatus();
-        SnackbarProvider();
     }
     
     /// <summary>
@@ -252,33 +250,14 @@ else
 
         StateHasChanged();
     }
-
-    /// <summary>
-    /// Starts the snackbar provider to display messages to the user.
-    /// </summary>
-    private void SnackbarProvider()
-    {
-        new Thread(async void () =>
-        {
-            try
-            {
-                while (true)
-                {
-                    await Task.Delay(1000);
-                    while (Core.Snackbar.NextMessage(out string message, out string severity, out Action<SnackbarOptions> config))
-                    {
-                        Severity mode = (Severity)Enum.Parse(typeof(Severity), severity);
-                        Snackbar.Add(message, mode, config);
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.LogError($"An unknown error occured when executing the Snackbar Task that has shutdown the task: {e.Message}");
-            }
-        }).Start();
-    }
     
+    /// <summary>
+    /// Opens a warning dialog with the given title and message. If the user accepts the dialog, the given action will be invoked.
+    /// </summary>
+    /// <param name="title">Title of the dialog.</param>
+    /// <param name="message">Message body.</param>
+    /// <param name="action">A Lambda/Action that should be invoked.</param>
+    /// <returns>A Task representing the dialog.</returns>
     private async Task OpenWarningDialog(string title, string message, Action action)
     {
         var parameters = new DialogParameters
@@ -298,6 +277,12 @@ else
         }
     }
     
+    /// <summary>
+    /// Opens a message dialog with the given title and message.
+    /// </summary>
+    /// <param name="title">Title of the dialog.</param>
+    /// <param name="message">Message body.</param>
+    /// <returns>A Task representing the dialog.</returns>
     private Task OpenMessageDialog(string title, string message)
     {
         var options = new DialogOptions { CloseOnEscapeKey = true };

@@ -2,6 +2,10 @@
 
 @inherits LayoutComponentBase
 
+@inject Core Core
+@inject ISnackbar Snackbar
+@inject ILogger<MainLayout> Logger
+
 <MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode"/>
 <MudPopoverProvider/>
 <MudDialogProvider/>
@@ -49,6 +53,34 @@
             PaletteDark = _darkPalette,
             LayoutProperties = new LayoutProperties()
         };
+
+        StartSnackbarProvider();
+    }
+    
+    /// <summary>
+    /// Starts the snackbar provider to display messages to the user.
+    /// </summary>
+    private void StartSnackbarProvider()
+    {
+        new Thread(async void () =>
+        {
+            try
+            {
+                while (true)
+                {
+                    await Task.Delay(1000);
+                    while (Core.Snackbar.NextMessage(out string message, out string severity, out Action<SnackbarOptions> config))
+                    {
+                        Severity mode = (Severity)Enum.Parse(typeof(Severity), severity);
+                        Snackbar.Add(message, mode, config);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"An unknown error occured when executing the Snackbar Task that has shutdown the task: {e.Message}");
+            }
+        }).Start();
     }
 
     private void DrawerToggle()
