@@ -1,6 +1,8 @@
 ﻿@using GuardianServices.Models
 @using DexusCore
 
+@inject Core Core
+
 @if (Sorted)
 {
     <MudPaper Class="d-flex flex-column gap-2" @key="RenderKey">
@@ -13,7 +15,7 @@
                                  Style="height: 100%; width: 100%;">
                         @foreach (var item in Items.Where(i => i.Identifier == character.CharacterId))
                         {
-                            <ItemModel Item=@item Core=@Core/>
+                            <ItemModel Item=@item />
                         }
                     </MudDropZone>
                 </MudItem>
@@ -40,7 +42,7 @@ else
                 @foreach (var item in Items)
                 {
                     <MudItem Class="d-flex flex-column">
-                        <ItemModel Item=@item Core=@Core/>
+                        <ItemModel Item=@item />
                     </MudItem>
                 }
             </MudDropZone>
@@ -61,12 +63,6 @@ else
     /// </summary>
     [Parameter]
     public required IEnumerable<Item> Items { get; set; }
-
-    /// <summary>
-    /// Core used by DexusVaultManager.
-    /// </summary>
-    [Parameter]
-    public required Core Core { get; set; }
 
     /// <summary>
     /// A bool value used to determine if the items should be sorted by character.

@@ -1,6 +1,8 @@
 ﻿@using GuardianServices.Models
 @using DexusCore
 
+@inject Core Core
+
 <MudPaper Class="d-flex flex-column gap-2" @key="RenderKey">
     <MudDropContainer T="Item" Items="Items.OrderByDescending(item => item.Power)"
                       ItemsSelector="@((item, dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer"
@@ -32,7 +34,7 @@
             </MudGrid>
         </ChildContent>
         <ItemRenderer>
-            <ItemModel Item=@context Core=@Core/>
+            <ItemModel Item=@context />
         </ItemRenderer>
     </MudDropContainer>
 </MudPaper>
@@ -50,13 +52,7 @@
     /// </summary>
     [Parameter]
     public required IEnumerable<Item> Items { get; set; }
-
-    /// <summary>
-    /// The singleton instance of core that DexusVaultManager uses.
-    /// </summary>
-    [Parameter]
-    public required Core Core { get; set; }
-
+    
     /// <summary>
     /// Handles transfers of items between buckets and informs the core of the change.
     /// Supports Vault to Character, Character to Vault, and Character to Character transfers.

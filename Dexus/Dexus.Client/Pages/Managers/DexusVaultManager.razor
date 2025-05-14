@@ -71,39 +71,37 @@
         </MudGrid>
 
         <!-- Postmaster Section -->
-        <BucketList Items="Content.Postmaster.Values" Sorted="true" Core=@Core
-                    RenderKey=@Content.ItemManagementRenderKey/>
+        <BucketList Items="Content.Postmaster.Values" Sorted="true" RenderKey=@Content.ItemManagementRenderKey/>
 
         <!-- Kinetic Weapons Section-->
-        <ManagmentList Items="Content.KineticWeapons.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
+        <ManagmentList Items="Content.KineticWeapons.Values" RenderKey=@Content.ItemManagementRenderKey/>
 
         <!-- Energy Weapons Section -->
-        <ManagmentList Items="Content.EnergyWeapons.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
+        <ManagmentList Items="Content.EnergyWeapons.Values" RenderKey=@Content.ItemManagementRenderKey/>
 
         <!-- Power Weapons Section -->
-        <ManagmentList Items="Content.PowerWeapons.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
+        <ManagmentList Items="Content.PowerWeapons.Values" RenderKey=@Content.ItemManagementRenderKey/>
 
         <!-- Helmets Section -->
-        <ManagmentList Items="Content.Helmets.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
+        <ManagmentList Items="Content.Helmets.Values" RenderKey=@Content.ItemManagementRenderKey/>
 
         <!-- Gauntlets Section -->
-        <ManagmentList Items="Content.Gauntlets.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
+        <ManagmentList Items="Content.Gauntlets.Values" RenderKey=@Content.ItemManagementRenderKey/>
 
         <!-- Chests Section -->
-        <ManagmentList Items="Content.Chests.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
+        <ManagmentList Items="Content.Chests.Values" RenderKey=@Content.ItemManagementRenderKey/>
 
         <!-- Legs Section -->
-        <ManagmentList Items="Content.Legs.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
+        <ManagmentList Items="Content.Legs.Values" RenderKey=@Content.ItemManagementRenderKey/>
 
         <!-- Class Items Section -->
-        <ManagmentList Items="Content.Skirts.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
+        <ManagmentList Items="Content.Skirts.Values" RenderKey=@Content.ItemManagementRenderKey/>
 
         <!-- Accessories Section -->
-        <ManagmentList Items="Content.Accessories.Values" Core=@Core RenderKey=@Content.ItemManagementRenderKey/>
+        <ManagmentList Items="Content.Accessories.Values" RenderKey=@Content.ItemManagementRenderKey/>
 
         <!-- Consumables Section -->
-        <BucketList Items="Content.UninstantiatedItems" Sorted="false" Core=@Core
-                    RenderKey=@Content.ItemManagementRenderKey/>
+        <BucketList Items="Content.UninstantiatedItems" Sorted="false" RenderKey=@Content.ItemManagementRenderKey/>
     </MudContainer>
 }
 else
@@ -154,15 +152,18 @@ else
         switch (Core.OAuthStatus)
         {
             case 3:
-                DialogUIService.SendDialog("No API Tokens.", "Dexus does not have any saved API Tokens for Bungie. Would you like to be redirected to a page where they can be inputted?", () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=false&inputTokenRedirect=true"); });
+                DialogUIService.SendDialog("No API Tokens.", "Dexus does not have any saved API Tokens for Bungie. Would you like to be redirected to a page where they can be inputted?", 
+                    () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=false&inputTokenRedirect=true"); });
                 return;
             case 2:
-                DialogUIService.SendDialog("Not Authorized with Bungie.", "You have not authorized Dexus to access your Bungie information or authorization has expired. Would you like to be redirected to the sign in page?", () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=true&inputTokenRedirect=false"); });
+                DialogUIService.SendDialog("Not Authorized with Bungie.", "You have not authorized Dexus to access your Bungie information or authorization has expired. Would you like to be redirected to the sign in page?", 
+                    () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=true&inputTokenRedirect=false"); });
                 return;
             case 1:
             {
                 if (!await Core.ConfirmOAuthStatus())
-                    DialogUIService.SendDialog("Not Authorized with Bungie.", "You have not authorized Dexus to access your Bungie information or authorization has expired. Would you like to be redirected to the sign in page?", () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=true&inputTokenRedirect=false"); });
+                    DialogUIService.SendDialog("Bungie Authorization Error.", "Your authorization with Bungie has expired and Dexus was unable to refresh it. You really should not be seeing this error but resigning in should fix it. Would you like to be redirected to the sign in page?", 
+                        () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=true&inputTokenRedirect=false"); });
                 break;
             }
         }

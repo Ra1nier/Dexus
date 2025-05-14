@@ -2,6 +2,8 @@
 @using DexusCore
 @using GuardianServices
 
+@inject Core Core
+
 <!-- Main Display -->
 <MudCard
     Style="width: 80px; height: 80px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; position: relative;"
@@ -214,12 +216,6 @@
     /// </summary>
     [Parameter]
     public required Item Item { get; set; }
-
-    /// <summary>
-    /// Singleton instance of the Core service.
-    /// </summary>
-    [Parameter]
-    public required Core Core { get; set; }
 
     // Property Popover locks
     private static Guid? activeItemID = null;
