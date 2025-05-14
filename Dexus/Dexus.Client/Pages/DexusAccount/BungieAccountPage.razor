@@ -1,0 +1,86 @@
+@using DexusCore
+
+@inject Core Core
+
+<MudItem xs="12" md="8" Class="mx-auto mt-6">
+    <MudPaper Elevation="4" Class="p-6" Style="border-radius: 12px;">
+        <MudText Typo="Typo.h6" Class="mb-4" Color="Color.Primary">Bungie API Tokens</MudText>
+
+        <MudForm @ref="apiTokenForm">
+            <MudGrid Spacing="3">
+                <MudItem xs="12">
+                    <MudTextField T="string"
+                                  Label="API Key"
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.VpnKey"
+                                  FullWidth="true"
+                                  @bind-Value="APIKey"/>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string"
+                                  Label="Client ID"
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.PermIdentity"
+                                  FullWidth="true"
+                                  @bind-Value="ClientID"/>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string"
+                                  Label="Client Secret"
+                                  Variant="Variant.Outlined"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Lock"
+                                  FullWidth="true"
+                                  @bind-Value="ClientSecret"/>
+                </MudItem>
+
+                <MudItem xs="12" Class="d-flex justify-end mt-4">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Save"
+                               OnClick="SaveAPIKeys">
+                        Save Changes
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </MudPaper>
+</MudItem>
+
+@code {
+    private MudForm? apiTokenForm;
+    private string APIKey = string.Empty;
+    private string ClientID = string.Empty;
+    private string ClientSecret = string.Empty;
+
+    /// <summary>
+    /// Runs when the age is initializing.
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        APIKey = Core.OAuthProfile.API_Key;
+        ClientID = Core.OAuthProfile.Client_ID;
+        ClientSecret = Core.OAuthProfile.Client_Secret;
+    }
+
+    /// <summary>
+    /// Saves the user API keys to the OAuthProfile
+    /// </summary>
+    private async Task SaveAPIKeys()
+    {
+        if (apiTokenForm is null)
+            return;
+
+        await apiTokenForm.Validate();
+
+        if (apiTokenForm.IsValid)
+        {
+            Core.SetOAuthKeys(APIKey, ClientID, ClientSecret);
+        }
+    }
+
+}

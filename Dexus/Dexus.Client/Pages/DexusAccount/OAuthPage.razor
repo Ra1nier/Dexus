@@ -1,0 +1,65 @@
+@using DexusCore
+@using UIServices
+
+@inject Core Core
+@inject ILogger<OAuthPage> Logger
+@inject DialogUIService DialogUIService
+@inject NavigationManager Navigation
+
+<MudPaper Class="p-4 mx-auto" Style="border-radius: 12px; max-width: 600px;">
+    <MudText Typo="Typo.h5" Class="mb-2">Bungie Sign-In</MudText>
+    @if (Core.OAuthStatus == 0)
+    {
+        <MudAlert Severity="Severity.Success" Class="mb-4">
+            You are signed in with Bungie. Your access tokens are active.
+        </MudAlert>
+        <MudButton Variant="Variant.Outlined" Color="Color.Error"
+                   StartIcon="@Icons.Material.Filled.Logout"
+                   OnClick="Logout">
+            Sign Out
+        </MudButton>
+    }
+    else
+    {
+        <MudText Typo="Typo.body1" Class="mb-3 text-muted">
+            You need to sign in with your Bungie.net account to access Destiny 2 profile data.
+        </MudText>
+        <MudStack AlignItems="AlignItems.Center" Spacing="2"
+                  Style="padding: 24px;margin: 24px; border-radius: 10px;">
+            <MudAvatar Size="Size.Large" Color="Color.Info">
+                <MudIcon Color="Color.Dark" Icon="@Icons.Material.Filled.Lock" Size="Size.Large"/>
+            </MudAvatar>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       OnClick="HandleSignIn" StartIcon="@Icons.Material.Filled.Login">
+                Sign In with Bungie
+            </MudButton>
+        </MudStack>
+    }
+</MudPaper>
+
+@code {
+    
+    /// <summary>
+    /// Starts the Sign-In process at Bungie.
+    /// </summary>
+    private void HandleSignIn()
+    {
+        if (Core.OAuthStatus == 3)
+        {
+            DialogUIService.SendDialog("You can not Sign In yet!", "There are no API Keys that Dexus can access yet. You must provide the API keys in the \"API Tokens\" Tab.");
+            return;
+        }
+
+        Logger.LogDebug("Sign In Started");
+
+        if (Core.OAuthStatus > 0)
+        {
+            Navigation.NavigateTo(Core.OAuthProfile.ConstructAuthorizationURL().ToString(), true);
+        }
+    }
+    
+    private void Logout()
+    {
+        // TODO: Logout Logic
+    }
+}

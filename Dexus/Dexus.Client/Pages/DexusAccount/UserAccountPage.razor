@@ -1,0 +1,41 @@
+<MudGrid>
+    <!-- Avatar -->
+    <MudItem xs="12" md="4">
+        <MudPaper Class="p-4" Style="border-radius: 10px;">
+            <MudText Typo="Typo.subtitle1">Dexus Profile</MudText>
+            <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="mt-2">
+                <MudAvatar Size="Size.Large" Variant="Variant.Outlined" Color="Color.Info"/>
+                <!-- TODO : Use the users bungie profile pic here -->
+                <!-- TODO : Maybe include some player stats or bungie account details -->
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+
+    <!-- Details -->
+    <MudItem xs="12" md="8">
+        <MudPaper Class="p-4" Style="border-radius: 10px;">
+            <MudText Typo="Typo.subtitle1">Profile Details</MudText>
+            <MudGrid Class="mt-2">
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" Label="First Name" Variant="Variant.Outlined"/>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" Label="Last Name" Variant="Variant.Outlined"/>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField T="string" Label="Job Title" Variant="Variant.Outlined"/>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField T="string" Label="Email" Variant="Variant.Outlined" ReadOnly="true"/>
+                </MudItem>
+                <MudItem xs="12" Class="d-flex justify-end mt-4">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary">Save Changes</MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+
+}
