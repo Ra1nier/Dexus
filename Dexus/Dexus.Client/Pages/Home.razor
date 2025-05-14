@@ -2,10 +2,10 @@
 @rendermode InteractiveServer
 
 @using DexusCore
-@using Dexus.Client.Flairs.DialogBoxes
+@using UIServices
 
 @inject NavigationManager Navigation
-@inject IDialogService DialogService
+@inject DialogUIService DialogUIService
 @inject Core Core
 
 <PageTitle>Dexus</PageTitle>
@@ -28,15 +28,15 @@
         switch (Core.OAuthStatus)
         {
             case 3:
-                await OpenWarningDialog("No API Tokens.", "Dexus does not have any saved API Tokens for Bungie. Would you like to be redirected to a page where they can be inputted?", () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=false&inputTokenRedirect=true"); });
+                DialogUIService.SendDialog("No API Tokens.", "Dexus does not have any saved API Tokens for Bungie. Would you like to be redirected to a page where they can be inputted?", () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=false&inputTokenRedirect=true"); });
                 return;
             case 2:
-                await OpenWarningDialog("Not Authorized with Bungie.", "You have not authorized Dexus to access your Bungie information or authorization has expired. Would you like to be redirected to the sign in page?", () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=true&inputTokenRedirect=false"); });
+                DialogUIService.SendDialog("Not Authorized with Bungie.", "You have not authorized Dexus to access your Bungie information or authorization has expired. Would you like to be redirected to the sign in page?", () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=true&inputTokenRedirect=false"); });
                 return;
             case 1:
             {
                 if (!await Core.ConfirmOAuthStatus())
-                    await OpenWarningDialog("Not Authorized with Bungie.", "You have not authorized Dexus to access your Bungie information or authorization has expired. Would you like to be redirected to the sign in page?", () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=true&inputTokenRedirect=false"); });
+                    DialogUIService.SendDialog("Not Authorized with Bungie.", "You have not authorized Dexus to access your Bungie information or authorization has expired. Would you like to be redirected to the sign in page?", () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=true&inputTokenRedirect=false"); });
                 break;
             }
         }
@@ -47,50 +47,5 @@
     /// </summary>
     protected override void OnInitialized()
     {
-    }
-    
-    /// <summary>
-    /// Opens a warning dialog with the given title and message. If the user accepts the dialog, the given action will be invoked.
-    /// </summary>
-    /// <param name="title">Title of the dialog.</param>
-    /// <param name="message">Message body.</param>
-    /// <param name="action">A Lambda/Action that should be invoked.</param>
-    /// <returns>A Task representing the dialog.</returns>
-    private async Task OpenWarningDialog(string title, string message, Action action)
-    {
-        var parameters = new DialogParameters
-        {
-            { nameof(WarningDialog.Title), title },
-            { nameof(WarningDialog.Message), message }
-        };
-
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
-
-        var dialog = await DialogService.ShowAsync<WarningDialog>(title, parameters, options);
-        var result = await dialog.Result;
-
-        if (result != null && !result.Canceled)
-        {
-            action.Invoke();
-        }
-    }
-    
-    /// <summary>
-    /// Opens a message dialog with the given title and message.
-    /// </summary>
-    /// <param name="title">Title of the dialog.</param>
-    /// <param name="message">Message body.</param>
-    /// <returns>A Task representing the dialog.</returns>
-    private Task OpenMessageDialog(string title, string message)
-    {
-        var options = new DialogOptions { CloseOnEscapeKey = true };
-        
-        var parameters = new DialogParameters
-        {
-            { nameof(MessageDialog.Title), title },
-            { nameof(MessageDialog.Message), message }
-        };
-
-        return DialogService.ShowAsync<MessageDialog>(title, parameters, options);
     }
 }
