@@ -1,6 +1,7 @@
 using Dexus.Components;
 using MudBlazor.Services;
 using DexusCore;
+using Dexus.Client.UIServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,7 @@ builder.Services.AddRazorComponents()
 
 // Add dependencies in the server side container to allow prerendering of components. TODO : Might need to fix when implementing electron.
 builder.Services.AddScoped<Core>();
+builder.Services.AddScoped<DialogUIService>();
 
 var app = builder.Build();
 

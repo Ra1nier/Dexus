@@ -2,6 +2,7 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
+using Dexus.Client.UIServices;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor;
 using MudBlazor.Services;
@@ -14,6 +15,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 
 // Add the Dexus core to the Blazor application as a Singleton Instance.
 builder.Services.AddScoped<Core>();
+builder.Services.AddScoped<DialogUIService>();
 
 builder.Services.AddMudServices(config =>
 {
