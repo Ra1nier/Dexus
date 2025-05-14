@@ -22,6 +22,17 @@
         <MudSpacer/>
         
         <!-- Right side of app bar -->
+        @if (refreshingContent)
+        {
+            <MudProgressCircular Size="Size.Medium" Indeterminate="true"/>
+        }
+        else
+        {
+            <MudTooltip Text="@tooltipText">
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Inherit"
+                               OnClick="@RefreshClientContent"/>
+            </MudTooltip>
+        }
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle"/>
         <MudIconButton Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" Edge="Edge.End"
                        OnClick="@AccountDrawerToggle"/>
@@ -39,10 +50,17 @@
 </div>
 
 @code {
+    // Layout Variables
     private bool _drawerOpen = true;
     private bool _accountDrawerOpen = false;
     private bool _isDarkMode = true;
     private MudTheme? _theme = null;
+    
+    // Refresh Button variables
+    private bool refreshingContent = false;
+    private DateTime lastRefreshTime = DateTime.Now;
+    private string tooltipText = "Time Since Last Refresh: 00:00";
+    private System.Timers.Timer? refreshUpdateTimer;
 
     /// <summary>
     /// Starts the process when the webpage is loaded.
@@ -57,6 +75,11 @@
             PaletteDark = _darkPalette,
             LayoutProperties = new LayoutProperties()
         };
+        
+        refreshUpdateTimer = new System.Timers.Timer(1000);
+        refreshUpdateTimer.Elapsed += (sender, e) => UpdateTooltip();
+        refreshUpdateTimer.AutoReset = true;
+        refreshUpdateTimer.Enabled = true;
 
         StartSnackbarProvider();
         StartDialogService();
@@ -164,6 +187,31 @@
         };
 
         return DialogService.ShowAsync<MessageDialog>(title, parameters, options);
+    }
+    
+    /// <summary>
+    /// Informs Content Manager that the user requested a refresh.
+    /// </summary>
+    private async Task RefreshClientContent()
+    {
+        refreshingContent = true;
+        StateHasChanged();
+
+        await Core.Content.RefreshUserContent();
+
+        lastRefreshTime = DateTime.Now;
+        refreshingContent = false;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Updates the Content Manager Refresh Button tooltip to show the current time since the last refresh.
+    /// </summary>
+    private void UpdateTooltip()
+    {
+        TimeSpan elapsed = DateTime.Now - lastRefreshTime;
+        tooltipText = $"Time Since Last Refresh: {elapsed:mm\\:ss}";
+        InvokeAsync(StateHasChanged);
     }
 
     private void DrawerToggle()

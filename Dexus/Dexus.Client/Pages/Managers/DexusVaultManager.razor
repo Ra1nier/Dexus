@@ -18,23 +18,6 @@
 {
     <!--Main Vault Manager-->
     <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge" Class="d-flex flex-column gap-3 position-relative">
-        
-        <!-- Refresh Content Button -->
-        @if (isRefreshing)
-        {
-            <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="position-absolute"
-                               Style="top: 16px; right: 16px; z-index: 1000;" />
-        }
-        else
-        {
-            <MudTooltip Text="Refresh Vault Data">
-                <MudFab StartIcon="@Icons.Material.Filled.Refresh"
-                        Color="Color.Primary"
-                        Class="position-absolute"
-                        Style="top: 16px; right: 16px; z-index: 1000;"
-                        OnClick="RefreshUserContent" />
-            </MudTooltip>
-        }
 
         <!--Guardian Manager Settings-->
         <MudPaper Style="overflow:hidden; position:relative;">
@@ -136,7 +119,6 @@ else
     // DexusVaultManager Variables
     private bool initializationComplete;
     private Dictionary<string, bool> localSettings = new Dictionary<string, bool>();
-    private bool isRefreshing = false;
 
     /// <summary>
     /// Handles the first render of the webpage.
@@ -194,20 +176,6 @@ else
 
         // Final Checks
         await Core.ConfirmOAuthStatus();
-    }
-    
-    /// <summary>
-    /// Requests that Content Manager starts a refresh of the user data.
-    /// </summary>
-    public async Task RefreshUserContent()
-    {
-        isRefreshing = true;
-        StateHasChanged();
-
-        await Content.RefreshUserContent();
-
-        isRefreshing = false;
-        StateHasChanged();
     }
 
     /// <summary>
