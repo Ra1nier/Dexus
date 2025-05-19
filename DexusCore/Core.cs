@@ -15,9 +15,6 @@ using GuardianServices;
 /// </summary>
 public class Core
 {
-    // Singleton instance of Core
-    private static Core instance = new Core();
-
     // Core libraries
     private OAuthProfile oauthProfile;
     private Profile profile;
@@ -30,6 +27,7 @@ public class Core
     private SnackbarService snackbar;
     private LoadingbarService loadingbars;
     private SettingsService settings;
+    private TimelineService timeline;
 
     // Main logger
     private ILogger logger;
@@ -56,10 +54,12 @@ public class Core
         this.snackbar = new SnackbarService();
         this.loadingbars = new LoadingbarService();
         this.settings = new SettingsService();
+        this.timeline = new TimelineService();
 
         // Start local instances of libraries needed by core
         this.profile = new Profile();
         this.oauthProfile = new OAuthProfile();
+        this.logger.LogDebug($"OAuth Profile Created. State = {this.oauthProfile.State}");
         this.oauth = new OAuthServer(this.logger, this.oauthProfile);
         this.request = new RequestServer(this.logger, this.profile, this.oauthProfile);
         this.manifest = new ManifestServer(this.logger);
@@ -122,6 +122,11 @@ public class Core
     /// </summary>
     public SettingsService Settings => this.settings;
 
+    /// <summary>
+    /// Gets the timeline service.
+    /// </summary>
+    public TimelineService Timeline => this.timeline;
+
     // Main Functionality
 
     /// <summary>
@@ -162,6 +167,23 @@ public class Core
             return await this.ConfirmOAuthStatus();
         }
 
+        return false;
+    }
+
+    /// <summary>
+    /// Attemps to Logout the current user.
+    /// </summary>
+    /// <returns>A bool value indicating whether Logout was successful.</returns>
+    public bool Logout()
+    {
+        if (this.profile.ThrowOut())
+        {
+            this.OAuthStatus = 2;
+            this.Snackbar.AddMessage("You have been successfully logged out!");
+            return true;
+        }
+
+        this.Snackbar.AddMessage("Dexus could not log you out. Try restarting.");
         return false;
     }
 
@@ -245,6 +267,9 @@ public class Core
 
             this.logger.LogError($"Profile failed to initialize. {reason}");
         }
+
+        // Get the most current version of the Destiny 2 manifest.
+        this.GetDestiny2Manifest();
     }
 
     /// <summary>
@@ -278,7 +303,7 @@ public class Core
     }
 
     /// <summary>
-    /// Gets the Destiny 2 manifest from bungie.
+    /// Gets the Destiny 2 manifest from bungie and saves the path to it in the manifest manager.
     /// </summary>
     private async void GetDestiny2Manifest()
     {
