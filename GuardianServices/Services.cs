@@ -476,3 +476,159 @@ public class SettingsService
         }
     }
 }
+
+/// <summary>
+/// Handles data management for MudTimelines.
+/// </summary>
+public class TimelineService
+{
+    private Dictionary<string, Timeline> timelines;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TimelineService"/> class.
+    /// </summary>
+    public TimelineService()
+    {
+        this.timelines = new Dictionary<string, Timeline>();
+    }
+
+    /// <summary>
+    /// Gets all current information related to the requested timeline.
+    /// </summary>
+    /// <param name="name">Name of the timeline.</param>
+    /// <param name="messages">All messages for the timeline.</param>
+    /// <param name="color">Colors the messages should display.</param>
+    /// <param name="alt">Booleans indicating whether the message should be alternated.</param>
+    /// <returns>True if the timeline was found, False otherwise.</returns>
+    public bool GetTimeline(string name, out List<string> messages, out List<Color> color, out List<bool> alt)
+    {
+        if (this.timelines.TryGetValue(name, out Timeline? timeline))
+        {
+            messages = timeline.Messages;
+            color = timeline.Color;
+            alt = timeline.Alt;
+            return true;
+        }
+
+        messages = new List<string>();
+        color = new List<Color>();
+        alt = new List<bool>();
+        return false;
+    }
+
+    /// <summary>
+    /// Adds a timeline to the Timeline service with a pre-generated name.
+    /// </summary>
+    /// <returns>The name of the generated timeline.</returns>
+    public string AddTimeline()
+    {
+        string name = Guid.NewGuid().ToString();
+        if (this.timelines.ContainsKey(name))
+        {
+            return string.Empty;
+        }
+
+        this.timelines.Add(name, new Timeline());
+        return name;
+    }
+
+    /// <summary>
+    /// Adds a timeline to the Timeline service with the given name.
+    /// </summary>
+    /// <param name="name">Name of the timeline to add.</param>
+    public void AddTimeline(string name)
+    {
+        if (this.timelines.ContainsKey(name))
+        {
+            return;
+        }
+
+        this.timelines.Add(name, new Timeline());
+    }
+
+    /// <summary>
+    /// Removes the timeline with the given name from the timeline service.
+    /// </summary>
+    /// <param name="name">Name of the timeline to remove.</param>
+    public void RemoveTimeline(string name)
+    {
+        this.timelines.Remove(name);
+    }
+
+    /// <summary>
+    /// Adds a message to the timeline of a given name.
+    /// </summary>
+    /// <param name="name">Name of the timeline.</param>
+    /// <param name="message">Message to add.</param>
+    public void AddMessage(string name, string message)
+    {
+        if (!this.timelines.TryGetValue(name, out Timeline? timeline))
+        {
+            return;
+        }
+
+        timeline.Messages.Add(message);
+        timeline.Color.Add(Color.Info);
+        timeline.Alt.Add(false);
+    }
+
+    /// <summary>
+    /// Adds a message to the timeline of a given name.
+    /// </summary>
+    /// <param name="name">Name of the timeline.</param>
+    /// <param name="message">Message to add.</param>
+    /// <param name="color">Color to display the message as.</param>
+    public void AddMessage(string name, string message, Color color)
+    {
+        if (!this.timelines.TryGetValue(name, out Timeline? timeline))
+        {
+            return;
+        }
+
+        timeline.Messages.Add(message);
+        timeline.Color.Add(color);
+        timeline.Alt.Add(false);
+    }
+
+    /// <summary>
+    /// Adds a message to the timeline of a given name.
+    /// </summary>
+    /// <param name="name">Name of the timeline.</param>
+    /// <param name="message">Message to add.</param>
+    /// <param name="color">Color to display the message as.</param>
+    /// <param name="alt">Whether the message should display in the alternate manner.</param>
+    public void AddMessage(string name, string message, Color color, bool alt)
+    {
+        if (!this.timelines.TryGetValue(name, out Timeline? timeline))
+        {
+            return;
+        }
+
+        timeline.Messages.Add(message);
+        timeline.Color.Add(color);
+        timeline.Alt.Add(alt);
+    }
+
+    /// <summary>
+    /// Represents all the data for a Timeline.
+    /// </summary>
+    private class Timeline
+    {
+        private List<string> messages;
+        private List<Color> color;
+        private List<bool> alt;
+
+        public Timeline()
+        {
+            this.messages = new List<string>();
+            this.color = new List<Color>();
+            this.alt = new List<bool>();
+        }
+
+        public List<string> Messages { get => this.messages; }
+
+        public List<Color> Color { get => this.color; }
+
+        public List<bool> Alt { get => this.alt; }
+    }
+}
