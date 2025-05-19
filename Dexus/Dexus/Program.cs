@@ -14,8 +14,8 @@ builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 
 // Add dependencies in the server side container to allow prerendering of components. TODO : Might need to fix when implementing electron.
-builder.Services.AddScoped<Core>();
-builder.Services.AddScoped<DialogUIService>();
+builder.Services.AddSingleton<Core>();
+builder.Services.AddSingleton<DialogUIService>();
 
 var app = builder.Build();
 

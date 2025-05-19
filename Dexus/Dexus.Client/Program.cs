@@ -13,10 +13,6 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 // Add Services
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
-// Add the Dexus core to the Blazor application as a Singleton Instance.
-builder.Services.AddScoped<Core>();
-builder.Services.AddScoped<DialogUIService>();
-
 builder.Services.AddMudServices(config =>
 {
     config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomRight;
