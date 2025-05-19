@@ -97,6 +97,24 @@ public class Profile
     }
 
     /// <summary>
+    /// Removes all Bungie Authorization data corresponding to the user.
+    /// </summary>
+    /// <returns>True if the operation completed successfully, False otherwise.</returns>
+    public bool ThrowOut()
+    {
+        try
+        {
+            this.EnsureDataFolderExists();
+
+            return this.DeleteUser(this.dataFolderPath);
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Loads the Destiny Membership ID from file.
     /// </summary>
     /// <returns>True if the operation completed successfully, False otherwise.</returns>
@@ -270,6 +288,33 @@ public class Profile
         {
             Console.WriteLine($"Exception occurred when attempting to read key expiry dates: {e.Message}");
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Removes the data folder containing the user tokens. Effectively logging out the user.
+    /// </summary>
+    /// <param name="dataPath">Path to the data folder.</param>
+    /// <returns>True if the data folder was deleted, False otherwise.</returns>
+    /// <exception cref="IOException">Thrown if the folder is not found or operation could not be completed.</exception>
+    private bool DeleteUser(string dataPath)
+    {
+        try
+        {
+            Directory.Delete(dataPath, true);
+
+            this.tokens = new Tokens();
+
+            this.AccessTokenExpireDate = DateTime.MinValue;
+            this.RefreshTokenExpireDate = DateTime.MinValue;
+            this.DestinyMembershipID = string.Empty;
+            this.MembershipType = string.Empty;
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            throw new IOException($"Could not delete tokens from the specified user tokens file: {e.Message}");
         }
     }
 
