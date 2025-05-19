@@ -9,7 +9,7 @@ using System.Text;
 using System.Text.Json;
 
 /// <summary>
-/// Contains the needed Bungie access points and tokens in a data class.
+/// Contains the necessary Bungie access points and tokens in a data class.
 /// </summary>
 public class OAuthProfile
 {

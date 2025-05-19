@@ -2,10 +2,9 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-using GuardianServices.Models.ItemDetails;
-
 namespace GuardianServices;
 
+using GuardianServices.Models.ItemDetails;
 using GuardianServices.Models;
 
 /// <summary>
@@ -66,8 +65,11 @@ public static class ItemExtensions
     /// <returns>True if the item is a weapon. False if not or the item was not found.</returns>
     public static bool IsWeapon(this Item item)
     {
+        bool isWeapon = false;
         string[] weaponDef = ["Kinetic Weapons", "Energy Weapons", "Power Weapons"];
-        return weaponDef.Contains(item.Bucket);
+        isWeapon = weaponDef.Contains(item.Bucket);
+
+        return isWeapon || item.Perks.Any();
     }
 
     /// <summary>
