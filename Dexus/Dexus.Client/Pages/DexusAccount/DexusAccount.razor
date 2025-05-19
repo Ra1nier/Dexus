@@ -33,20 +33,12 @@
 </MudContainer>
 
 @code {
-
     /// <summary>
-    /// Indicates whether the user has ben redirected to the Account page because they need to sign in.
+    /// Indicates whether the user has been redirected to the API Token page because they need to input tokens.
     /// </summary>
     [Parameter]
-    [SupplyParameterFromQuery(Name = "signInRedirect")]
-    public required bool SignIn { get; set; }
-
-    /// <summary>
-    /// Indicates whether the user has ben redirected to the Account page because they need to sign in.
-    /// </summary>
-    [Parameter]
-    [SupplyParameterFromQuery(Name = "inputTokenRedirect")]
-    public required bool InputTokens { get; set; }
+    [SupplyParameterFromQuery(Name = "goToTab")]
+    public required int GoToTab { get; set; }
 
     // Account page specifics
     private int activeTabIndex = 0;
@@ -56,14 +48,6 @@
     /// </summary>
     protected override void OnInitialized()
     {
-        if (InputTokens)
-        {
-            activeTabIndex = 1;
-        }
-
-        if (SignIn)
-        {
-            activeTabIndex = 2;
-        }
+        activeTabIndex = GoToTab;
     }
 }
