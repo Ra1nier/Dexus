@@ -44,14 +44,22 @@
     /// <summary>
     /// Render key that determines if the content in the management list needs to be refreshed
     /// </summary>
-    [Parameter]
-    public required Guid RenderKey { get; set; }
+    private Guid RenderKey => Core.Content.ItemManagementRenderKey;
 
     /// <summary>
     /// The items to display in the management list
     /// </summary>
     [Parameter]
     public required IEnumerable<Item> Items { get; set; }
+
+    /// <summary>
+    /// Gets called when the component first initializes.
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        // Connects
+        Core.Content.TransferOccured += RefreshState;
+    }
     
     /// <summary>
     /// Handles transfers of items between buckets and informs the core of the change.
@@ -71,7 +79,7 @@
         string origin = transfer.Identifier ?? string.Empty;
         string destination = item.DropzoneIdentifier;
 
-        if ((destination == origin) || !(await Core.ConfirmOAuthStatus()))
+        if (destination == origin)
         {
             return;
         }
@@ -93,11 +101,15 @@
 
         if (Core.Content.GetTransferStatus(itemID) == 0)
         {
-            RenderKey = Guid.NewGuid();
             Core.Snackbar.AddMessage($"Transfer of {Core.Content.ItemDetails[transfer.ItemHash].DisplayProperties.Name} to {transferBucket} was Successful.", "Success");
         }
-
-        this.StateHasChanged();
     }
 
+    /// <summary>
+    /// Slot that responds to changes in the content manager and informs Blazor that a refresh is needed.
+    /// </summary>
+    private void RefreshState()
+    {
+        InvokeAsync(StateHasChanged);
+    }
 }

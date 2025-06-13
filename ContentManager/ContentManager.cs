@@ -113,6 +113,11 @@ public class ContentManager
     }
 
     /// <summary>
+    /// Signal that informs all connected slots that a transfer has occured.
+    /// </summary>
+    public event Action? TransferOccured;
+
+    /// <summary>
     /// Gets the Characters List.
     /// </summary>
     public Dictionary<string, Character> Characters { get => this.characters; }
@@ -598,6 +603,7 @@ public class ContentManager
         }
 
         this.itemManagementRenderKey = Guid.NewGuid();
+        this.TransferOccured?.Invoke();
         return transferSuccess;
     }
 

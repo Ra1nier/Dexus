@@ -55,8 +55,7 @@ else
     /// <summary>
     /// Render key that determines if the content in the bucket list needs to be refreshed.
     /// </summary>
-    [Parameter]
-    public required Guid RenderKey { get; set; }
+    private Guid RenderKey => Core.Content.ItemManagementRenderKey;
 
     /// <summary>
     /// Items to display in the bucket list.
@@ -69,5 +68,21 @@ else
     /// </summary>
     [Parameter]
     public required bool Sorted { get; set; }
-
+    
+    /// <summary>
+    /// Gets called when the component first initializes.
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        // Connects
+        Core.Content.TransferOccured += RefreshState;
+    }
+    
+    /// <summary>
+    /// Slot that responds to changes in the content manager and informs Blazor that a refresh is needed.
+    /// </summary>
+    private void RefreshState()
+    {
+        InvokeAsync(StateHasChanged);
+    }
 }
