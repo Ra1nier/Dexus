@@ -7,6 +7,7 @@
 @inject NavigationManager Navigation
 @inject DialogUIService DialogUIService
 @inject Core Core
+@inject UICore UICore
 
 <PageTitle>Dexus</PageTitle>
 
@@ -25,24 +26,7 @@
     {
         if (!firstRender) return;
         
-        switch (Core.OAuthStatus)
-        {
-            case 3:
-                DialogUIService.SendDialog("No API Tokens.", "Dexus does not have any saved API Tokens for Bungie. Would you like to be redirected to a page where they can be inputted?", 
-                    () => { Navigation.NavigateTo("/DexusAccount?goToTab=1"); });
-                return;
-            case 2:
-                DialogUIService.SendDialog("Not Authorized with Bungie.", "You have not authorized Dexus to access your Bungie information or authorization has expired. Would you like to be redirected to the sign in page?", 
-                    () => { Navigation.NavigateTo("/DexusAccount?goToTab=2"); });
-                return;
-            case 1:
-            {
-                if (!await Core.ConfirmOAuthStatus())
-                    DialogUIService.SendDialog("Bungie Authorization Error.", "Your authorization with Bungie has expired and Dexus was unable to refresh it. You really should not be seeing this error but resigning in should fix it. Would you like to be redirected to the sign in page?", 
-                        () => { Navigation.NavigateTo("/DexusAccount?goToTab=2"); });
-                break;
-            }
-        }
+        await UICore.VerifyAPIAvaliablity();
     }
 
     /// <summary>
