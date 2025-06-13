@@ -2,14 +2,13 @@
 @rendermode InteractiveServer
 
 @using DexusCore
-@using ContentManager
 @using Dexus.Client.Componates
 @using UIServices
 
 @inject NavigationManager Navigation
 @inject ILogger<DexusVaultManager> Logger
 @inject DialogUIService DialogUIService
-@inject Core Core;
+@inject Core Core
 
 <PageTitle>Dexus Vault Manager</PageTitle>
 
@@ -18,27 +17,9 @@
 {
     <!--Main Vault Manager-->
     <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge" Class="d-flex flex-column gap-3 position-relative">
-
-        <!--Guardian Manager Settings-->
-        <MudPaper Style="overflow:hidden; position:relative;">
-            <MudExpansionPanel Text="Manager Settings" MaxHeight="150">
-                <MudTabs Outlined="true" MinimumTabWidth="20px">
-                    <MudTabPanel Icon="@Icons.Material.Filled.Settings">
-                        @foreach (string settingName in localSettings.Keys)
-                        {
-                            <MudSwitch T=bool @bind-Value="localSettings[settingName]" Label=@settingName
-                                       Color="Color.Success"/>
-                        }
-                    </MudTabPanel>
-                </MudTabs>
-                <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" Variant="Variant.Filled"
-                               Color="Color.Primary" Size="Size.Large" OnClick="ApplySettingsWithRefresh"/>
-            </MudExpansionPanel>
-        </MudPaper>
-
         <!-- Column Labels -->
         <MudGrid Class="d-flex justify-center" Justify="Justify.SpaceBetween">
-            @foreach (var character in Content.Characters.Values)
+            @foreach (var character in Core.Content.Characters.Values)
             {
                 <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column justify-center">
                     <MudText Typo="Typo.h6" Class="mb-1 text-center">@character.Class</MudText>
@@ -54,37 +35,37 @@
         </MudGrid>
 
         <!-- Postmaster Section -->
-        <BucketList Items="Content.Postmaster.Values" Sorted="true" RenderKey=@Content.ItemManagementRenderKey/>
+        <BucketList Items="Core.Content.Postmaster.Values" Sorted="true"/>
 
         <!-- Kinetic Weapons Section-->
-        <ManagmentList Items="Content.KineticWeapons.Values" RenderKey=@Content.ItemManagementRenderKey/>
+        <ManagmentList Items="Core.Content.KineticWeapons.Values"/>
 
         <!-- Energy Weapons Section -->
-        <ManagmentList Items="Content.EnergyWeapons.Values" RenderKey=@Content.ItemManagementRenderKey/>
+        <ManagmentList Items="Core.Content.EnergyWeapons.Values"/>
 
         <!-- Power Weapons Section -->
-        <ManagmentList Items="Content.PowerWeapons.Values" RenderKey=@Content.ItemManagementRenderKey/>
+        <ManagmentList Items="Core.Content.PowerWeapons.Values"/>
 
         <!-- Helmets Section -->
-        <ManagmentList Items="Content.Helmets.Values" RenderKey=@Content.ItemManagementRenderKey/>
+        <ManagmentList Items="Core.Content.Helmets.Values"/>
 
         <!-- Gauntlets Section -->
-        <ManagmentList Items="Content.Gauntlets.Values" RenderKey=@Content.ItemManagementRenderKey/>
+        <ManagmentList Items="Core.Content.Gauntlets.Values"/>
 
         <!-- Chests Section -->
-        <ManagmentList Items="Content.Chests.Values" RenderKey=@Content.ItemManagementRenderKey/>
-
+        <ManagmentList Items="Core.Content.Chests.Values"/>
+        max
         <!-- Legs Section -->
-        <ManagmentList Items="Content.Legs.Values" RenderKey=@Content.ItemManagementRenderKey/>
+        <ManagmentList Items="Core.Content.Legs.Values"/>
 
         <!-- Class Items Section -->
-        <ManagmentList Items="Content.Skirts.Values" RenderKey=@Content.ItemManagementRenderKey/>
+        <ManagmentList Items="Core.Content.Skirts.Values"/>
 
         <!-- Accessories Section -->
-        <ManagmentList Items="Content.Accessories.Values" RenderKey=@Content.ItemManagementRenderKey/>
+        <ManagmentList Items="Core.Content.Accessories.Values"/>
 
         <!-- Consumables Section -->
-        <BucketList Items="Content.UninstantiatedItems" Sorted="false" RenderKey=@Content.ItemManagementRenderKey/>
+        <BucketList Items="Core.Content.UninstantiatedItems" Sorted="false"/>
     </MudContainer>
 }
 else
@@ -109,17 +90,11 @@ else
 }
 
 
-@code 
+@code
 {
-    /// <summary>
-    /// Holds the singleton instance of Content Manager from Core that Dexus uses.
-    /// </summary>
-    public static ContentManager Content = new ContentManager();
-
     // DexusVaultManager Variables
     private bool initializationComplete;
-    private Dictionary<string, bool> localSettings = new Dictionary<string, bool>();
-
+    
     /// <summary>
     /// Handles the first render of the webpage.
     /// </summary>
@@ -130,21 +105,21 @@ else
         {
             return;
         }
-        
+
         switch (Core.OAuthStatus)
         {
             case 3:
-                DialogUIService.SendDialog("No API Tokens.", "Dexus does not have any saved API Tokens for Bungie. Would you like to be redirected to a page where they can be inputted?", 
+                DialogUIService.SendDialog("No API Tokens.", "Dexus does not have any saved API Tokens for Bungie. Would you like to be redirected to a page where they can be inputted?",
                     () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=false&inputTokenRedirect=true"); });
                 return;
             case 2:
-                DialogUIService.SendDialog("Not Authorized with Bungie.", "You have not authorized Dexus to access your Bungie information or authorization has expired. Would you like to be redirected to the sign in page?", 
+                DialogUIService.SendDialog("Not Authorized with Bungie.", "You have not authorized Dexus to access your Bungie information or authorization has expired. Would you like to be redirected to the sign in page?",
                     () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=true&inputTokenRedirect=false"); });
                 return;
             case 1:
             {
                 if (!await Core.ConfirmOAuthStatus())
-                    DialogUIService.SendDialog("Bungie Authorization Error.", "Your authorization with Bungie has expired and Dexus was unable to refresh it. You really should not be seeing this error but resigning in should fix it. Would you like to be redirected to the sign in page?", 
+                    DialogUIService.SendDialog("Bungie Authorization Error.", "Your authorization with Bungie has expired and Dexus was unable to refresh it. You really should not be seeing this error but resigning in should fix it. Would you like to be redirected to the sign in page?",
                         () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=true&inputTokenRedirect=false"); });
                 break;
             }
@@ -152,9 +127,8 @@ else
 
         if (!initializationComplete)
         {
-            await Content.InitializeUserContent();
-            Content.AllowTransfers();
-            InitializeSettings();
+            await Core.Content.InitializeUserContent();
+            Core.Content.AllowTransfers();
         }
 
         initializationComplete = true;
@@ -166,57 +140,13 @@ else
     /// </summary>
     protected async override void OnInitialized()
     {
-        Content = Core.Content;
-
         // Refresh user content
         if (initializationComplete)
         {
-            await Content.RefreshUserContent();
+            await Core.Content.RefreshUserContent();
         }
 
         // Final Checks
         await Core.ConfirmOAuthStatus();
-    }
-
-    /// <summary>
-    /// Initializes the startup settings for the application.
-    /// </summary>
-    private void InitializeSettings()
-    {
-        localSettings = new Dictionary<string, bool>
-        {
-            { "Weapon-Names", false },
-            { "WeaponStyle-Tag", false },
-        };
-
-        ApplySettings();
-    }
-
-    /// <summary>
-    /// Applies the local settings and saves them to disk.
-    /// </summary>
-    /// <returns>True if completed successfully, False otherwise.</returns>
-    private void ApplySettings()
-    {
-        Core.Settings.SetSettings(localSettings, false);
-        if (!Core.Settings.SaveSettings())
-        {
-            Core.Snackbar.AddMessage("Failed to save settings.", "Error");
-        }
-    }
-
-    /// <summary>
-    /// Applies the local settings and saves them to disk.
-    /// </summary>
-    /// <returns>True if completed successfully, False otherwise.</returns>
-    private void ApplySettingsWithRefresh()
-    {
-        Core.Settings.SetSettings(localSettings, false);
-        if (!Core.Settings.SaveSettings())
-        {
-            Core.Snackbar.AddMessage("Failed to save settings.", "Error");
-        }
-
-        StateHasChanged();
     }
 }

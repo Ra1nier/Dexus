@@ -26,7 +26,6 @@ public class Core
     // Core services
     private SnackbarService snackbar;
     private LoadingbarService loadingbars;
-    private SettingsService settings;
     private TimelineService timeline;
 
     // Main logger
@@ -53,7 +52,6 @@ public class Core
         // Start instances of core services
         this.snackbar = new SnackbarService();
         this.loadingbars = new LoadingbarService();
-        this.settings = new SettingsService();
         this.timeline = new TimelineService();
 
         // Start local instances of libraries needed by core
@@ -116,11 +114,6 @@ public class Core
     /// Gets the loadingbars service.
     /// </summary>
     public LoadingbarService Loadingbars => this.loadingbars;
-
-    /// <summary>
-    /// Gets the settings service.
-    /// </summary>
-    public SettingsService Settings => this.settings;
 
     /// <summary>
     /// Gets the timeline service.
