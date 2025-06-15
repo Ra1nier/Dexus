@@ -2,6 +2,8 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
+using GuardianServices.Models;
+
 namespace RequestManager;
 
 using Microsoft.Extensions.Logging;
@@ -56,7 +58,7 @@ public class ManifestServer
         // Convert itemHash to manifest id and construct query.
         int id = this.ConvertHashToID(itemHash);
         string query = $"SELECT json FROM DestinyInventoryItemDefinition WHERE id = {id};";
-
+        
         // Execute Query and get response
         (bool success, string json) = await this.QueryManifest(query);
 
@@ -135,7 +137,7 @@ public class ManifestServer
 
         return JsonSerializer.Deserialize<PerkDetails>(json) ?? new PerkDetails();
     }
-    
+
     /// <summary>
     /// Queries the manifest for the associated weapon.
     /// </summary>
@@ -156,6 +158,29 @@ public class ManifestServer
         }
 
         return json;
+    }
+
+    /// <summary>
+    /// Queries the manifest for the associated weapon.
+    /// </summary>
+    /// <param name="plugHash">Plug hash to query.</param>
+    /// <returns>A WeaponDetails class representing the manifest details of the specific weapon.</returns>
+    public async Task<SocketTypeDetails> Manifest_Query_SocketType(uint socketHash)
+    {
+        // Convert itemHash to manifest id and construct query.
+        int id = this.ConvertHashToID(socketHash);
+        this.logger.LogInformation($"Getting socket type for socketHash={id}");
+        string query = $"SELECT json FROM DestinySocketTypeDefinition WHERE id = {id};";
+        this.logger.LogCritical($"Arch Manifest ID: {id}");
+
+        (bool success, string json) = await this.QueryManifest(query);
+
+        if (!success)
+        {
+            this.logger.LogError($"No data found for PerkHash={socketHash} with ID={id}");
+        }
+
+        return JsonSerializer.Deserialize<SocketTypeDetails>(json) ?? new SocketTypeDetails();
     }
 
     /// <summary>

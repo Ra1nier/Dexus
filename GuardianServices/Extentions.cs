@@ -69,7 +69,7 @@ public static class ItemExtensions
         string[] weaponDef = ["Kinetic Weapons", "Energy Weapons", "Power Weapons"];
         isWeapon = weaponDef.Contains(item.Bucket);
 
-        return isWeapon || item.Perks.Any();
+        return isWeapon || (item.Perks != null && item.Perks.Any());
     }
 
     /// <summary>

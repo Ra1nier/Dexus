@@ -64,6 +64,7 @@ public class ContentManager
     // Content Detail Dictionaries.
     private Dictionary<uint, ItemDetails> itemDetails = new Dictionary<uint, ItemDetails>();
     private Dictionary<uint, ItemDetails> perkDetails = new Dictionary<uint, ItemDetails>();
+    private Dictionary<long, SocketTypeDetails> socketDetails = new Dictionary<long, SocketTypeDetails>();
 
     // Content Management Containers
     private Queue<TransferInfo> queuedTransfers = new Queue<TransferInfo>();
@@ -328,6 +329,11 @@ public class ContentManager
     /// Gets the Perk Details List.
     /// </summary>
     public Dictionary<uint, ItemDetails> PerkDetails { get => this.perkDetails; }
+
+    /// <summary>
+    /// Gets the Socket Details List.
+    /// </summary>
+    public Dictionary<long, SocketTypeDetails> SocketDetails { get => this.socketDetails; }
 
     /// <summary>
     /// Gets a value indicating whether if transfers are currently being handled.
@@ -1160,11 +1166,11 @@ public class ContentManager
         this.logger.LogInformation("Getting Clients Item Information.");
         foreach (Item item in items)
         {
-            // This needs to be done first as other operations below depend on this being completed.
-            await this.QueryManifestForDetails(item);
+            // This needs to be done first as the operations below depend on this being completed.
+            await this.QueryManifestForItemGeneralDetails(item);
 
             await this.QueryManifestForBuckets(item);
-            await this.QueryManifestForPerkDetails(item);
+            await this.QueryManifestForItemSpecificDefinitions(item);
         }
     }
 
@@ -1173,13 +1179,15 @@ public class ContentManager
     /// </summary>
     /// <param name="item">Item to get information for.</param>
     /// <returns>Task representing the operation.</returns>
-    private async Task QueryManifestForDetails(Item item)
+    private async Task QueryManifestForItemGeneralDetails(Item item)
     {
         uint itemHash = item.ItemHash;
+        ItemDetails details;
 
         if (!this.itemDetails.TryGetValue(itemHash, out _))
         {
-            var details = await this.GetItemDetailsFromManifest(itemHash);
+            // --- Main Details ---
+            details = await this.GetItemDetailsFromManifest(itemHash);
 
             if (details.Equals(new ItemDetails()))
             {
@@ -1189,6 +1197,21 @@ public class ContentManager
             lock (this.itemDetails)
             {
                 this.itemDetails.Add(itemHash, details);
+            }
+
+            // --- Socket Details ---
+            if (details.Sockets.SocketEntries != null)
+            {
+                foreach (var socketEntry in details.Sockets.SocketEntries)
+                {
+                    long typeHash = socketEntry.SocketTypeHash;
+                    if (this.socketDetails.TryGetValue(typeHash, out _))
+                    {
+                        continue;
+                    }
+
+                    this.socketDetails.Add(typeHash, await this.GetSocketDetails(typeHash));
+                }
             }
         }
     }
@@ -1223,7 +1246,7 @@ public class ContentManager
     /// </summary>
     /// <param name="item">Item to get information for.</param>
     /// <returns>Task representing the operation.</returns>
-    private async Task QueryManifestForPerkDetails(Item item)
+    private async Task QueryManifestForItemSpecificDefinitions(Item item)
     {
         if (item?.Sockets == null)
         {
@@ -1314,15 +1337,15 @@ public class ContentManager
     /// <summary>
     /// Gets the details of the perkHash provided.
     /// </summary>
-    /// <param name="perkHash">ItemHash to use in the search.</param>
-    /// <returns>A PerkDetails containing the info from the manifest.</returns>
-    private async Task<PerkDetails> GetPerkDetails(uint perkHash)
+    /// <param name="socketHash">SocketTypeHash to use in the search.</param>
+    /// <returns>A SocketTypeDetails containing the info from the manifest.</returns>
+    private async Task<SocketTypeDetails> GetSocketDetails(long socketHash)
     {
-        PerkDetails details = await this.manifest.Manifest_Query_PerkDetails(perkHash);
+        SocketTypeDetails details = await this.manifest.Manifest_Query_SocketType((uint)socketHash);
 
-        if (details.Equals(new PerkDetails()))
+        if (details.Equals(new SocketTypeDetails()))
         {
-            this.logger.LogError($"GVM could not find any ItemDetails for the perkHash={perkHash} in the manifest.");
+            this.logger.LogError($"GVM could not find any SoketTypeDetails for the socketHash={socketHash} in the manifest.");
         }
 
         return details;

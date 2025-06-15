@@ -1,0 +1,160 @@
+@using GuardianServices.Models
+@using DexusCore
+
+@inject Core Core
+
+<ItemPopover Item="Item" Condition="@Condition">
+    <!-- Slot Details Grid -->
+    <div class="mt-2"
+         style="display: grid; 
+                        grid-template-columns: 1fr 3fr 1fr; 
+                        gap: 6px; 
+                        text-align: center;">
+
+        <div class="slot-header">Archetype</div>
+        <div class="slot-header">Perks</div>
+        <div class="slot-header">Origin</div>
+
+        <!-- Archetype -->
+        <div class="slot-icon">
+            @{
+                
+                var socketEntries = Core.Content.Define(Item.ItemHash).Sockets.SocketEntries;
+                foreach (var socketEntry in socketEntries)
+                {
+                    if (Core.Content.SocketDetails.TryGetValue(socketEntry.SocketTypeHash, out var socketDetails))
+                    {
+                        var archSocket = socketDetails.PlugWhitelist.Where(w => w.CategoryIdentifier == "intrinsics");
+                    }
+                }
+            }
+            <MudTooltip Text="Placeholder">
+                <img src="@archIconPath" class="perk-icon"/>
+            </MudTooltip>
+        </div>
+
+        <!-- Perk Slots -->
+        @if (Item.Sockets != null)
+        {
+            <div style="display: flex; justify-content: center; gap: 6px;">
+                @for (int i = 1; i <= 4; i++)
+                {
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                        @if (Item.Sockets.Plugs.TryGetValue(i, out var plug))
+                        {
+                            @foreach (var perk in plug)
+                            {
+                                string iconPath = $"https://www.bungie.net{Core.Content.PerkDetails[perk.PlugItemHash].DisplayProperties.Icon}";
+                                string altText = Core.Content.PerkDetails[perk.PlugItemHash].DisplayProperties.Name;
+                                <MudTooltip Text="@altText">
+                                    <img src="@iconPath" class="perk-icon"/>
+                                </MudTooltip>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- Origin Placeholder -->
+        <div class="slot-icon">
+            Placeholder
+        </div>
+    </div>
+
+    <!-- Weapon Stats -->
+    <MudExpansionPanel Text="Weapon Stats" MaxHeight="150">
+        <MudList T="string">
+            <MudListItem Text="Range" Icon="@Icons.Material.Filled.GpsFixed"/>
+            <MudListItem Text="Stability" Icon="@Icons.Material.Filled.ShowChart"/>
+            <MudListItem Text="Reload Speed" Icon="@Icons.Material.Filled.Sync"/>
+        </MudList>
+    </MudExpansionPanel>
+</ItemPopover>
+
+@code {
+
+    /// <summary>
+    /// Item to display Info About.
+    /// </summary>
+    [Parameter]
+    public required Item Item { get; set; }
+
+    /// <summary>
+    /// Bool liked to whether the popover should be displayed.
+    /// </summary>
+    [Parameter]
+    public required bool Condition { get; set; }
+
+    /// <summary>
+    /// Selects the perk oon the item.
+    /// </summary>
+    private async Task SelectPerk()
+    {
+        if (!(await Core.ConfirmOAuthStatus()))
+        {
+            return;
+        }
+
+        // TODO: Add functionality to change an items perk in Content Manager.
+        return;
+    }
+
+}
+
+<style>
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .slot-header {
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 6px;
+        border-radius: 4px;
+    }
+
+    .slot-icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 6px;
+    }
+
+    .perk-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        transition: transform 0.2s;
+    }
+
+    .perk-icon:hover {
+        transform: scale(1.1);
+    }
+
+    .transfer-options {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .transfer-icon {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 8px;
+        transition: transform 0.2s;
+    }
+
+    .transfer-icon:hover {
+        transform: scale(1.1);
+    }
+</style>
