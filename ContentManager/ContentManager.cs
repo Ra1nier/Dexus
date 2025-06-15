@@ -393,15 +393,28 @@ public class ContentManager
     }
 
     /// <summary>
+    /// Adds the request to the list of transfers. This overload should only be used for a transfer type of "Pull".
+    /// </summary>
+    /// <param name="type">Type of transfer wanted.</param>
+    /// <param name="item">Item to transfer.</param>
+    /// <returns>The Item instance ID of the item. Can be used to track the progress of the transfer.</returns>
+    public string QueueTransfer(TransferType type, Item item)
+    {
+        this.queuedTransfers.Enqueue(new TransferInfo(type, item, string.Empty, string.Empty));
+        return item.ItemInstanceId ?? string.Empty;
+    }
+
+    /// <summary>
     /// Adds the request to the list of transfers.
     /// </summary>
+    /// <param name="type">Type of transfer wanted.</param>
     /// <param name="item">Item to transfer.</param>
     /// <param name="origin">Where the item is.</param>
     /// <param name="destination">Where the item should go.</param>
     /// <returns>The Item instance ID of the item. Can be used to track the progress of the transfer.</returns>
-    public string QueueTransfer(Item item, string origin, string destination)
+    public string QueueTransfer(TransferType type, Item item, string origin, string destination)
     {
-        this.queuedTransfers.Enqueue(new TransferInfo(item, origin, destination));
+        this.queuedTransfers.Enqueue(new TransferInfo(type, item, origin, destination));
         return item.ItemInstanceId ?? string.Empty;
     }
 
@@ -452,11 +465,19 @@ public class ContentManager
                         while (this.queuedTransfers.Count > 0)
                         {
                             TransferInfo transfer = this.queuedTransfers.Dequeue();
-                            bool transferSuccess =
-                                await this.Transfer(transfer.Item, transfer.Origin, transfer.Destination);
+                            bool transferSuccess = false;
 
-                            this.recentlyHandledTransfers.Add(transfer.Item.ItemInstanceId ?? string.Empty,
-                                transferSuccess);
+                            switch (transfer.Type)
+                            {
+                                case TransferType.Push:
+                                    transferSuccess = await this.Transfer(transfer.Item, transfer.Origin, transfer.Destination);
+                                    break;
+                                case TransferType.Pull:
+                                    transferSuccess = await this.PullFromPostmaster(transfer.Item);
+                                    break;
+                            }
+
+                            this.recentlyHandledTransfers.Add(transfer.Item.ItemInstanceId ?? string.Empty, transferSuccess);
                         }
 
                         await Task.Delay(100, token);
@@ -493,27 +514,6 @@ public class ContentManager
         }
 
         this.recentlyHandledTransfers.StopAutoCleanup();
-    }
-
-    /// <summary>
-    /// Pulls the requested item from the postmaster.
-    /// </summary>
-    /// <param name="item">Item to fetch.</param>
-    /// <returns>True if the operation was completed successfully. False Otherwise.</returns>
-    public async Task<bool> PullFromPostmaster(Item item)
-    {
-        if (this.profile.MembershipType == null)
-        {
-            this.logger.LogCritical("MembershipType is null. Unable to transfer item.");
-            this.snackbar.AddMessage(
-                "Something went wrong. GVM is unable to access your bungie data. Transfer cannot be completed. Try logging back in to solve this issue.",
-                "Error");
-            return false;
-        }
-
-        this.itemManagementRenderKey = Guid.NewGuid();
-        return await this.request.ActionItem_Request_PullFromPostmaster(this.profile.MembershipType, item.ItemHash,
-            item.ItemInstanceId ?? string.Empty, item.Quantity, item.Identifier ?? string.Empty);
     }
 
     /// <summary>
@@ -575,6 +575,27 @@ public class ContentManager
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Pulls the requested item from the postmaster.
+    /// </summary>
+    /// <param name="item">Item to fetch.</param>
+    /// <returns>True if the operation was completed successfully. False Otherwise.</returns>
+    private async Task<bool> PullFromPostmaster(Item item)
+    {
+        if (this.profile.MembershipType == null)
+        {
+            this.logger.LogCritical("MembershipType is null. Unable to transfer item.");
+            this.snackbar.AddMessage(
+                "Something went wrong. GVM is unable to access your bungie data. Transfer cannot be completed. Try logging back in to solve this issue.",
+                "Error");
+            return false;
+        }
+
+        this.itemManagementRenderKey = Guid.NewGuid();
+        return await this.request.ActionItem_Request_PullFromPostmaster(this.profile.MembershipType, item.ItemHash,
+            item.ItemInstanceId ?? string.Empty, item.Quantity, item.Identifier ?? string.Empty);
     }
 
     /// <summary>

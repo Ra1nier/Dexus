@@ -92,7 +92,7 @@
 
         Core.Snackbar.AddMessage($"Transferring {Core.Content.ItemDetails[transfer.ItemHash].DisplayProperties.Name} to {transferBucket}.", "Info");
 
-        string itemID = Core.Content.QueueTransfer(transfer, origin, destination);
+        string itemID = Core.Content.QueueTransfer(TransferType.Push, transfer, origin, destination);
 
         while (Core.Content.GetTransferStatus(itemID) == 2)
         {
