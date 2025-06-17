@@ -99,13 +99,13 @@ public class Item
     /// Gets or sets the perks for the item.
     /// </summary>
     [JsonIgnore]
-    public List<Perk> Perks { get; set; }
+    public List<Perk>? Perks { get; set; }
 
     /// <summary>
     /// Gets or sets the sockets for the item.
     /// </summary>
     [JsonIgnore]
-    public ItemSockets Sockets { get; set; }
+    public PlugDetails? Sockets { get; set; }
 
     /// <summary>
     /// Gets or sets the identifier.
@@ -123,7 +123,34 @@ public class Item
     /// Gets or sets the Power.
     /// </summary>
     [JsonIgnore]
-    public int Power { get; set; }
+    public int? Power { get; set; }
+
+    /// <summary>
+    /// Copies all information from the object this is called on to the provided target Item.
+    /// </summary>
+    /// <param name="target">Target to copy to.</param>
+    public void CopyTo(Item target)
+    {
+        target.ItemHash = this.ItemHash;
+        target.ItemInstanceId = this.ItemInstanceId;
+        target.Quantity = this.Quantity;
+        target.BindStatus = this.BindStatus;
+        target.Location = this.Location;
+        target.BucketHash = this.BucketHash;
+        target.TransferStatus = this.TransferStatus;
+        target.Lockable = this.Lockable;
+        target.State = this.State;
+        target.DismantlePermission = this.DismantlePermission;
+        target.IsWrapper = this.IsWrapper;
+        target.TooltipNotificationIndexes = this.TooltipNotificationIndexes;
+        target.VersionNumber = this.VersionNumber;
+        target.Bucket = this.Bucket;
+        target.Perks = this.Perks;
+        target.Sockets = this.Sockets;
+        target.Identifier = this.Identifier;
+        target.IconPath = this.IconPath;
+        target.Power = this.Power;
+    }
 
     /// <summary>
     /// Perk represents a perk slot that an item holds.
