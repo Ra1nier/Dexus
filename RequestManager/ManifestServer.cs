@@ -2,16 +2,13 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-using GuardianServices.Models;
-
 namespace RequestManager;
 
+using GuardianServices.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Data.Sqlite;
 using System.Text.Json;
 using SQLitePCL;
-using GuardianServices.Models.ItemDetails;
-using GuardianServices.Models.PerkDetails;
 
 /// <summary>
 /// Handles interactions with the Destiny 2 Manifest.

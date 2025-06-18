@@ -9,7 +9,7 @@
 <MudCard
     Style="width: 80px; height: 80px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; position: relative;"
     Elevation="4" @onclick="TogglePopover">
-    @{ string iconPath = $"https://www.bungie.net{@Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Icon}"; }
+    @{ string iconPath = $"https://www.bungie.net{@Item.Details.DisplayProperties.Icon}"; }
     <MudCardMedia Image="@iconPath" alt="Weapon"
                   Style="width: 100%; height: 100%; object-fit: cover;"/>
     @if (Item.Power != 0)
@@ -43,7 +43,7 @@ else
     /// The Item to be represented by this model.
     /// </summary>
     [Parameter]
-    public required Item Item { get; set; }
+    public required DItem Item { get; set; }
 
     // Condition to control popover visibility
     private bool Condition { get; set; } = false;

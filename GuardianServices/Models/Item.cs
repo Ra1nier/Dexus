@@ -48,12 +48,6 @@ public class Item
     public uint BucketHash { get; set; }
 
     /// <summary>
-    /// Gets or sets the bucket.
-    /// </summary>
-    [JsonIgnore]
-    public string? Bucket { get; set; }
-
-    /// <summary>
     /// Gets or sets the transfer status.
     /// </summary>
     [JsonPropertyName("transferStatus")]
@@ -72,7 +66,7 @@ public class Item
     public int State { get; set; }
 
     /// <summary>
-    /// Gets or sets the dismantle permission.
+    /// Gets or sets the dismantleable permission.
     /// </summary>
     [JsonPropertyName("dismantlePermission")]
     public int DismantlePermission { get; set; }
@@ -96,36 +90,6 @@ public class Item
     public int? VersionNumber { get; set; }
 
     /// <summary>
-    /// Gets or sets the perks for the item.
-    /// </summary>
-    [JsonIgnore]
-    public List<Perk>? Perks { get; set; }
-
-    /// <summary>
-    /// Gets or sets the sockets for the item.
-    /// </summary>
-    [JsonIgnore]
-    public PlugDetails? Sockets { get; set; }
-
-    /// <summary>
-    /// Gets or sets the identifier.
-    /// </summary>
-    [JsonIgnore]
-    public string? Identifier { get; set; }
-
-    /// <summary>
-    /// Gets or sets the IconPath.
-    /// </summary>
-    [JsonIgnore]
-    public string? IconPath { get; set; }
-
-    /// <summary>
-    /// Gets or sets the Power.
-    /// </summary>
-    [JsonIgnore]
-    public int? Power { get; set; }
-
-    /// <summary>
     /// Copies all information from the object this is called on to the provided target Item.
     /// </summary>
     /// <param name="target">Target to copy to.</param>
@@ -144,52 +108,5 @@ public class Item
         target.IsWrapper = this.IsWrapper;
         target.TooltipNotificationIndexes = this.TooltipNotificationIndexes;
         target.VersionNumber = this.VersionNumber;
-        target.Bucket = this.Bucket;
-        target.Perks = this.Perks;
-        target.Sockets = this.Sockets;
-        target.Identifier = this.Identifier;
-        target.IconPath = this.IconPath;
-        target.Power = this.Power;
-    }
-
-    /// <summary>
-    /// Perk represents a perk slot that an item holds.
-    /// </summary>
-    public class Perk
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Perk"/> class.
-        /// </summary>
-        /// <param name="perkHash">PerkHash.</param>
-        /// <param name="iconPath">IconPath.</param>
-        /// <param name="isActive">IsEquipped.</param>
-        /// <param name="visible">IsVisible.</param>
-        public Perk(uint perkHash, string iconPath, bool isActive, bool visible)
-        {
-            this.PerkHash = perkHash;
-            this.IconPath = iconPath;
-            this.IsActive = isActive;
-            this.IsVisible = visible;
-        }
-
-        /// <summary>
-        /// Gets or sets the hash of the Perk.
-        /// </summary>
-        public uint PerkHash { get; set; }
-
-        /// <summary>
-        /// Gets or sets the Icon Path of the Perk.
-        /// </summary>
-        public string IconPath { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether a Bool indicating whether this is an active perk.
-        /// </summary>
-        public bool IsActive { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether a Bool indicating whether this perk is visible on the weapon.
-        /// </summary>
-        public bool IsVisible { get; set; }
     }
 }

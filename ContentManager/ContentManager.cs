@@ -7,8 +7,6 @@ namespace ContentManager;
 using ClientProfile;
 using GuardianServices;
 using GuardianServices.Models;
-using GuardianServices.Models.ItemDetails;
-using GuardianServices.Models.PerkDetails;
 using Microsoft.Extensions.Logging;
 using RequestManager;
 using System.Text.Json;
@@ -58,12 +56,13 @@ public class ContentManager
 
     // Content Containers
     private Dictionary<string, Character> characters = new Dictionary<string, Character>();
-    private Dictionary<string, Item> dropzoneBackingStore = new Dictionary<string, Item>();
-    private List<Item> uninstancatedItems = new List<Item>();
+    private Dictionary<string, DItem> dropzoneBackingStore = new Dictionary<string, DItem>();
+    private List<DItem> uninstancatedItems = new List<DItem>();
 
     // Content Detail Dictionaries.
     private Dictionary<uint, ItemDetails> itemDetails = new Dictionary<uint, ItemDetails>();
     private Dictionary<uint, ItemDetails> perkDetails = new Dictionary<uint, ItemDetails>();
+    private Dictionary<uint, ItemDetails> plugDetails = new Dictionary<uint, ItemDetails>();
     private Dictionary<long, SocketTypeDetails> socketDetails = new Dictionary<long, SocketTypeDetails>();
 
     // Content Management Containers
@@ -78,20 +77,6 @@ public class ContentManager
 
     // Render Keys
     private Guid itemManagementRenderKey = Guid.NewGuid();
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ContentManager"/> class.
-    /// This instance will be NON-FUNCTIONAL. This should only be used for nullable purposes.
-    /// </summary>
-    public ContentManager()
-    {
-        this.logger = null!;
-        this.profile = null!;
-        this.request = null!;
-        this.manifest = null!;
-        this.snackbar = null!;
-        this.loadingbars = null!;
-    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ContentManager"/> class.
@@ -126,7 +111,7 @@ public class ContentManager
     /// <summary>
     /// Gets the KineticWeapons List.
     /// </summary>
-    public Dictionary<string, Item> KineticWeapons
+    public Dictionary<string, DItem> KineticWeapons
     {
         get
         {
@@ -138,7 +123,7 @@ public class ContentManager
     /// <summary>
     /// Gets the EnergyWeapons List.
     /// </summary>
-    public Dictionary<string, Item> EnergyWeapons
+    public Dictionary<string, DItem> EnergyWeapons
     {
         get
         {
@@ -150,7 +135,7 @@ public class ContentManager
     /// <summary>
     /// Gets the PowerWeapons List.
     /// </summary>
-    public Dictionary<string, Item> PowerWeapons
+    public Dictionary<string, DItem> PowerWeapons
     {
         get
         {
@@ -162,7 +147,7 @@ public class ContentManager
     /// <summary>
     /// Gets the Helmets List.
     /// </summary>
-    public Dictionary<string, Item> Helmets
+    public Dictionary<string, DItem> Helmets
     {
         get
         {
@@ -174,7 +159,7 @@ public class ContentManager
     /// <summary>
     /// Gets the Gauntlets List.
     /// </summary>
-    public Dictionary<string, Item> Gauntlets
+    public Dictionary<string, DItem> Gauntlets
     {
         get
         {
@@ -186,7 +171,7 @@ public class ContentManager
     /// <summary>
     /// Gets the Chests List.
     /// </summary>
-    public Dictionary<string, Item> Chests
+    public Dictionary<string, DItem> Chests
     {
         get
         {
@@ -198,7 +183,7 @@ public class ContentManager
     /// <summary>
     /// Gets the Legs List.
     /// </summary>
-    public Dictionary<string, Item> Legs
+    public Dictionary<string, DItem> Legs
     {
         get
         {
@@ -210,7 +195,7 @@ public class ContentManager
     /// <summary>
     /// Gets the Skirts List.
     /// </summary>
-    public Dictionary<string, Item> Skirts
+    public Dictionary<string, DItem> Skirts
     {
         get
         {
@@ -222,7 +207,7 @@ public class ContentManager
     /// <summary>
     /// Gets the Accessories List.
     /// </summary>
-    public Dictionary<string, Item> Accessories
+    public Dictionary<string, DItem> Accessories
     {
         get
         {
@@ -243,7 +228,7 @@ public class ContentManager
     /// <summary>
     /// Gets the Postmaster List.
     /// </summary>
-    public Dictionary<string, Item> Postmaster
+    public Dictionary<string, DItem> Postmaster
     {
         get
         {
@@ -255,7 +240,7 @@ public class ContentManager
     /// <summary>
     /// Gets the Engrams List.
     /// </summary>
-    public Dictionary<string, Item> Engrams
+    public Dictionary<string, DItem> Engrams
     {
         get
         {
@@ -267,7 +252,7 @@ public class ContentManager
     /// <summary>
     /// Gets the Quests List.
     /// </summary>
-    public Dictionary<string, Item> Quests
+    public Dictionary<string, DItem> Quests
     {
         get
         {
@@ -286,7 +271,7 @@ public class ContentManager
     /// <summary>
     /// Gets the consumables List.
     /// </summary>
-    public List<Item> Consumables
+    public List<DItem> Consumables
     {
         get
         {
@@ -313,27 +298,12 @@ public class ContentManager
     /// <summary>
     /// Gets the DropzoneBackingStore List.
     /// </summary>
-    public Dictionary<string, Item> DropzoneBackingStore { get => this.dropzoneBackingStore; }
+    public Dictionary<string, DItem> DropzoneBackingStore { get => this.dropzoneBackingStore; }
 
     /// <summary>
     /// Gets the UninstantiatedItems List.
     /// </summary>
-    public List<Item> UninstantiatedItems { get => this.uninstancatedItems; }
-
-    /// <summary>
-    /// Gets the Item Details List.
-    /// </summary>
-    public Dictionary<uint, ItemDetails> ItemDetails { get => this.itemDetails; }
-
-    /// <summary>
-    /// Gets the Perk Details List.
-    /// </summary>
-    public Dictionary<uint, ItemDetails> PerkDetails { get => this.perkDetails; }
-
-    /// <summary>
-    /// Gets the Socket Details List.
-    /// </summary>
-    public Dictionary<long, SocketTypeDetails> SocketDetails { get => this.socketDetails; }
+    public List<DItem> UninstantiatedItems { get => this.uninstancatedItems; }
 
     /// <summary>
     /// Gets a value indicating whether if transfers are currently being handled.
@@ -384,27 +354,12 @@ public class ContentManager
     }
 
     /// <summary>
-    /// Returns the items details from the itemDetails list without the threat of a runtime error (Might be a massive lie).
-    /// </summary>
-    /// <param name="itemHash">Item hash for the item.</param>
-    /// <returns>The ItemDetails object from the list if found. Else and empty ItemDetails.</returns>
-    public ItemDetails Define(uint itemHash)
-    {
-        if (this.itemDetails.TryGetValue(itemHash, out var itemDetails))
-        {
-            return itemDetails;
-        }
-
-        return new ItemDetails();
-    }
-
-    /// <summary>
     /// Adds the request to the list of transfers. This overload should only be used for a transfer type of "Pull".
     /// </summary>
     /// <param name="type">Type of transfer wanted.</param>
     /// <param name="item">Item to transfer.</param>
     /// <returns>The Item instance ID of the item. Can be used to track the progress of the transfer.</returns>
-    public string QueueTransfer(TransferType type, Item item)
+    public string QueueTransfer(TransferType type, DItem item)
     {
         this.queuedTransfers.Enqueue(new TransferInfo(type, item, string.Empty, string.Empty));
         return item.ItemInstanceId ?? string.Empty;
@@ -418,7 +373,7 @@ public class ContentManager
     /// <param name="origin">Where the item is.</param>
     /// <param name="destination">Where the item should go.</param>
     /// <returns>The Item instance ID of the item. Can be used to track the progress of the transfer.</returns>
-    public string QueueTransfer(TransferType type, Item item, string origin, string destination)
+    public string QueueTransfer(TransferType type, DItem item, string origin, string destination)
     {
         this.queuedTransfers.Enqueue(new TransferInfo(type, item, origin, destination));
         return item.ItemInstanceId ?? string.Empty;
@@ -476,14 +431,16 @@ public class ContentManager
                             switch (transfer.Type)
                             {
                                 case TransferType.Push:
-                                    transferSuccess = await this.Transfer(transfer.Item, transfer.Origin, transfer.Destination);
+                                    transferSuccess = await this.Transfer(transfer.Item, transfer.Origin,
+                                        transfer.Destination);
                                     break;
                                 case TransferType.Pull:
                                     transferSuccess = await this.PullFromPostmaster(transfer.Item);
                                     break;
                             }
 
-                            this.recentlyHandledTransfers.Add(transfer.Item.ItemInstanceId ?? string.Empty, transferSuccess);
+                            this.recentlyHandledTransfers.Add(transfer.Item.ItemInstanceId ?? string.Empty,
+                                transferSuccess);
                         }
 
                         await Task.Delay(100, token);
@@ -523,7 +480,7 @@ public class ContentManager
     }
 
     /// <summary>
-    /// Performs all tasks related to loading or refreshing the users content.
+    /// Performs all tasks related to loading or refreshing the user's content.
     /// </summary>
     /// <returns>A Task representing the operation.</returns>
     private async Task LoadUserContents()
@@ -543,10 +500,6 @@ public class ContentManager
         ];
         await Task.WhenAll(contentTasks);
 
-        // Fetch item information on the items bucket, details, and other key information
-        await this.FetchItemInformation(this.dropzoneBackingStore.Values.ToList());
-        await this.FetchItemInformation(this.UninstantiatedItems);
-
         // Inform all dependents that information from the DBS has changed
         this.itemManagementRenderKey = Guid.NewGuid();
     }
@@ -557,7 +510,7 @@ public class ContentManager
     /// <param name="item">Item to equip.</param>
     /// <param name="location">Character id of the item location.</param>
     /// <returns>True if the transfer operation was successful. False otherwise.</returns>
-    private async Task<bool> Equip(Item item, string location)
+    private async Task<bool> Equip(DItem item, string location)
     {
         if (this.profile.MembershipType == null)
         {
@@ -569,10 +522,10 @@ public class ContentManager
         }
 
         // Equip the item.
-        Item itemBeingReplaced =
+        DItem? itemBeingReplaced =
             this.DropzoneBackingStore.Where(i => i.Value.Identifier == $"{location}Equipped").Select(i => i.Value)
-                .FirstOrDefault() ?? new Item();
-        if (await this.request.ActionItem_Request_EquipItem(this.profile.MembershipType,
+                .FirstOrDefault();
+        if (itemBeingReplaced != null && await this.request.ActionItem_Request_EquipItem(this.profile.MembershipType,
                 item.ItemInstanceId ?? string.Empty, location))
         {
             this.SetIdentifier(itemBeingReplaced, location);
@@ -588,7 +541,7 @@ public class ContentManager
     /// </summary>
     /// <param name="item">Item to fetch.</param>
     /// <returns>True if the operation was completed successfully. False Otherwise.</returns>
-    private async Task<bool> PullFromPostmaster(Item item)
+    private async Task<bool> PullFromPostmaster(DItem item)
     {
         if (this.profile.MembershipType == null)
         {
@@ -611,7 +564,7 @@ public class ContentManager
     /// <param name="origin">Origin location (CharacterID or Vault) of the item.</param>
     /// <param name="destination">Destination location (CharacterID or Vault) of the item.</param>
     /// <returns>True if the transfer operation was successful. False otherwise.</returns>
-    private async Task<bool> Transfer(Item item, string origin, string destination)
+    private async Task<bool> Transfer(DItem item, string origin, string destination)
     {
         bool transferSuccess;
         if (origin.Contains("Equipped") || destination.Contains("Equipped"))
@@ -641,7 +594,7 @@ public class ContentManager
     /// <param name="origin">Origin of the transfer.</param>
     /// <param name="destination">Destination of the transfer.</param>
     /// <returns>True if the transfer operation was successful. False otherwise.</returns>
-    private async Task<bool> TransferItem(Item transfer, string origin, string destination)
+    private async Task<bool> TransferItem(DItem transfer, string origin, string destination)
     {
         if (this.profile.MembershipType == null)
         {
@@ -686,7 +639,7 @@ public class ContentManager
             else if (!secondTransfer)
             {
                 this.snackbar.AddMessage(
-                    $"Transfer of {this.ItemDetails[transfer.ItemHash].DisplayProperties.Name} failed. Returning the item to the origin.",
+                    $"Transfer of {transfer.Details.DisplayProperties.Name} failed. Returning the item to the origin.",
                     "Warning");
                 bool returnSuccessful = await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType,
                     itemHash, itemID, stackSize, origin, false);
@@ -695,7 +648,7 @@ public class ContentManager
                 {
                     this.SetIdentifier(transfer, "Vault");
                     this.snackbar.AddMessage(
-                        $"Transfer failed. {this.ItemDetails[transfer.ItemHash].DisplayProperties.Name} " +
+                        $"Transfer failed. {transfer.Details.DisplayProperties.Name} " +
                         "has ended up in the Vault as GVM was unable to return it.", "Warning");
                 }
 
@@ -713,7 +666,7 @@ public class ContentManager
     /// <param name="origin">Origin of the transfer.</param>
     /// <param name="destination">Destination of the transfer.</param>
     /// <returns>True if the transfer operation was successful. False otherwise.</returns>
-    private async Task<bool> TransferEquipped(Item transfer, string origin, string destination)
+    private async Task<bool> TransferEquipped(DItem transfer, string origin, string destination)
     {
         string trueDestination = destination.Replace("Equipped", string.Empty);
         bool transferSuccess;
@@ -745,13 +698,13 @@ public class ContentManager
     /// <param name="origin">Location of the item.</param>
     /// <param name="destination">Where to send the item.</param>
     /// <returns>True if the transfer operation was successful. False otherwise.</returns>
-    private async Task<bool> HandelTransferOfEquippedItem(Item item, string origin, string destination)
+    private async Task<bool> HandelTransferOfEquippedItem(DItem item, string origin, string destination)
     {
         string trueOrigin = origin.Replace("Equipped", string.Empty);
         string trueDestination = destination.Replace("Equipped", string.Empty);
 
         // Get all items eligible to replace equipped item
-        Dictionary<string, Item> charactersItemBucket = this.DropzoneBackingStore
+        Dictionary<string, DItem> charactersItemBucket = this.DropzoneBackingStore
             .Where(b => b.Value.Bucket == item.Bucket).Where(i => i.Value.Identifier == trueOrigin)
             .ToDictionary(i => i.Key, i => i.Value);
 
@@ -763,7 +716,7 @@ public class ContentManager
             return false; // TODO: Not the best solution. Could pull item from vault to equip, but I am too lazy.
         }
 
-        Item itemToEquip = charactersItemBucket.Values.First();
+        DItem itemToEquip = charactersItemBucket.Values.First();
 
         bool equipCompleted = await this.Equip(itemToEquip, trueOrigin);
         if (equipCompleted)
@@ -783,7 +736,7 @@ public class ContentManager
     /// <param name="itemHash">The item hash of the item.</param>
     /// <param name="itemID">The item ID of the item.</param>
     /// <param name="stackSize">The item stack size of the item.</param>
-    private void GenerateTransferData(Item transfer, out uint itemHash, out string itemID, out int stackSize)
+    private void GenerateTransferData(DItem transfer, out uint itemHash, out string itemID, out int stackSize)
     {
         itemHash = transfer.ItemHash;
         itemID = transfer.ItemInstanceId ?? "-1";
@@ -791,7 +744,7 @@ public class ContentManager
     }
 
     /// <summary>
-    /// Gets clients character information from bungie.
+    /// Gets clients character information from Bungie.
     /// </summary>
     /// <returns>Task representing the operation.</returns>
     private async Task FetchClientCharacters()
@@ -900,7 +853,7 @@ public class ContentManager
 
                     foreach (JsonElement itemJson in characterInventory.EnumerateArray())
                     {
-                        Item item = this.BuildItem(itemJson, $"{character.CharacterId}Equipped", perksDataArray,
+                        DItem item = await this.BuildDItem(itemJson, $"{character.CharacterId}Equipped", perksDataArray,
                             plugsDataArray, instanceDataArray);
                         this.AddItemToStore(item);
                         itemsLoaded++;
@@ -961,7 +914,8 @@ public class ContentManager
 
                     foreach (JsonElement itemJson in characterInventory.EnumerateArray())
                     {
-                        Item item = this.BuildItem(itemJson, character.CharacterId, perksDataArray, plugsDataArray,
+                        DItem item = await this.BuildDItem(itemJson, character.CharacterId, perksDataArray,
+                            plugsDataArray,
                             instanceDataArray);
                         this.AddItemToStore(item);
                         itemsLoaded++;
@@ -1018,7 +972,7 @@ public class ContentManager
             int itemsLoaded = 0;
             foreach (JsonElement itemElement in vaultArray.EnumerateArray())
             {
-                Item item = this.BuildItem(itemElement, "Vault", perksDataArray, plugsDataArray, instanceDataArray);
+                DItem item = await this.BuildDItem(itemElement, "Vault", perksDataArray, plugsDataArray, instanceDataArray);
                 this.AddItemToStore(item);
                 itemsLoaded++;
             }
@@ -1041,101 +995,10 @@ public class ContentManager
     }
 
     /// <summary>
-    /// Builds an Item based on the provided data.
-    /// </summary>
-    /// <param name="itemJson">The base item data from bungie.</param>
-    /// <param name="itemIdentifier">Where the item is located.</param>
-    /// <param name="perksDataArray">Data for all the items perks.</param>
-    /// <param name="plugsDataArray">Data for all the items plugs.</param>
-    /// <param name="instanceDataArray">Data for all the items instance data.</param>
-    /// <returns>The Item object that was built.</returns>
-    private Item BuildItem(JsonElement itemJson, string itemIdentifier, JsonElement perksDataArray,
-        JsonElement plugsDataArray, JsonElement instanceDataArray)
-    {
-        Item item = itemJson.Deserialize<Item>() ?? new Item();
-        item.Identifier = itemIdentifier;
-
-        if (this.GetItemPerks(perksDataArray, item, out List<Item.Perk> perks))
-        {
-            item.Perks = perks;
-        }
-
-        if (this.GetItemSockets(plugsDataArray, item, out ItemSockets sockets))
-        {
-            item.Sockets = sockets;
-        }
-
-        // Get needed data
-        item.Power = this.GetItemPrimaryStat(instanceDataArray, item.ItemInstanceId ?? string.Empty);
-
-        return item;
-    }
-
-    /// <summary>
-    /// Gets the perks for the item associated with the item instance ID.
-    /// </summary>
-    /// <param name="perkData">Perk data received from bungie.</param>
-    /// <param name="item">Item to get the perks for.</param>
-    /// <param name="perks">The list of perks for the item.</param>
-    /// <returns>A Perk class constructed from the time.</returns>
-    private bool GetItemPerks(JsonElement perkData, Item item, out List<Item.Perk> perks)
-    {
-        perks = new List<Item.Perk>();
-
-        if (string.IsNullOrEmpty(item.ItemInstanceId))
-        {
-            return false;
-        }
-
-        if (perkData.TryGetProperty(item.ItemInstanceId, out JsonElement itemPerks))
-        {
-            if (itemPerks.TryGetProperty("perks", out JsonElement perksArray))
-            {
-                foreach (var perk in perksArray.EnumerateArray())
-                {
-                    perks.Add(new Item.Perk(
-                        perk.GetProperty("perkHash").GetUInt32(),
-                        perk.GetProperty("iconPath").GetString() ?? string.Empty,
-                        perk.GetProperty("isActive").GetBoolean(),
-                        perk.GetProperty("visible").GetBoolean()));
-                }
-
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Gets the Items Sockets and the Sockets perks for the item from the provided data.
-    /// </summary>
-    /// <param name="socketData">JsonElement containing all the socket information.</param>
-    /// <param name="item">Item to get the sockets for.</param>
-    /// <param name="sockets">An ItemSockets object for the item.</param>
-    /// <returns>True the socket data was found for the Item. False otherwise.</returns>
-    private bool GetItemSockets(JsonElement socketData, Item item, out ItemSockets sockets)
-    {
-        sockets = new ItemSockets();
-        if (string.IsNullOrEmpty(item.ItemInstanceId))
-        {
-            return false;
-        }
-
-        if (socketData.TryGetProperty(item.ItemInstanceId, out JsonElement itemSockets))
-        {
-            sockets = itemSockets.Deserialize<ItemSockets>() ?? new ItemSockets();
-            return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Adds the item to the correct store in content manager.
+    /// Adds the item to the correct store.
     /// </summary>
     /// <param name="item">Item to add.</param>
-    private void AddItemToStore(Item item)
+    private void AddItemToStore(DItem item)
     {
         if (!string.IsNullOrEmpty(item.ItemInstanceId))
         {
@@ -1157,131 +1020,194 @@ public class ContentManager
     }
 
     /// <summary>
-    /// Gets the item details and bucket information for the clients items.
+    /// Builds an Item based on the provided data. TODO: Now needs to handel fetching item information from the Manifest.
     /// </summary>
-    /// <param name="items">List of items to fetch details for.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    private async Task FetchItemInformation(List<Item> items)
+    /// <param name="itemJson">The base item data from bungie.</param>
+    /// <param name="itemIdentifier">Where the item is located.</param>
+    /// <param name="perksDataArray">Data for all the items perks.</param>
+    /// <param name="plugsDataArray">Data for all the items plugs.</param>
+    /// <param name="instanceDataArray">Data for all the items instance data.</param>
+    /// <returns>The Item object that was built.</returns>
+    private async Task<DItem> BuildDItem(JsonElement itemJson, string itemIdentifier, JsonElement perksDataArray,
+        JsonElement plugsDataArray, JsonElement instanceDataArray)
     {
-        this.logger.LogInformation("Getting Clients Item Information.");
-        foreach (Item item in items)
+        Item bungieItem = itemJson.Deserialize<Item>() ?? new Item();
+        DItem? item = null;
+        if (!bungieItem.Equals(new Item()))
         {
-            // This needs to be done first as the operations below depend on this being completed.
-            await this.QueryManifestForItemGeneralDetails(item);
+            ItemDetails details = await this.QueryManifestForGeneralItemDetails(bungieItem);
+            string bucket = await this.QueryManifestForBucket(bungieItem, itemIdentifier);
+            item = DItem.FromBungieItem(bungieItem, details, bucket, itemIdentifier);
 
-            await this.QueryManifestForBuckets(item);
-            await this.QueryManifestForItemSpecificDefinitions(item);
+            item.Power = this.GetItemPrimaryStat(instanceDataArray, bungieItem.ItemInstanceId ?? string.Empty);
+            await this.GetItemPerks(item, perksDataArray);
+            await this.GetItemPlugs(item, plugsDataArray);
+        }
+
+        return item;
+    }
+
+    /// <summary>
+    /// Gets the perks for the item associated with the item instance ID. TODO: Look into using deserialization to tone this function down.
+    /// </summary>
+    /// <param name="item">Item to assign the perks to.</param>
+    /// <param name="perkData">Perk data received from bungie.</param>
+    /// <returns>A Task representing the operation.</returns>
+    private async Task GetItemPerks(DItem item, JsonElement perkData)
+    {
+        if (string.IsNullOrEmpty(item.ItemInstanceId))
+        {
+            return;
+        }
+
+        if (perkData.TryGetProperty(item.ItemInstanceId, out JsonElement itemPerks))
+        {
+            if (itemPerks.TryGetProperty("perks", out JsonElement perksArray))
+            {
+                List<Perk> perks = new List<Perk>();
+                foreach (var perk in perksArray.EnumerateArray())
+                {
+                    uint perkHash = perk.GetProperty("perkHash").GetUInt32();
+                    bool detailsExist;
+                    ItemDetails? perkDetails;
+                    lock (this.perkDetails)
+                    {
+                        detailsExist = this.perkDetails.TryGetValue(perkHash, out perkDetails);
+                    }
+
+                    if (!detailsExist)
+                    {
+                        perkDetails = await this.GetItemDetailsFromManifest(perkHash);
+                        if (perkDetails.Equals(new ItemDetails()))
+                        {
+                            this.snackbar.AddMessage("GVM is unable to define a perk.", "warning");
+                        }
+                        else
+                        {
+                            lock (this.perkDetails)
+                            {
+                                this.perkDetails.Add(perkHash, perkDetails);
+                            }
+                        }
+                    }
+
+                    if (perkDetails != null && !perkDetails.Equals(new ItemDetails()))
+                    {
+                        perks.Add(new Perk(
+                            perkHash,
+                            perk.GetProperty("iconPath").GetString() ?? string.Empty,
+                            perk.GetProperty("isActive").GetBoolean(),
+                            perk.GetProperty("visible").GetBoolean(),
+                            perkDetails));
+                    }
+                }
+
+                item.Perks = perks;
+            }
         }
     }
 
     /// <summary>
-    /// Creates a Item Details for the clients weapon and adds it to the Item Details list.
+    /// Gets the Items Sockets and the Sockets perks for the item from the provided data.
+    /// </summary>
+    /// <param name="item">Item to assign the sockets to.</param>
+    /// <param name="plugData">JsonElement containing all the plug information.</param>
+    private async Task GetItemPlugs(DItem item, JsonElement plugData)
+    {
+        if (string.IsNullOrEmpty(item.ItemInstanceId))
+        {
+            return;
+        }
+
+        if (plugData.TryGetProperty(item.ItemInstanceId, out JsonElement itemPlugs))
+        {
+            var plugs = itemPlugs.Deserialize<DItemPlugs>() ?? new DItemPlugs();
+
+            foreach (var plug in plugs.ReusablePlugs)
+            {
+                foreach (var reusablePlug in plug.Value)
+                {
+                    ItemDetails? plugDetails;
+                    bool detailsExist;
+
+                    lock (this.plugDetails)
+                    {
+                        detailsExist = this.plugDetails.TryGetValue(reusablePlug.PlugItemHash, out plugDetails);
+                    }
+
+                    if (!detailsExist)
+                    {
+                        plugDetails = await this.GetItemDetailsFromManifest(reusablePlug.PlugItemHash);
+
+                        if (plugDetails != null && !plugDetails.Equals(new ItemDetails()))
+                        {
+                            lock (this.plugDetails)
+                            {
+                                this.plugDetails.TryAdd(reusablePlug.PlugItemHash, plugDetails);
+                            }
+                        }
+                        else
+                        {
+                            this.snackbar.AddMessage("GVM could not define a plug.", "warning");
+                            plugDetails = new ItemDetails();
+                        }
+                    }
+
+                    reusablePlug.Details = plugDetails!;
+                }
+            }
+
+            item.Plugs = plugs;
+        }
+    }
+
+    /// <summary>
+    /// Creates an ItemDetail for the client's weapon and adds it to the Item Details list.
     /// </summary>
     /// <param name="item">Item to get information for.</param>
     /// <returns>Task representing the operation.</returns>
-    private async Task QueryManifestForItemGeneralDetails(Item item)
+    private async Task<ItemDetails> QueryManifestForGeneralItemDetails(Item item)
     {
         uint itemHash = item.ItemHash;
-        ItemDetails details;
 
-        if (!this.itemDetails.TryGetValue(itemHash, out _))
+        ItemDetails? details = null;
+        if (this.itemDetails.TryGetValue(itemHash, out var itemDetails))
         {
-            // --- Main Details ---
-            details = await this.GetItemDetailsFromManifest(itemHash);
-
-            if (details.Equals(new ItemDetails()))
-            {
-                this.snackbar.AddMessage("GVM is unable to define an item.", "warning");
-            }
-
-            lock (this.itemDetails)
-            {
-                this.itemDetails.Add(itemHash, details);
-            }
-
-            // --- Socket Details ---
-            if (details.Sockets.SocketEntries != null)
-            {
-                foreach (var socketEntry in details.Sockets.SocketEntries)
-                {
-                    long typeHash = socketEntry.SocketTypeHash;
-                    if (this.socketDetails.TryGetValue(typeHash, out _))
-                    {
-                        continue;
-                    }
-
-                    this.socketDetails.Add(typeHash, await this.GetSocketDetails(typeHash));
-                }
-            }
+            return itemDetails;
         }
+
+        details = await this.GetItemDetailsFromManifest(itemHash);
+        if (details.Equals(new ItemDetails()))
+        {
+            this.snackbar.AddMessage("GVM is unable to define an item.", "warning");
+            return details;
+        }
+
+        lock (this.itemDetails)
+        {
+            this.itemDetails.Add(itemHash, details);
+        }
+
+        return details;
     }
 
     /// <summary>
     /// Assigns each item in the given list into their buckets.
     /// </summary>
     /// <param name="item">Item to get information for.</param>
+    /// <param name="identifier">Where the item is currently located.</param>
     /// <returns>Task representing the operation.</returns>
-    private async Task QueryManifestForBuckets(Item item)
+    private async Task<string> QueryManifestForBucket(Item item, string identifier)
     {
         uint hash = item.ItemHash;
-        if (string.IsNullOrEmpty(item.Bucket))
+
+        if (identifier == "Vault")
         {
-            if (item.Identifier == "Vault")
-            {
-                item.Bucket = await this.GetBucketDefinition(this.itemDetails[hash].Inventory.BucketTypeHash);
-            }
-            else
-            {
-                item.Bucket = await this.GetBucketDefinition(item.BucketHash);
-            }
+            return await this.GetBucketDefinition(this.itemDetails[hash].Inventory.BucketTypeHash);
         }
         else
         {
-            this.logger.LogWarning($"Bucket not found for item: {item.ItemHash}, BucketHash: {item.BucketHash}");
-        }
-    }
-
-    /// <summary>
-    /// Creates Perk Details for the weapon's perks and adds them to the Perk Details list.
-    /// </summary>
-    /// <param name="item">Item to get information for.</param>
-    /// <returns>Task representing the operation.</returns>
-    private async Task QueryManifestForItemSpecificDefinitions(Item item)
-    {
-        if (item?.Sockets == null)
-        {
-            return;
-        }
-
-        var sockets = item.Sockets.Plugs;
-
-        if (sockets.Count == 0)
-        {
-            return;
-        }
-
-        foreach (var plugs in sockets.Values)
-        {
-            foreach (var perk in plugs)
-            {
-                uint perkHash = perk.PlugItemHash;
-
-                if (this.perkDetails.TryGetValue(perkHash, out _))
-                {
-                    continue;
-                }
-
-                var details = await this.GetItemDetailsFromManifest(perkHash);
-                if (details.Equals(new ItemDetails()))
-                {
-                    this.snackbar.AddMessage("GVM is unable to define a perk.", "warning");
-                }
-
-                lock (this.perkDetails)
-                {
-                    this.perkDetails.Add(perkHash, details);
-                }
-            }
+            return await this.GetBucketDefinition(item.BucketHash);
         }
     }
 
@@ -1335,23 +1261,6 @@ public class ContentManager
     }
 
     /// <summary>
-    /// Gets the details of the perkHash provided.
-    /// </summary>
-    /// <param name="socketHash">SocketTypeHash to use in the search.</param>
-    /// <returns>A SocketTypeDetails containing the info from the manifest.</returns>
-    private async Task<SocketTypeDetails> GetSocketDetails(long socketHash)
-    {
-        SocketTypeDetails details = await this.manifest.Manifest_Query_SocketType((uint)socketHash);
-
-        if (details.Equals(new SocketTypeDetails()))
-        {
-            this.logger.LogError($"GVM could not find any SoketTypeDetails for the socketHash={socketHash} in the manifest.");
-        }
-
-        return details;
-    }
-
-    /// <summary>
     /// Gets and item's primary stat.
     /// </summary>
     /// <returns>The value of the items primary stat.</returns>
@@ -1378,7 +1287,7 @@ public class ContentManager
     /// </summary>
     /// <param name="item">Item to set identifier of.</param>
     /// <param name="identifier">Identifier to set.</param>
-    private void SetIdentifier(Item item, string identifier)
+    private void SetIdentifier(DItem item, string identifier)
     {
         this.dropzoneBackingStore[item.ItemInstanceId ?? string.Empty].Identifier = identifier;
     }

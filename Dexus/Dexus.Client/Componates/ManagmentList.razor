@@ -4,7 +4,7 @@
 @inject Core Core
 
 <MudPaper Class="d-flex flex-column gap-2" @key="RenderKey">
-    <MudDropContainer T="Item" Items="Items.OrderByDescending(item => item.Power)"
+    <MudDropContainer T="DItem" Items="Items.OrderByDescending(item => item.Power)"
                       ItemsSelector="@((item, dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer"
                       Class="d-flex flex-wrap flex-grow-1">
         <ChildContent>
@@ -15,10 +15,10 @@
                         @{
                             string equipped = character.Value.CharacterId + "Equipped";
                         }
-                        <MudDropZone T="Item" Identifier="@equipped"
+                        <MudDropZone T="DItem" Identifier="@equipped"
                                      Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1"
                                      Style="height: 15%; width: 100%;"></MudDropZone>
-                        <MudDropZone T="Item" Identifier="@character.Value.CharacterId"
+                        <MudDropZone T="DItem" Identifier="@character.Value.CharacterId"
                                      Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1"
                                      Style="height: 85%; width: 100%;"></MudDropZone>
                     </MudItem>
@@ -26,7 +26,7 @@
                 <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
                     @if (Items.Count(x => x.Identifier == "Vault") > 0)
                     {
-                        <MudDropZone T="Item" Identifier="Vault"
+                        <MudDropZone T="DItem" Identifier="Vault"
                                      Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1"
                                      Style="min-width: 50%; height: 100%;"/>
                     }
@@ -50,7 +50,7 @@
     /// The items to display in the management list
     /// </summary>
     [Parameter]
-    public required IEnumerable<Item> Items { get; set; }
+    public required IEnumerable<DItem> Items { get; set; }
 
     /// <summary>
     /// Gets called when the component first initializes.
@@ -66,14 +66,14 @@
     /// Supports Vault to Character, Character to Vault, and Character to Character transfers.
     /// </summary>
     /// <param name="item">Item being transferred.</param>
-    private async void Transfer(MudItemDropInfo<Item> item)
+    private async void Transfer(MudItemDropInfo<DItem> item)
     {
         if (item.Item == null || !Core.Content.TransfersAllowed || !(await Core.ConfirmOAuthStatus()))
         {
             return;
         }
 
-        Item transfer = item.Item;
+        DItem transfer = item.Item;
 
         // Item bucket Identification
         string origin = transfer.Identifier ?? string.Empty;
@@ -90,7 +90,7 @@
             transferBucket = Core.Content.Characters.FirstOrDefault(x => x.Value.CharacterId == destination.Replace("Equipped", string.Empty)).Value.Class ?? destination;
         }
 
-        Core.Snackbar.AddMessage($"Transferring {Core.Content.ItemDetails[transfer.ItemHash].DisplayProperties.Name} to {transferBucket}.", "Info");
+        Core.Snackbar.AddMessage($"Transferring {transfer.Details.DisplayProperties.Name} to {transferBucket}.", "Info");
 
         string itemID = Core.Content.QueueTransfer(TransferType.Push, transfer, origin, destination);
 
@@ -101,7 +101,7 @@
 
         if (Core.Content.GetTransferStatus(itemID) == 0)
         {
-            Core.Snackbar.AddMessage($"Transfer of {Core.Content.ItemDetails[transfer.ItemHash].DisplayProperties.Name} to {transferBucket} was Successful.", "Success");
+            Core.Snackbar.AddMessage($"Transfer of {transfer.Details.DisplayProperties.Name} to {transferBucket} was Successful.", "Success");
         }
     }
 

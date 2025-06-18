@@ -18,7 +18,7 @@
         <!-- Header with Name and Close Button -->
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <MudText Typo="Typo.h6"
-                     Style="flex-grow: 1; font-weight: 600;">@Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name</MudText>
+                     Style="flex-grow: 1; font-weight: 600;">@Item.Details.DisplayProperties.Name</MudText>
             <MudIconButton Icon="@Icons.Material.Outlined.Close" OnClick="() => Condition = false"
                            Size="Size.Small" Style="color: white;"/>
         </div>
@@ -81,7 +81,7 @@
     /// Item to display Info About.
     /// </summary>
     [Parameter]
-    public required Item Item { get; set; }
+    public required DItem Item { get; set; }
 
     /// <summary>
     /// Bool liked to whether the popover should be displayed.
@@ -127,7 +127,7 @@
             characterName = Core.Content.Characters.FirstOrDefault(x => x.Value.CharacterId == destination).Value.Class ?? destination;
         }
 
-        Core.Snackbar.AddMessage($"Transferring {Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name} to {characterName}.", "Info");
+        Core.Snackbar.AddMessage($"Transferring {Item.Details.DisplayProperties.Name} to {characterName}.", "Info");
 
         string itemID = Core.Content.QueueTransfer(TransferType.Push, Item, origin, destination);
 
@@ -138,7 +138,7 @@
 
         if (Core.Content.GetTransferStatus(itemID) == 0)
         {
-            Core.Snackbar.AddMessage($"Transfer of {Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name} to {characterName} was Successful.", "Success");
+            Core.Snackbar.AddMessage($"Transfer of {Item.Details.DisplayProperties.Name} to {characterName} was Successful.", "Success");
         }
     }
 

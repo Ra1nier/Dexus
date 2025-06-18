@@ -16,7 +16,7 @@ public class TransferInfo
     /// <param name="item">Item to transfer.</param>
     /// <param name="origin">Where the item is.</param>
     /// <param name="destination">Where the item should go.</param>
-    public TransferInfo(TransferType type, Item item, string origin, string destination)
+    public TransferInfo(TransferType type, DItem item, string origin, string destination)
     {
         this.Type = type;
         this.Item = item;
@@ -32,7 +32,7 @@ public class TransferInfo
     /// <summary>
     /// Gets or sets the item involved in the transfer.
     /// </summary>
-    public Item Item { get; set; }
+    public DItem Item { get; set; }
 
     /// <summary>
     /// Gets or sets the origin of the transfer.

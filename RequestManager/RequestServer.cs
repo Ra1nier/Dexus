@@ -7,7 +7,7 @@ namespace RequestManager;
 using ClientProfile;
 using OAuthService;
 using GuardianServices;
-using GuardianServices.Models.ItemDetails;
+using GuardianServices.Models;
 using Microsoft.Extensions.Logging;
 using System.IO.Compression;
 using System.Text;
