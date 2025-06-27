@@ -107,7 +107,7 @@ else
         if (!initializationComplete)
         {
             await Core.Content.InitializeUserContent();
-            Core.Content.AllowTransfers();
+            Core.Content.Transfer.AllowTransfers();
         }
 
         initializationComplete = true;

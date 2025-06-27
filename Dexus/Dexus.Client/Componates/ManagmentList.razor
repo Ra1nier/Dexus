@@ -58,7 +58,7 @@
     protected override void OnInitialized()
     {
         // Connects
-        Core.Content.TransferOccured += RefreshState;
+        Core.Content.Transfer.TransferOccured += RefreshState;
     }
     
     /// <summary>
@@ -68,7 +68,7 @@
     /// <param name="item">Item being transferred.</param>
     private async void Transfer(MudItemDropInfo<DItem> item)
     {
-        if (item.Item == null || !Core.Content.TransfersAllowed || !(await Core.ConfirmOAuthStatus()))
+        if (item.Item == null || !Core.Content.Transfer.TransfersAllowed || !(await Core.ConfirmOAuthStatus()))
         {
             return;
         }
@@ -92,14 +92,14 @@
 
         Core.Snackbar.AddMessage($"Transferring {transfer.Details.DisplayProperties.Name} to {transferBucket}.", "Info");
 
-        string itemID = Core.Content.QueueTransfer(TransferType.Push, transfer, origin, destination);
+        string itemID = Core.Content.Transfer.QueueTransfer(TransferType.Push, transfer, destination);
 
-        while (Core.Content.GetTransferStatus(itemID) == 2)
+        while (Core.Content.Transfer.GetTransferStatus(itemID) == 2)
         {
             await Task.Delay(100);
         }
 
-        if (Core.Content.GetTransferStatus(itemID) == 0)
+        if (Core.Content.Transfer.GetTransferStatus(itemID) == 0)
         {
             Core.Snackbar.AddMessage($"Transfer of {transfer.Details.DisplayProperties.Name} to {transferBucket} was Successful.", "Success");
         }

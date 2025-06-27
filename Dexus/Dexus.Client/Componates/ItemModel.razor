@@ -5,38 +5,43 @@
 
 @inject Core Core
 
+@{
+    string sizeStyle = $"width: {Size}px; height: {Size}px;";
+    string borderStyle = string.Empty;
+    string iconPath = $"https://www.bungie.net{Item.Details.DisplayProperties.Icon}";
+}
+
 <!-- Main Display -->
-<MudCard
-    Style="width: 80px; height: 80px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; position: relative;"
-    Elevation="4" @onclick="TogglePopover">
-    @{ string iconPath = $"https://www.bungie.net{@Item.Details.DisplayProperties.Icon}"; }
-    <MudCardMedia Image="@iconPath" alt="Weapon"
-                  Style="width: 100%; height: 100%; object-fit: cover;"/>
+<MudCard class="item-card"
+         Style="@($"{sizeStyle} position: relative;")"
+         @onclick="TogglePopover">
+
+    @if (Item.IsCrafted())
+    {
+        <div class="crafted-gradient-overlay"></div>
+    }
+    
+    @if (Item.IsMasterworked())
+    {
+        <div class="masterworked-gradient-overlay"></div>
+    }
+
+    <MudCardMedia Image="@iconPath" alt="Item"
+                  Style="width: 100%; height: 100%; object-fit: cover;" />
+
     @if (Item.Power != 0)
     {
-        <div
-            style="position: absolute; top: 4px; right: 4px; background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 6px; font-size: 12px; border-radius: 4px;">@Item.Power</div>
+        <div class="power-label">@Item.Power</div>
     }
-    else if (@Item.Quantity != 1)
+    else if (Item.Quantity != 1)
     {
-        <div
-            style="position: absolute; top: 4px; right: 4px; background: rgba(0, 0, 0, 0.6); color: white; padding: 2px 6px; font-size: 12px; border-radius: 4px;">@Item.Quantity.ToString()</div>
+        <div class="power-label">@Item.Quantity</div>
     }
 </MudCard>
 
+
 <!-- Popover for Info and Actions for the Item -->
-@if (Item.IsWeapon())
-{
-    <WeaponPopover Item="@Item" Condition="@Condition" />
-}
-else if (Item.IsArmor())
-{
-    <ArmorPopover Item="@Item" Condition="@Condition" />
-}
-else
-{
-    <ItemPopover Item="@Item" Condition="@Condition" />
-}
+<ItemPopover Item="@Item" Condition="@Condition" />
 
 @code {
     /// <summary>
@@ -44,6 +49,12 @@ else
     /// </summary>
     [Parameter]
     public required DItem Item { get; set; }
+
+    /// <summary>
+    /// Optional size in pixels for the card (width and height).
+    /// </summary>
+    [Parameter]
+    public int Size { get; set; } = 80;
 
     // Condition to control popover visibility
     private bool Condition { get; set; } = false;
@@ -53,3 +64,45 @@ else
         Condition = !Condition;
     }
 }
+
+<style>
+    .item-card {
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .crafted-gradient-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 33%;
+        background: linear-gradient(to top, rgba(255, 0, 0, 0.6), transparent);
+        pointer-events: none;
+        z-index: 2;
+    }
+    
+    .masterworked-gradient-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 33%;
+        background: linear-gradient(to top, rgba(255, 185, 0, 0.76), transparent);
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    /* Power/quantity label */
+    .power-label {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        background: rgba(0, 0, 0, 0.6);
+        color: white;
+        padding: 2px 6px;
+        font-size: 12px;
+        border-radius: 4px;
+        z-index: 3;
+    }
+</style>

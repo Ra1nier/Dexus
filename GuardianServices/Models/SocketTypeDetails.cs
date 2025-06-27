@@ -48,7 +48,7 @@ public class SocketTypeDetails
 
     [JsonPropertyName("blacklisted")]
     public bool Blacklisted { get; set; }
-    
+
     public class DisplayPropertiesData
     {
         [JsonPropertyName("description")]

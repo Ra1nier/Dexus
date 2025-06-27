@@ -55,7 +55,7 @@ public class ManifestServer
         // Convert itemHash to manifest id and construct query.
         int id = this.ConvertHashToID(itemHash);
         string query = $"SELECT json FROM DestinyInventoryItemDefinition WHERE id = {id};";
-        
+
         // Execute Query and get response
         (bool success, string json) = await this.QueryManifest(query);
 

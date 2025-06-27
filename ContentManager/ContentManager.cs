@@ -2,6 +2,8 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
+using MudBlazor;
+
 namespace ContentManager;
 
 using ClientProfile;
@@ -12,7 +14,9 @@ using RequestManager;
 using System.Text.Json;
 
 /// <summary>
-/// The ContentManager class is responsible for managing the content of GVM.
+/// The ContentManager class is responsible for managing the content of a user's account.
+/// For now, the only things handled by content manager are character and profile inventories.
+/// However, this class should be used for all things bungie-client related.
 /// </summary>
 public class ContentManager
 {
@@ -22,7 +26,7 @@ public class ContentManager
     private readonly string baseUrl = "https://www.bungie.net";
 
     /// <summary>
-    /// Logger for GVM.
+    /// Logger for Dexus.
     /// </summary>
     private readonly ILogger logger;
 
@@ -32,22 +36,22 @@ public class ContentManager
     private readonly Profile profile;
 
     /// <summary>
-    /// Request Server for GVM.
+    /// Request Server for Dexus.
     /// </summary>
     private readonly RequestServer request;
 
     /// <summary>
-    /// Manifest Server for GVM.
+    /// Manifest Server for Dexus.
     /// </summary>
     private readonly ManifestServer manifest;
 
     /// <summary>
-    /// Snackbar Service for GVM.
+    /// Snackbar Service for Dexus.
     /// </summary>
     private readonly SnackbarService snackbar;
 
     /// <summary>
-    /// Loadingbar service for GVM.
+    /// Loadingbar service for Dexus.
     /// </summary>
     private readonly LoadingbarService loadingbars;
 
@@ -63,17 +67,7 @@ public class ContentManager
     private Dictionary<uint, ItemDetails> itemDetails = new Dictionary<uint, ItemDetails>();
     private Dictionary<uint, ItemDetails> perkDetails = new Dictionary<uint, ItemDetails>();
     private Dictionary<uint, ItemDetails> plugDetails = new Dictionary<uint, ItemDetails>();
-    private Dictionary<long, SocketTypeDetails> socketDetails = new Dictionary<long, SocketTypeDetails>();
-
-    // Content Management Containers
-    private Queue<TransferInfo> queuedTransfers = new Queue<TransferInfo>();
-
-    private TimedDictionary<string, bool> recentlyHandledTransfers =
-        new TimedDictionary<string, bool>(TimeSpan.FromSeconds(10));
-
-    // Content Tasks
-    private Task? transferTask;
-    private CancellationTokenSource? cancellationTokenSource;
+    private Dictionary<uint, ItemDetails> socketDetails = new Dictionary<uint, ItemDetails>();
 
     // Render Keys
     private Guid itemManagementRenderKey = Guid.NewGuid();
@@ -96,12 +90,17 @@ public class ContentManager
         this.manifest = manifest;
         this.snackbar = snackbar;
         this.loadingbars = loadingbars;
+        this.Transfer = new TransferManager(logger, profile, request, snackbar, this.dropzoneBackingStore);
+
+        // connectors
+        this.Transfer.TransferOccured += this.RefreshRenderKey;
+        this.Transfer.SetIdentifier += this.SetIdentifier;
     }
 
     /// <summary>
-    /// Signal that informs all connected slots that a transfer has occured.
+    /// Gets the transfer manager used by ContentManager.
     /// </summary>
-    public event Action? TransferOccured;
+    public TransferManager Transfer { get; }
 
     /// <summary>
     /// Gets the Characters List.
@@ -111,162 +110,63 @@ public class ContentManager
     /// <summary>
     /// Gets the KineticWeapons List.
     /// </summary>
-    public Dictionary<string, DItem> KineticWeapons
-    {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Kinetic Weapons")
-                .ToDictionary(i => i.Key, i => i.Value);
-        }
-    }
+    public Dictionary<string, DItem> KineticWeapons => this.GetItemsByBucket("Kinetic Weapons");
 
     /// <summary>
     /// Gets the EnergyWeapons List.
     /// </summary>
-    public Dictionary<string, DItem> EnergyWeapons
-    {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Energy Weapons")
-                .ToDictionary(i => i.Key, i => i.Value);
-        }
-    }
+    public Dictionary<string, DItem> EnergyWeapons => this.GetItemsByBucket("Energy Weapons");
 
     /// <summary>
     /// Gets the PowerWeapons List.
     /// </summary>
-    public Dictionary<string, DItem> PowerWeapons
-    {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Power Weapons")
-                .ToDictionary(i => i.Key, i => i.Value);
-        }
-    }
+    public Dictionary<string, DItem> PowerWeapons => this.GetItemsByBucket("Power Weapons");
 
     /// <summary>
     /// Gets the Helmets List.
     /// </summary>
-    public Dictionary<string, DItem> Helmets
-    {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Helmet")
-                .ToDictionary(i => i.Key, i => i.Value);
-        }
-    }
+    public Dictionary<string, DItem> Helmets => this.GetItemsByBucket("Helmet");
 
     /// <summary>
     /// Gets the Gauntlets List.
     /// </summary>
-    public Dictionary<string, DItem> Gauntlets
-    {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Gauntlets")
-                .ToDictionary(i => i.Key, i => i.Value);
-        }
-    }
+    public Dictionary<string, DItem> Gauntlets => this.GetItemsByBucket("Gauntlets");
 
     /// <summary>
     /// Gets the Chests List.
     /// </summary>
-    public Dictionary<string, DItem> Chests
-    {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Chest Armor")
-                .ToDictionary(i => i.Key, i => i.Value);
-        }
-    }
+    public Dictionary<string, DItem> Chests => this.GetItemsByBucket("Chest Armor");
 
     /// <summary>
     /// Gets the Legs List.
     /// </summary>
-    public Dictionary<string, DItem> Legs
-    {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Leg Armor")
-                .ToDictionary(i => i.Key, i => i.Value);
-        }
-    }
+    public Dictionary<string, DItem> Legs => this.GetItemsByBucket("Leg Armor");
 
     /// <summary>
     /// Gets the Skirts List.
     /// </summary>
-    public Dictionary<string, DItem> Skirts
-    {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Class Armor")
-                .ToDictionary(i => i.Key, i => i.Value);
-        }
-    }
+    public Dictionary<string, DItem> Skirts => this.GetItemsByBucket("Class Armor");
 
     /// <summary>
     /// Gets the Accessories List.
     /// </summary>
-    public Dictionary<string, DItem> Accessories
-    {
-        get
-        {
-            string[] buckets =
-            [
-                "Ghost",
-                "Ships",
-                "Vehicle",
-                "Emblems",
-                "Accessories"
-            ];
-
-            return this.dropzoneBackingStore.Where(i => buckets.Contains(i.Value.Bucket))
-                .ToDictionary(i => i.Key, i => i.Value);
-        }
-    }
+    public Dictionary<string, DItem> Accessories =>
+        this.GetItemsByBucket("Ghost", "Ships", "Vehicle", "Emblems", "Accessories");
 
     /// <summary>
     /// Gets the Postmaster List.
     /// </summary>
-    public Dictionary<string, DItem> Postmaster
-    {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Lost Items")
-                .ToDictionary(i => i.Key, i => i.Value);
-        }
-    }
+    public Dictionary<string, DItem> Postmaster => this.GetItemsByBucket("Lost Items");
 
     /// <summary>
     /// Gets the Engrams List.
     /// </summary>
-    public Dictionary<string, DItem> Engrams
-    {
-        get
-        {
-            return this.dropzoneBackingStore.Where(i => i.Value.Bucket == "Engrams")
-                .ToDictionary(i => i.Key, i => i.Value);
-        }
-    }
+    public Dictionary<string, DItem> Engrams => this.GetItemsByBucket("Engrams");
 
     /// <summary>
     /// Gets the Quests List.
     /// </summary>
-    public Dictionary<string, DItem> Quests
-    {
-        get
-        {
-            string[] buckets =
-            [
-                "Messages",
-                "Special Orders",
-                "Quests"
-            ];
-
-            return this.dropzoneBackingStore.Where(i => buckets.Contains(i.Value.Bucket))
-                .ToDictionary(i => i.Key, i => i.Value);
-        }
-    }
+    public Dictionary<string, DItem> Quests => this.GetItemsByBucket("Messages", "Special Orders", "Quests");
 
     /// <summary>
     /// Gets the consumables List.
@@ -304,11 +204,6 @@ public class ContentManager
     /// Gets the UninstantiatedItems List.
     /// </summary>
     public List<DItem> UninstantiatedItems { get => this.uninstancatedItems; }
-
-    /// <summary>
-    /// Gets a value indicating whether if transfers are currently being handled.
-    /// </summary>
-    public bool TransfersAllowed { get; private set; }
 
     /// <summary>
     /// Gets the render key that indicates whether item management lists need to be rendered again.
@@ -354,129 +249,14 @@ public class ContentManager
     }
 
     /// <summary>
-    /// Adds the request to the list of transfers. This overload should only be used for a transfer type of "Pull".
+    /// Returns a Dictionary(string, DItem) containing every item that is a part of the provided bucket array.
     /// </summary>
-    /// <param name="type">Type of transfer wanted.</param>
-    /// <param name="item">Item to transfer.</param>
-    /// <returns>The Item instance ID of the item. Can be used to track the progress of the transfer.</returns>
-    public string QueueTransfer(TransferType type, DItem item)
+    /// <param name="bucket">Array of strings containing the buckets requested.</param>
+    /// <returns>The dictionary containing the items.</returns>
+    public Dictionary<string, DItem> GetItemsByBucket(params string[] bucket)
     {
-        this.queuedTransfers.Enqueue(new TransferInfo(type, item, string.Empty, string.Empty));
-        return item.ItemInstanceId ?? string.Empty;
-    }
-
-    /// <summary>
-    /// Adds the request to the list of transfers.
-    /// </summary>
-    /// <param name="type">Type of transfer wanted.</param>
-    /// <param name="item">Item to transfer.</param>
-    /// <param name="origin">Where the item is.</param>
-    /// <param name="destination">Where the item should go.</param>
-    /// <returns>The Item instance ID of the item. Can be used to track the progress of the transfer.</returns>
-    public string QueueTransfer(TransferType type, DItem item, string origin, string destination)
-    {
-        this.queuedTransfers.Enqueue(new TransferInfo(type, item, origin, destination));
-        return item.ItemInstanceId ?? string.Empty;
-    }
-
-    /// <summary>
-    /// Gets the transfer status of the item.
-    /// </summary>
-    /// <param name="itemInstanceId">ID of the item.</param>
-    /// <returns>Returns 0 if the transfer was successful, 1 if the transfer was unsuccessful, 2 if the key was not found.</returns>
-    public int GetTransferStatus(string itemInstanceId)
-    {
-        if (this.recentlyHandledTransfers.TryGetValue(itemInstanceId, out bool status))
-        {
-            return status ? 0 : 1;
-        }
-
-        return 2;
-    }
-
-    /// <summary>
-    /// Allows content manager to start processing transfers.
-    /// </summary>
-    public void AllowTransfers()
-    {
-        this.TransfersAllowed = true;
-
-        // Create a cancellation token source to signal task cancellation
-        this.cancellationTokenSource = new CancellationTokenSource();
-        CancellationToken token = this.cancellationTokenSource.Token;
-
-        // If transfers are already being processed return as to not overwrite the task.
-        if (this.transferTask != null && this.transferTask.Status == TaskStatus.Running)
-        {
-            return;
-        }
-
-        this.logger.LogInformation(
-            "Transfer processing task was started. Content Manager will now handle transfer requests.");
-        this.recentlyHandledTransfers.StartAutoCleanup(TimeSpan.FromSeconds(5));
-        this.transferTask = Task.Run(
-            async () =>
-            {
-                try
-                {
-                    while (true)
-                    {
-                        token.ThrowIfCancellationRequested();
-
-                        while (this.queuedTransfers.Count > 0)
-                        {
-                            TransferInfo transfer = this.queuedTransfers.Dequeue();
-                            bool transferSuccess = false;
-
-                            switch (transfer.Type)
-                            {
-                                case TransferType.Push:
-                                    transferSuccess = await this.Transfer(transfer.Item, transfer.Origin,
-                                        transfer.Destination);
-                                    break;
-                                case TransferType.Pull:
-                                    transferSuccess = await this.PullFromPostmaster(transfer.Item);
-                                    break;
-                            }
-
-                            this.recentlyHandledTransfers.Add(transfer.Item.ItemInstanceId ?? string.Empty,
-                                transferSuccess);
-                        }
-
-                        await Task.Delay(100, token);
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    this.logger.LogInformation(
-                        "Transfer processing task was canceled. Content Manager will not handle anymore transfer requests.");
-                }
-                catch (Exception e)
-                {
-                    this.logger.LogError(e, "Error occurred while processing transfers.");
-                }
-            }, token);
-    }
-
-    /// <summary>
-    /// Stops content manager from processing transfers.
-    /// </summary>
-    public void StopTransfers()
-    {
-        this.TransfersAllowed = false;
-
-        this.cancellationTokenSource?.Cancel();
-        this.transferTask?.Wait();
-
-        this.cancellationTokenSource?.Dispose();
-        this.transferTask?.Dispose();
-
-        while (this.recentlyHandledTransfers.Any())
-        {
-            Task.Delay(1000);
-        }
-
-        this.recentlyHandledTransfers.StopAutoCleanup();
+        return this.dropzoneBackingStore.Where(i => bucket.Contains(i.Value.Bucket))
+            .ToDictionary(i => i.Key, i => i.Value);
     }
 
     /// <summary>
@@ -485,11 +265,7 @@ public class ContentManager
     /// <returns>A Task representing the operation.</returns>
     private async Task LoadUserContents()
     {
-        // Erase old information if needed.
-        if (this.dropzoneBackingStore.Count != 0)
-        {
-            this.dropzoneBackingStore.Clear();
-        }
+        this.ClearDropzoneBackingStore();
 
         // Load client contents from bungie.
         List<Task> contentTasks =
@@ -505,242 +281,19 @@ public class ContentManager
     }
 
     /// <summary>
-    /// Equips the item to the provided character.
+    /// Clears both dropzone backing stores if they contain items.
     /// </summary>
-    /// <param name="item">Item to equip.</param>
-    /// <param name="location">Character id of the item location.</param>
-    /// <returns>True if the transfer operation was successful. False otherwise.</returns>
-    private async Task<bool> Equip(DItem item, string location)
+    private void ClearDropzoneBackingStore()
     {
-        if (this.profile.MembershipType == null)
+        if (this.dropzoneBackingStore.Count != 0)
         {
-            this.logger.LogCritical("MembershipType is null. Unable to transfer item.");
-            this.snackbar.AddMessage(
-                "Something went wrong. GVM is unable to access your bungie data. Equip cannot be completed. Try logging back in to solve this issue.",
-                "Error");
-            return false;
+            this.dropzoneBackingStore.Clear();
         }
 
-        // Equip the item.
-        DItem? itemBeingReplaced =
-            this.DropzoneBackingStore.Where(i => i.Value.Identifier == $"{location}Equipped").Select(i => i.Value)
-                .FirstOrDefault();
-        if (itemBeingReplaced != null && await this.request.ActionItem_Request_EquipItem(this.profile.MembershipType,
-                item.ItemInstanceId ?? string.Empty, location))
+        if (this.uninstancatedItems.Count != 0)
         {
-            this.SetIdentifier(itemBeingReplaced, location);
-            this.SetIdentifier(item, $"{location}Equipped");
-            return true;
+            this.uninstancatedItems.Clear();
         }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Pulls the requested item from the postmaster.
-    /// </summary>
-    /// <param name="item">Item to fetch.</param>
-    /// <returns>True if the operation was completed successfully. False Otherwise.</returns>
-    private async Task<bool> PullFromPostmaster(DItem item)
-    {
-        if (this.profile.MembershipType == null)
-        {
-            this.logger.LogCritical("MembershipType is null. Unable to transfer item.");
-            this.snackbar.AddMessage(
-                "Something went wrong. GVM is unable to access your bungie data. Transfer cannot be completed. Try logging back in to solve this issue.",
-                "Error");
-            return false;
-        }
-
-        this.itemManagementRenderKey = Guid.NewGuid();
-        return await this.request.ActionItem_Request_PullFromPostmaster(this.profile.MembershipType, item.ItemHash,
-            item.ItemInstanceId ?? string.Empty, item.Quantity, item.Identifier ?? string.Empty);
-    }
-
-    /// <summary>
-    /// Transfers the provided item to the provided destination.
-    /// </summary>
-    /// <param name="item">Item to transfer.</param>
-    /// <param name="origin">Origin location (CharacterID or Vault) of the item.</param>
-    /// <param name="destination">Destination location (CharacterID or Vault) of the item.</param>
-    /// <returns>True if the transfer operation was successful. False otherwise.</returns>
-    private async Task<bool> Transfer(DItem item, string origin, string destination)
-    {
-        bool transferSuccess;
-        if (origin.Contains("Equipped") || destination.Contains("Equipped"))
-        {
-            transferSuccess = await this.TransferEquipped(item, origin, destination);
-        }
-        else
-        {
-            transferSuccess = await this.TransferItem(item, origin, destination);
-        }
-
-        if (transferSuccess)
-        {
-            // Update the item's location
-            this.SetIdentifier(item, destination);
-        }
-
-        this.itemManagementRenderKey = Guid.NewGuid();
-        this.TransferOccured?.Invoke();
-        return transferSuccess;
-    }
-
-    /// <summary>
-    /// Handles the transfer of an item between buckets.
-    /// </summary>
-    /// <param name="transfer">Item to transfer.</param>
-    /// <param name="origin">Origin of the transfer.</param>
-    /// <param name="destination">Destination of the transfer.</param>
-    /// <returns>True if the transfer operation was successful. False otherwise.</returns>
-    private async Task<bool> TransferItem(DItem transfer, string origin, string destination)
-    {
-        if (this.profile.MembershipType == null)
-        {
-            this.logger.LogCritical("MembershipType is null. Unable to transfer item.");
-            this.snackbar.AddMessage(
-                "Something went wrong. GVM is unable to access your bungie data. Transfer cannot be completed. Try logging back in to solve this issue.",
-                "Error");
-            return false;
-        }
-
-        this.GenerateTransferData(transfer, out uint itemHash, out string itemID, out int stackSize);
-
-        if (destination == "Vault")
-        {
-            // Transfer to Vault
-            return await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID,
-                stackSize, origin, true);
-        }
-        else if (origin == "Vault")
-        {
-            // Transfer to Character
-            return await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID,
-                stackSize, destination, false);
-        }
-        else
-        {
-            // Transfer to Vault then to the Character
-            bool firstTransfer = await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType,
-                itemHash, itemID, stackSize, origin, true);
-
-            bool secondTransfer = false;
-            if (firstTransfer)
-            {
-                secondTransfer = await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType,
-                    itemHash, itemID, stackSize, destination, false);
-            }
-
-            if (firstTransfer && secondTransfer)
-            {
-                return true;
-            }
-            else if (!secondTransfer)
-            {
-                this.snackbar.AddMessage(
-                    $"Transfer of {transfer.Details.DisplayProperties.Name} failed. Returning the item to the origin.",
-                    "Warning");
-                bool returnSuccessful = await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType,
-                    itemHash, itemID, stackSize, origin, false);
-
-                if (!returnSuccessful)
-                {
-                    this.SetIdentifier(transfer, "Vault");
-                    this.snackbar.AddMessage(
-                        $"Transfer failed. {transfer.Details.DisplayProperties.Name} " +
-                        "has ended up in the Vault as GVM was unable to return it.", "Warning");
-                }
-
-                return returnSuccessful;
-            }
-
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Handles the transfer of an equipped item between buckets. The item will be replaced by a random item from the character's inventory.
-    /// </summary>
-    /// <param name="transfer">Item to transfer.</param>
-    /// <param name="origin">Origin of the transfer.</param>
-    /// <param name="destination">Destination of the transfer.</param>
-    /// <returns>True if the transfer operation was successful. False otherwise.</returns>
-    private async Task<bool> TransferEquipped(DItem transfer, string origin, string destination)
-    {
-        string trueDestination = destination.Replace("Equipped", string.Empty);
-        bool transferSuccess;
-        if (origin.Contains("Equipped") && destination.Contains("Equipped"))
-        {
-            transferSuccess = await this.HandelTransferOfEquippedItem(transfer, origin, destination);
-        }
-        else if (origin.Contains("Equipped"))
-        {
-            return await this.HandelTransferOfEquippedItem(transfer, origin, destination);
-        }
-        else
-        {
-            transferSuccess = await this.TransferItem(transfer, origin, trueDestination);
-        }
-
-        if (transferSuccess)
-        {
-            return await this.Equip(transfer, trueDestination);
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Handles the transfer of an item from ann equipped slot bucket to another characters inventory bucket.
-    /// </summary>
-    /// <param name="item">Item to transfer.</param>
-    /// <param name="origin">Location of the item.</param>
-    /// <param name="destination">Where to send the item.</param>
-    /// <returns>True if the transfer operation was successful. False otherwise.</returns>
-    private async Task<bool> HandelTransferOfEquippedItem(DItem item, string origin, string destination)
-    {
-        string trueOrigin = origin.Replace("Equipped", string.Empty);
-        string trueDestination = destination.Replace("Equipped", string.Empty);
-
-        // Get all items eligible to replace equipped item
-        Dictionary<string, DItem> charactersItemBucket = this.DropzoneBackingStore
-            .Where(b => b.Value.Bucket == item.Bucket).Where(i => i.Value.Identifier == trueOrigin)
-            .ToDictionary(i => i.Key, i => i.Value);
-
-        if (!charactersItemBucket.Any())
-        {
-            this.snackbar.AddMessage(
-                "Character has no items to to replace the equipped item. Transfer another weapon into your inventory to fix this.",
-                "Warning");
-            return false; // TODO: Not the best solution. Could pull item from vault to equip, but I am too lazy.
-        }
-
-        DItem itemToEquip = charactersItemBucket.Values.First();
-
-        bool equipCompleted = await this.Equip(itemToEquip, trueOrigin);
-        if (equipCompleted)
-        {
-            return await this.TransferItem(item, trueOrigin, trueDestination);
-        }
-
-        this.snackbar.AddMessage("GVM was unable to equip a different item to replace the item you wanted to transfer.",
-            "Warning");
-        return false;
-    }
-
-    /// <summary>
-    /// Generates the data required for a transfer.
-    /// </summary>
-    /// <param name="transfer">Item to extract data for.</param>
-    /// <param name="itemHash">The item hash of the item.</param>
-    /// <param name="itemID">The item ID of the item.</param>
-    /// <param name="stackSize">The item stack size of the item.</param>
-    private void GenerateTransferData(DItem transfer, out uint itemHash, out string itemID, out int stackSize)
-    {
-        itemHash = transfer.ItemHash;
-        itemID = transfer.ItemInstanceId ?? "-1";
-        stackSize = transfer.Quantity;
     }
 
     /// <summary>
@@ -801,12 +354,12 @@ public class ContentManager
 
             if (this.Characters.Count == 0)
             {
-                this.snackbar.AddMessage($"GVM Could not load your Guardians.", "Error");
+                this.snackbar.AddMessage($"Dexus Could not load your Guardians.", "Error");
             }
         }
         catch (Exception e)
         {
-            this.logger.LogError($"GVM was unable to retrieve the client's characters: {e.Message}");
+            this.logger.LogError($"Dexus was unable to retrieve the client's characters: {e.Message}");
         }
     }
 
@@ -824,12 +377,11 @@ public class ContentManager
                 "CharacterEquipment",
                 "ItemInstances",
                 "ItemPerks",
+                "ItemSockets",
                 "ItemReusablePlugs",
             ];
             string equipmentContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
-            await File.WriteAllTextAsync(
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "FullItemComponents.json"),
-                equipmentContentsJson);
+            // await File.WriteAllTextAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "FullItemComponents.json"), equipmentContentsJson); // TODO: remove
 
             JsonDocument equipmentContents = JsonDocument.Parse(equipmentContentsJson);
             JsonElement equipmentArray = equipmentContents.RootElement.GetProperty("Response")
@@ -841,6 +393,8 @@ public class ContentManager
                 .GetProperty("data"); // TODO: Likely not needed anymore but keeping just in case
             JsonElement plugsDataArray = equipmentContents.RootElement.GetProperty("Response")
                 .GetProperty("itemComponents").GetProperty("reusablePlugs").GetProperty("data");
+            JsonElement socketsDataArray = equipmentContents.RootElement.GetProperty("Response")
+                .GetProperty("itemComponents").GetProperty("sockets").GetProperty("data");
 
             // Populate Inventories list
             int itemsLoaded = 0;
@@ -854,7 +408,7 @@ public class ContentManager
                     foreach (JsonElement itemJson in characterInventory.EnumerateArray())
                     {
                         DItem item = await this.BuildDItem(itemJson, $"{character.CharacterId}Equipped", perksDataArray,
-                            plugsDataArray, instanceDataArray);
+                            plugsDataArray, socketsDataArray, instanceDataArray);
                         this.AddItemToStore(item);
                         itemsLoaded++;
                     }
@@ -870,7 +424,7 @@ public class ContentManager
         }
         catch (Exception e)
         {
-            this.logger.LogError($"GVM was unable to retrieve the client's equipment: {e.Message}");
+            this.logger.LogError($"Dexus was unable to retrieve the client's equipment: {e.Message}");
         }
     }
 
@@ -887,7 +441,8 @@ public class ContentManager
             [
                 "CharacterInventories",
                 "ItemInstances",
-                "ItemPerks",
+                "ItemPerks", // TODO: Needs to be removed and switched to a need to know basis for each item.
+                "ItemSockets",
                 "ItemReusablePlugs",
             ];
             string inventoriesContentsJson =
@@ -902,6 +457,8 @@ public class ContentManager
                 .GetProperty("itemComponents").GetProperty("perks").GetProperty("data");
             JsonElement plugsDataArray = inventoriesContents.RootElement.GetProperty("Response")
                 .GetProperty("itemComponents").GetProperty("reusablePlugs").GetProperty("data");
+            JsonElement socketsDataArray = inventoriesContents.RootElement.GetProperty("Response")
+                .GetProperty("itemComponents").GetProperty("sockets").GetProperty("data");
 
             // Populate Inventories list
             int itemsLoaded = 0;
@@ -915,8 +472,7 @@ public class ContentManager
                     foreach (JsonElement itemJson in characterInventory.EnumerateArray())
                     {
                         DItem item = await this.BuildDItem(itemJson, character.CharacterId, perksDataArray,
-                            plugsDataArray,
-                            instanceDataArray);
+                            plugsDataArray, socketsDataArray, instanceDataArray);
                         this.AddItemToStore(item);
                         itemsLoaded++;
                     }
@@ -936,7 +492,7 @@ public class ContentManager
         }
         catch (Exception e)
         {
-            this.logger.LogError($"GVM was unable to retrieve the client's inventories: {e.Message}");
+            this.logger.LogError($"Dexus was unable to retrieve the client's inventories: {e.Message}");
         }
     }
 
@@ -953,7 +509,8 @@ public class ContentManager
             [
                 "ProfileInventories",
                 "ItemInstances",
-                "ItemPerks",
+                "ItemPerks", // TODO: Needs to be removed and switched to a need to know basis for each item.
+                "ItemSockets",
                 "ItemReusablePlugs",
             ];
             string vaultContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
@@ -967,12 +524,15 @@ public class ContentManager
                 .GetProperty("perks").GetProperty("data");
             JsonElement plugsDataArray = vaultContents.RootElement.GetProperty("Response")
                 .GetProperty("itemComponents").GetProperty("reusablePlugs").GetProperty("data");
+            JsonElement socketsDataArray = vaultContents.RootElement.GetProperty("Response")
+                .GetProperty("itemComponents").GetProperty("sockets").GetProperty("data");
 
             // Populate Vault list
             int itemsLoaded = 0;
             foreach (JsonElement itemElement in vaultArray.EnumerateArray())
             {
-                DItem item = await this.BuildDItem(itemElement, "Vault", perksDataArray, plugsDataArray, instanceDataArray);
+                DItem item = await this.BuildDItem(itemElement, "Vault", perksDataArray, plugsDataArray,
+                    socketsDataArray, instanceDataArray);
                 this.AddItemToStore(item);
                 itemsLoaded++;
             }
@@ -990,7 +550,7 @@ public class ContentManager
         }
         catch (Exception e)
         {
-            this.logger.LogError($"GVM was unable to retrieve the client's vault: {e.Message}");
+            this.logger.LogError($"Dexus was unable to retrieve the client's vault: {e.Message}");
         }
     }
 
@@ -1020,28 +580,32 @@ public class ContentManager
     }
 
     /// <summary>
-    /// Builds an Item based on the provided data. TODO: Now needs to handel fetching item information from the Manifest.
+    /// Builds an Item based on the provided data.
     /// </summary>
     /// <param name="itemJson">The base item data from bungie.</param>
     /// <param name="itemIdentifier">Where the item is located.</param>
-    /// <param name="perksDataArray">Data for all the items perks.</param>
-    /// <param name="plugsDataArray">Data for all the items plugs.</param>
+    /// <param name="perksDataArray">Data for all the item's perks.</param> // TODO: Needs to be removed and switched to a need-to-know basis.
+    /// <param name="plugsDataArray">Data for all the item's plugs.</param>
+    /// <param name="socketDataArray">Data for the item's sockets.</param>
     /// <param name="instanceDataArray">Data for all the items instance data.</param>
     /// <returns>The Item object that was built.</returns>
     private async Task<DItem> BuildDItem(JsonElement itemJson, string itemIdentifier, JsonElement perksDataArray,
-        JsonElement plugsDataArray, JsonElement instanceDataArray)
+        JsonElement plugsDataArray, JsonElement socketDataArray, JsonElement instanceDataArray)
     {
         Item bungieItem = itemJson.Deserialize<Item>() ?? new Item();
         DItem? item = null;
         if (!bungieItem.Equals(new Item()))
         {
+            // This operation needs to occur first as many operations below depend on this being done.
             ItemDetails details = await this.QueryManifestForGeneralItemDetails(bungieItem);
             string bucket = await this.QueryManifestForBucket(bungieItem, itemIdentifier);
             item = DItem.FromBungieItem(bungieItem, details, bucket, itemIdentifier);
 
             item.Power = this.GetItemPrimaryStat(instanceDataArray, bungieItem.ItemInstanceId ?? string.Empty);
-            await this.GetItemPerks(item, perksDataArray);
+            await this.GetItemPerks(item,
+                perksDataArray); // TODO: This only exists for weapons pre Forsaken and is now deprecated. Most weapons will not have this functionality, therefore find a way to request this only when dealing with an older Item.
             await this.GetItemPlugs(item, plugsDataArray);
+            await this.GetItemSockets(item, socketDataArray);
         }
 
         return item;
@@ -1080,7 +644,7 @@ public class ContentManager
                         perkDetails = await this.GetItemDetailsFromManifest(perkHash);
                         if (perkDetails.Equals(new ItemDetails()))
                         {
-                            this.snackbar.AddMessage("GVM is unable to define a perk.", "warning");
+                            this.snackbar.AddMessage("Dexus is unable to define a perk.", "warning");
                         }
                         else
                         {
@@ -1108,9 +672,9 @@ public class ContentManager
     }
 
     /// <summary>
-    /// Gets the Items Sockets and the Sockets perks for the item from the provided data.
+    /// Gets the Items Plugs for the item from the provided data.
     /// </summary>
-    /// <param name="item">Item to assign the sockets to.</param>
+    /// <param name="item">Item to assign the plugs to.</param>
     /// <param name="plugData">JsonElement containing all the plug information.</param>
     private async Task GetItemPlugs(DItem item, JsonElement plugData)
     {
@@ -1148,7 +712,7 @@ public class ContentManager
                         }
                         else
                         {
-                            this.snackbar.AddMessage("GVM could not define a plug.", "warning");
+                            this.snackbar.AddMessage("Dexus could not define a plug.", "warning");
                             plugDetails = new ItemDetails();
                         }
                     }
@@ -1162,6 +726,59 @@ public class ContentManager
     }
 
     /// <summary>
+    /// Gets the Items Sockets for the item from the provided data.
+    /// </summary>
+    /// <param name="item">Item to assign the sockets to.</param>
+    /// <param name="socketData">Data received from Bungie containing information about the user's sockets.</param>
+    private async Task GetItemSockets(DItem item, JsonElement socketData)
+    {
+        if (string.IsNullOrEmpty(item.ItemInstanceId))
+        {
+            return;
+        }
+
+        Dictionary<uint, DItemSockets.Socket> builtSockets = new Dictionary<uint, DItemSockets.Socket>();
+
+        if (socketData.TryGetProperty(item.ItemInstanceId, out JsonElement itemSockets) && itemSockets.TryGetProperty(item.ItemInstanceId, out JsonElement socketList))
+        {
+            var sockets = socketList.Deserialize<List<BungieSocket>>() ?? new List<BungieSocket>();
+
+            foreach (var socket in sockets)
+            {
+                ItemDetails? socketDetails;
+                bool detailsExist;
+
+                lock (this.socketDetails)
+                {
+                    detailsExist = this.socketDetails.TryGetValue(socket.PlugHash, out socketDetails);
+                }
+
+                if (!detailsExist)
+                {
+                    socketDetails = await this.GetItemDetailsFromManifest(socket.PlugHash);
+
+                    if (socketDetails != null && !socketDetails.Equals(new ItemDetails()))
+                    {
+                        lock (this.socketDetails)
+                        {
+                            this.socketDetails.TryAdd(socket.PlugHash, socketDetails);
+                        }
+                    }
+                    else
+                    {
+                        this.snackbar.AddMessage("Dexus could not define a plug.", "warning");
+                        socketDetails = new ItemDetails();
+                    }
+                }
+
+                builtSockets.Add(socket.PlugHash, new DItemSockets.Socket(socket.IsEnabled, socket.IsVisible, socketDetails!));
+            }
+
+            item.Sockets.Data = builtSockets;
+        }
+    }
+
+    /// <summary>
     /// Creates an ItemDetail for the client's weapon and adds it to the Item Details list.
     /// </summary>
     /// <param name="item">Item to get information for.</param>
@@ -1170,7 +787,7 @@ public class ContentManager
     {
         uint itemHash = item.ItemHash;
 
-        ItemDetails? details = null;
+        ItemDetails? details;
         if (this.itemDetails.TryGetValue(itemHash, out var itemDetails))
         {
             return itemDetails;
@@ -1179,7 +796,7 @@ public class ContentManager
         details = await this.GetItemDetailsFromManifest(itemHash);
         if (details.Equals(new ItemDetails()))
         {
-            this.snackbar.AddMessage("GVM is unable to define an item.", "warning");
+            this.snackbar.AddMessage("Dexus is unable to define an item.", "warning");
             return details;
         }
 
@@ -1224,7 +841,7 @@ public class ContentManager
         {
             details = await this.request.PlatformDestiny2_Request_ItemDefinition(itemHash);
             this.logger.LogError(
-                $"GVM could not find any ItemDetails for the itemHash={itemHash} in the manifest or and has attempted to get it from Bungie.");
+                $"Dexus could not find any ItemDetails for the itemHash={itemHash} in the manifest or and has attempted to get it from Bungie.");
         }
 
         return details;
@@ -1285,10 +902,16 @@ public class ContentManager
     /// <summary>
     /// Sets the identifier of the item.
     /// </summary>
-    /// <param name="item">Item to set identifier of.</param>
-    /// <param name="identifier">Identifier to set.</param>
-    private void SetIdentifier(DItem item, string identifier)
+    private void SetIdentifier((DItem, string) information)
     {
-        this.dropzoneBackingStore[item.ItemInstanceId ?? string.Empty].Identifier = identifier;
+        this.dropzoneBackingStore[information.Item1.ItemInstanceId ?? string.Empty].Identifier = information.Item2;
+    }
+
+    /// <summary>
+    /// Assigns a new value to the item management render key to indicate that the state has changed.
+    /// </summary>
+    private void RefreshRenderKey()
+    {
+        this.itemManagementRenderKey = Guid.NewGuid();
     }
 }

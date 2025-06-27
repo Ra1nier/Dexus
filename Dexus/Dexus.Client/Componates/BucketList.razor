@@ -15,7 +15,7 @@
                                  Style="height: 100%; width: 100%;">
                         @foreach (var item in Items.Where(i => i.Identifier == character.CharacterId))
                         {
-                            <ItemModel Item=@item />
+                            <ItemModel Item=@item Size="60" />
                         }
                     </MudDropZone>
                 </MudItem>
@@ -75,7 +75,7 @@ else
     protected override void OnInitialized()
     {
         // Connects
-        Core.Content.TransferOccured += RefreshState;
+        Core.Content.Transfer.TransferOccured += RefreshState;
     }
     
     /// <summary>
