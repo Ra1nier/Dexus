@@ -322,8 +322,6 @@ public class ContentManager
                     {
                         // Assign the character ID manually
                         character.CharacterId = characterJson.Name;
-
-                        // character.Class = await this.GetCharacterClass(character.ClassHash); This is causing issues so using switch statement for now. Switch is also probably more efficient and what are the chances they change the numbers :).
                         switch (character.ClassType)
                         {
                             case 0:
@@ -364,6 +362,23 @@ public class ContentManager
     }
 
     /// <summary>
+    /// Builds the appropriate component request header for the given destiny 2 bucket.
+    /// </summary>
+    /// <param name="destiny2Comp">Destiny 2 Bucket to build the header around.</param>
+    /// <returns>String[] containing the requests.</returns>
+    private string[] BuildRequestHeader(string destiny2Comp)
+    {
+        return
+        [
+            destiny2Comp,
+            "ItemInstances",
+            "ItemPerks",
+            "ItemSockets",
+            "ItemReusablePlugs",
+        ];
+    }
+
+    /// <summary>
     /// Creates the clients character equipment from Bungie.
     /// </summary>
     /// <returns>Task representing the operation.</returns>
@@ -371,16 +386,7 @@ public class ContentManager
     {
         try
         {
-            // Fetch Inventories contents and associated data.
-            string[] requests =
-            [
-                "CharacterEquipment",
-                "ItemInstances",
-                "ItemPerks",
-                "ItemSockets",
-                "ItemReusablePlugs",
-            ];
-            string equipmentContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
+            string equipmentContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(BuildRequestHeader("CharacterEquipment"), true);
             // await File.WriteAllTextAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "FullItemComponents.json"), equipmentContentsJson); // TODO: remove
 
             JsonDocument equipmentContents = JsonDocument.Parse(equipmentContentsJson);
@@ -436,17 +442,8 @@ public class ContentManager
     {
         try
         {
-            // Fetch Inventories contents and associated data.
-            string[] requests =
-            [
-                "CharacterInventories",
-                "ItemInstances",
-                "ItemPerks", // TODO: Needs to be removed and switched to a need to know basis for each item.
-                "ItemSockets",
-                "ItemReusablePlugs",
-            ];
             string inventoriesContentsJson =
-                await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
+                await this.request.PlatformDestiny2_Request_ProfileContents(BuildRequestHeader("CharacterInventories"), true);
 
             JsonDocument inventoriesContents = JsonDocument.Parse(inventoriesContentsJson);
             JsonElement inventoriesArray = inventoriesContents.RootElement.GetProperty("Response")
@@ -504,16 +501,7 @@ public class ContentManager
     {
         try
         {
-            // Fetch Inventories contents and associated data.
-            string[] requests =
-            [
-                "ProfileInventories",
-                "ItemInstances",
-                "ItemPerks", // TODO: Needs to be removed and switched to a need to know basis for each item.
-                "ItemSockets",
-                "ItemReusablePlugs",
-            ];
-            string vaultContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(requests, true);
+            string vaultContentsJson = await this.request.PlatformDestiny2_Request_ProfileContents(BuildRequestHeader("ProfileInventories"), true);
 
             JsonDocument vaultContents = JsonDocument.Parse(vaultContentsJson);
             JsonElement vaultArray = vaultContents.RootElement.GetProperty("Response").GetProperty("profileInventory")
