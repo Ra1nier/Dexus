@@ -76,7 +76,7 @@
         DItem transfer = item.Item;
 
         // Item bucket Identification
-        string origin = transfer.Identifier ?? string.Empty;
+        string origin = transfer.Identifier;
         string destination = item.DropzoneIdentifier;
 
         if (destination == origin)
