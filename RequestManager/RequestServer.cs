@@ -25,6 +25,9 @@ public class RequestServer
     // Logger
     private ILogger logger;
 
+    // Save paths
+    private string requestManagerDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "RequestManager");
+
     /// <summary>
     /// Initializes a new instance of the <see cref="RequestServer"/> class.
     /// </summary>
@@ -49,11 +52,13 @@ public class RequestServer
         this.logger.LogInformation("REQUEST: Destiny Membership ID");
 
         // Construct HTTP request
-        string requestURI = $"https://www.bungie.net/Platform/Destiny2/-1/Profile/{this.profile.MembershipID}/LinkedProfiles/?getAllMemberships=false";
+        string requestURI =
+            $"https://www.bungie.net/Platform/Destiny2/-1/Profile/{this.profile.MembershipID}/LinkedProfiles/?getAllMemberships=false";
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
 
         // Add headers
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
         request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
@@ -98,14 +103,12 @@ public class RequestServer
 
                 return result;
             }
-            else
-            {
-                string errorResponse = await response.Content.ReadAsStringAsync();
-                this.logger.LogError($"Error Response: {errorResponse}");
-                result[0] = "Error";
 
-                return result;
-            }
+            string errorResponse = await response.Content.ReadAsStringAsync();
+            this.logger.LogError($"Error Response: {errorResponse}");
+            result[0] = "Error";
+
+            return result;
         }
         catch (Exception e)
         {
@@ -129,11 +132,13 @@ public class RequestServer
         this.logger.LogInformation($"REQUEST: Destiny Profile Content ({contentType}={content})");
 
         // Construct HTTP request
-        string requestURI = $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.DestinyMembershipID}/?components={content}&definitions={includeDefinitions}";
+        string requestURI =
+            $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.DestinyMembershipID}/?components={content}&definitions={includeDefinitions}";
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
 
         // Add headers
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
         request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
@@ -150,12 +155,10 @@ public class RequestServer
 
                 return jsonResponse;
             }
-            else
-            {
-                string errorResponse = await response.Content.ReadAsStringAsync();
-                this.logger.LogError($"Error Response: {errorResponse}");
-                return "Error";
-            }
+
+            string errorResponse = await response.Content.ReadAsStringAsync();
+            this.logger.LogError($"Error Response: {errorResponse}");
+            return "Error";
         }
         catch (Exception e)
         {
@@ -179,14 +182,17 @@ public class RequestServer
             contents.Add(ComponentTypeLookup.GetContent(contentType));
         }
 
-        this.logger.LogInformation($"REQUEST: Destiny Profile Contents ({string.Join(", ", contentTypes)}={contents.Print()})");
+        this.logger.LogInformation(
+            $"REQUEST: Destiny Profile Contents ({string.Join(", ", contentTypes)}={contents.Print()})");
 
         // Construct HTTP request
-        string requestURI = $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.DestinyMembershipID}/?components={contents.PrintCSV()}&definitions={includeDefinitions}";
+        string requestURI =
+            $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.DestinyMembershipID}/?components={contents.PrintCSV()}&definitions={includeDefinitions}";
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
 
         // Add headers
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
         request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
@@ -199,7 +205,8 @@ public class RequestServer
             {
                 string jsonResponse = await response.Content.ReadAsStringAsync();
 
-                this.logger.LogDebug($"Successful JSON Response: Content ({string.Join(", ", contentTypes)}={contents.Print()})");
+                this.logger.LogDebug(
+                    $"Successful JSON Response: Content ({string.Join(", ", contentTypes)}={contents.Print()})");
 
                 return jsonResponse;
             }
@@ -212,7 +219,8 @@ public class RequestServer
         }
         catch (Exception e)
         {
-            this.logger.LogError($"REQUEST FAILED: Destiny Profile Content {string.Join(", ", contentTypes)}={contents.Print()}, {e.Message}");
+            this.logger.LogError(
+                $"REQUEST FAILED: Destiny Profile Content {string.Join(", ", contentTypes)}={contents.Print()}, {e.Message}");
             return "Error";
         }
     }
@@ -224,18 +232,22 @@ public class RequestServer
     /// <param name="characterId">Character to request the content type from.</param>
     /// <param name="includeDefinitions">Includes the definitions if true, ignores if false.</param>
     /// <returns>The JSON response from bungie.</returns>
-    public async Task<string> PlatformDestiny2_Request_CharacterContents(string contentType, string characterId, bool includeDefinitions)
+    public async Task<string> PlatformDestiny2_Request_CharacterContents(string contentType, string characterId,
+        bool includeDefinitions)
     {
         // Convert componentType to a component
         int content = ComponentTypeLookup.GetContent(contentType);
-        this.logger.LogInformation($"REQUEST: Destiny Character Content ({contentType}={content}) For Character={characterId}");
+        this.logger.LogInformation(
+            $"REQUEST: Destiny Character Content ({contentType}={content}) For Character={characterId}");
 
         // Construct HTTP request
-        string requestURI = $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.DestinyMembershipID}/Character/{characterId}/?components={content}&definitions={includeDefinitions}";
+        string requestURI =
+            $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.DestinyMembershipID}/Character/{characterId}/?components={content}&definitions={includeDefinitions}";
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
 
         // Add headers
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
         request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
@@ -273,7 +285,8 @@ public class RequestServer
     /// <param name="characterId">Character to request the content type from.</param>
     /// <param name="includeDefinitions">Includes the definitions if true, ignores if false.</param>
     /// <returns>The JSON response from bungie.</returns>
-    public async Task<string> PlatformDestiny2_Request_CharacterContents(string[] contentTypes, string characterId, bool includeDefinitions)
+    public async Task<string> PlatformDestiny2_Request_CharacterContents(string[] contentTypes, string characterId,
+        bool includeDefinitions)
     {
         // Convert componentType to a component
         List<int> contents = new List<int>();
@@ -282,14 +295,17 @@ public class RequestServer
             contents.Add(ComponentTypeLookup.GetContent(contentType));
         }
 
-        this.logger.LogInformation($"REQUEST: Destiny Character Contents ({string.Join(", ", contentTypes)}={contents.Print()}) For Character={characterId}");
+        this.logger.LogInformation(
+            $"REQUEST: Destiny Character Contents ({string.Join(", ", contentTypes)}={contents.Print()}) For Character={characterId}");
 
         // Construct HTTP request
-        string requestURI = $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.DestinyMembershipID}/Character/{characterId}/?components={contents.PrintCSV()}&definitions={includeDefinitions}";
+        string requestURI =
+            $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.DestinyMembershipID}/Character/{characterId}/?components={contents.PrintCSV()}&definitions={includeDefinitions}";
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
 
         // Add headers
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
         request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
@@ -302,7 +318,8 @@ public class RequestServer
             {
                 string jsonResponse = await response.Content.ReadAsStringAsync();
 
-                this.logger.LogDebug($"Successful JSON Response: Content ({string.Join(", ", contentTypes)}={contents.Print()}) For Character={characterId}");
+                this.logger.LogDebug(
+                    $"Successful JSON Response: Content ({string.Join(", ", contentTypes)}={contents.Print()}) For Character={characterId}");
 
                 return jsonResponse;
             }
@@ -315,7 +332,8 @@ public class RequestServer
         }
         catch (Exception e)
         {
-            this.logger.LogError($"REQUEST FAILED: Destiny Character Content {string.Join(", ", contentTypes)}={contents.Print()} For Character={characterId}, {e.Message}");
+            this.logger.LogError(
+                $"REQUEST FAILED: Destiny Character Content {string.Join(", ", contentTypes)}={contents.Print()} For Character={characterId}, {e.Message}");
             return "Error";
         }
     }
@@ -330,9 +348,11 @@ public class RequestServer
     /// <param name="characterID">Character ID of either the origin point to character to transfer to based on vaultTransfer.</param>
     /// <param name="vaultTransfer">Flag that indicates whether the item is being transferred is Character->Vault.</param>
     /// <returns>True if bungie returns a successful response, false otherwise.</returns>
-    public async Task<bool> ActionItem_Request_TransferItem(string membershipType, uint itemHash, string itemID, int stackSize, string characterID, bool vaultTransfer)
+    public async Task<bool> ActionItem_Request_TransferItem(string membershipType, uint itemHash, string itemID,
+        int stackSize, string characterID, bool vaultTransfer)
     {
-        this.logger.LogInformation($"REQUEST: Destiny Item Transfer - {itemID} TO " + (vaultTransfer ? "Vault" : $"Character({characterID})"));
+        this.logger.LogInformation($"REQUEST: Destiny Item Transfer - {itemID} TO " +
+                                   (vaultTransfer ? "Vault" : $"Character({characterID})"));
 
         // Construct HTTP request
         string requestURI = $"https://www.bungie.net/Platform/Destiny2/Actions/Items/TransferItem/";
@@ -352,7 +372,8 @@ public class RequestServer
         request.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
         // Add headers
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
         request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
@@ -376,7 +397,8 @@ public class RequestServer
         }
         catch (Exception e)
         {
-            this.logger.LogError($"REQUEST FAILED: Transfer - {itemID} TO " + (vaultTransfer ? "Vault" : $"Character({characterID})") + $", {e.Message}");
+            this.logger.LogError($"REQUEST FAILED: Transfer - {itemID} TO " +
+                                 (vaultTransfer ? "Vault" : $"Character({characterID})") + $", {e.Message}");
             return false;
         }
     }
@@ -397,17 +419,13 @@ public class RequestServer
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, requestURI);
 
         // Construct request body in JSON format
-        var body = new
-        {
-            membershipType = membershipType,
-            itemID = itemID,
-            characterID = characterID,
-        };
+        var body = new { membershipType = membershipType, itemID = itemID, characterID = characterID, };
         string jsonBody = JsonSerializer.Serialize(body);
         request.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
         // Add headers
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
         request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
@@ -445,7 +463,8 @@ public class RequestServer
     /// <param name="stackSize">Stack size of the item.</param>
     /// <param name="characterID">Character ID of either the origin point to character to transfer to based on vaultTransfer.</param>
     /// <returns>True if bungie returns a successful response, false otherwise.</returns>
-    public async Task<bool> ActionItem_Request_PullFromPostmaster(string membershipType, uint itemHash, string itemID, int stackSize, string characterID)
+    public async Task<bool> ActionItem_Request_PullFromPostmaster(string membershipType, uint itemHash, string itemID,
+        int stackSize, string characterID)
     {
         this.logger.LogInformation($"REQUEST: Postmaster Pull of Item - {itemID}, FOR Character - {characterID}");
 
@@ -466,7 +485,8 @@ public class RequestServer
         request.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
         // Add headers
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
         request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
@@ -490,44 +510,37 @@ public class RequestServer
         }
         catch (Exception e)
         {
-            this.logger.LogError($"REQUEST FAILED: Postmaster Pull of Item - {itemID}, FOR Character - {characterID}: {e.Message}");
+            this.logger.LogError(
+                $"REQUEST FAILED: Postmaster Pull of Item - {itemID}, FOR Character - {characterID}: {e.Message}");
             return false;
         }
     }
 
     /// <summary>
-    /// Get the most current Destiny 2 manifest from Bungie.
+    /// Gets the current Destiny 2 Manifest path for the requested language.
     /// </summary>
-    /// <returns>The path to the saved manifest.</returns>
-    public async Task<string> Destiny2Manifest_Request_GetCurrentManifest()
+    /// <returns>The path to the manifest in the requested language.</returns>
+    public async Task<string> Destiny2Manifest_Request_GetManifestPath(string requestedLang)
     {
-        this.logger.LogInformation("REQUEST: Destiny Manifest");
+        this.logger.LogInformation("REQUEST: Destiny Manifest Versions");
 
         string requestURI = "https://www.bungie.net/Platform/Destiny2/Manifest/";
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
 
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
         request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
         try
         {
-            // Setup directories and file paths
-            string saveDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "RequestManager", "Manifest");
-            string zipFilePath = Path.Combine(saveDir, "manifest.zip");
-
-            if (!Directory.Exists(saveDir))
-            {
-                Directory.CreateDirectory(saveDir);
-            }
-
             // Send Request
             HttpResponseMessage response = await this.client.SendAsync(request);
 
             if (!response.IsSuccessStatusCode)
             {
                 string errorResponse = await response.Content.ReadAsStringAsync();
-                this.logger.LogError("Failed to retrieve manifest dictionary: {ErrorResponse}", errorResponse);
+                this.logger.LogError($"Failed to retrieve manifest dictionary: {errorResponse}");
                 return string.Empty;
             }
 
@@ -538,7 +551,7 @@ public class RequestServer
                 .RootElement
                 .GetProperty("Response")
                 .GetProperty("mobileWorldContentPaths")
-                .GetProperty("en");
+                .GetProperty(requestedLang);
 
             string englishManifestPath = englishManifestPathElement.GetString() ?? string.Empty;
             if (string.IsNullOrEmpty(englishManifestPath))
@@ -547,13 +560,39 @@ public class RequestServer
                 return string.Empty;
             }
 
-            string databaseUrl = $"https://www.bungie.net{englishManifestPath}";
+            return englishManifestPath;
+        }
+        catch (Exception e)
+        {
+            this.logger.LogError($"REQUEST FAILED: Destiny Manifest - {e.Message}");
+            return string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Get the most current Destiny 2 manifest from Bungie.
+    /// </summary>
+    /// <returns>The path to the saved manifest.</returns>
+    public async Task<string> Destiny2Manifest_Request_GetCurrentManifest(string requestedManifest)
+    {
+        string manifestURI = $"https://www.bungie.net{requestedManifest}";
+
+        try
+        {
+            // Setup directories and file paths
+            string saveDir = Path.Combine(this.requestManagerDir, "Manifest");
+            string zipFilePath = Path.Combine(saveDir, "manifest.zip");
+
+            if (!Directory.Exists(saveDir))
+            {
+                Directory.CreateDirectory(saveDir);
+            }
 
             // If Manifest file does not exist, download and extract it. Else check for updates and download if necessary.
             string[] manifestFile = Directory.GetFiles(saveDir, "*.content", SearchOption.TopDirectoryOnly);
             if (manifestFile.Length == 0)
             {
-                if (await this.DownloadFileAndExtract(databaseUrl, saveDir, zipFilePath))
+                if (await this.DownloadFileAndExtract(manifestURI, saveDir, zipFilePath))
                 {
                     this.logger.LogInformation("Manifest downloaded successfully");
                 }
@@ -565,12 +604,12 @@ public class RequestServer
             else
             {
                 string downloadedManifestHash = manifestFile[0].Split('_').Last().Split('.').First();
-                string currentManifestHash = englishManifestPath.Split('/').Last().Split('_').Last().Split('.').First();
+                string currentManifestHash = requestedManifest.Split('/').Last().Split('_').Last().Split('.').First();
 
                 if (downloadedManifestHash != currentManifestHash)
                 {
                     File.Delete(manifestFile[0]);
-                    if (await this.DownloadFileAndExtract(databaseUrl, saveDir, zipFilePath))
+                    if (await this.DownloadFileAndExtract(manifestURI, saveDir, zipFilePath))
                     {
                         this.logger.LogInformation("Manifest downloaded successfully");
                     }
@@ -614,11 +653,13 @@ public class RequestServer
         this.logger.LogInformation($"REQUEST: Destiny Item Definition: {itemHash}");
 
         // Construct HTTP request
-        string requestURI = $"https://www.bungie.net/Platform/Destiny2/Manifest/DestinyInventoryItemDefinition/{itemHash}";
+        string requestURI =
+            $"https://www.bungie.net/Platform/Destiny2/Manifest/DestinyInventoryItemDefinition/{itemHash}";
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
 
         // Add headers
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
         request.Headers.Add("X-API-Key", this.auth.API_Key);
         request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
@@ -638,12 +679,10 @@ public class RequestServer
 
                 return details;
             }
-            else
-            {
-                string errorResponse = await response.Content.ReadAsStringAsync();
-                this.logger.LogError($"Error Response: {errorResponse}");
-                return new ItemDetails();
-            }
+
+            string errorResponse = await response.Content.ReadAsStringAsync();
+            this.logger.LogError($"Error Response: {errorResponse}");
+            return new ItemDetails();
         }
         catch (Exception e)
         {
@@ -733,5 +772,11 @@ public class RequestServer
             this.logger.LogError($"File could not be downloaded: {e.Message}");
             return false;
         }
+    }
+
+    private void SaveJSON_Debug(string json)
+    {
+        string savePath = Path.Combine(this.requestManagerDir, "Debug");
+        File.WriteAllText(savePath, json);
     }
 }

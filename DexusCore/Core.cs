@@ -1,8 +1,10 @@
 ﻿// <copyright file="Core.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
+
 namespace DexusCore;
 
+using GuardianServices.Models;
 using Microsoft.Extensions.Logging;
 using ClientProfile;
 using OAuthService;
@@ -32,7 +34,7 @@ public class Core
     private ILogger logger;
 
     // Local Values
-    private int oAuthStatus = 2;
+    private int oAuthStatus = 3;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Core"/> class.
@@ -300,7 +302,8 @@ public class Core
     /// </summary>
     private async void GetDestiny2Manifest()
     {
-        this.manifest.ManifestPath = await this.request.Destiny2Manifest_Request_GetCurrentManifest();
+        string englishManifestPath = await this.request.Destiny2Manifest_Request_GetManifestPath("en");
+        this.manifest.ManifestPath = await this.request.Destiny2Manifest_Request_GetCurrentManifest(englishManifestPath);
     }
 
     /// <summary>
