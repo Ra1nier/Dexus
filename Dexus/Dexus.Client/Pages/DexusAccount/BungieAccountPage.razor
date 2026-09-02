@@ -2,9 +2,9 @@
 
 @inject Core Core
 
-<MudItem xs="12" md="8" Class="mx-auto mt-6">
-    <MudPaper Elevation="4" Class="p-6" Style="border-radius: 12px;">
-        <MudText Typo="Typo.h6" Class="mb-4" Color="Color.Primary">Bungie Application Credentials</MudText>
+<MudItem xs="12" md="8" Class="mx-auto mt-4">
+    <MudPaper Elevation="0" Class="bungie-credentials-card">
+        <MudText Typo="Typo.h6" Class="credentials-title" Color="Color.Primary">Bungie Application Credentials</MudText>
 
         @if (Core.OAuthProfile.UsesConfiguredAPIKeys)
         {
@@ -56,7 +56,7 @@
 
                 @if (!Core.OAuthProfile.UsesConfiguredAPIKeys)
                 {
-                    <MudItem xs="12" Class="d-flex justify-end mt-4">
+                    <MudItem xs="12" Class="d-flex justify-end mt-2">
                         <MudButton Variant="Variant.Filled"
                                    Color="Color.Primary"
                                    StartIcon="@Icons.Material.Filled.Save"
@@ -106,3 +106,16 @@
     }
 
 }
+
+<style>
+    .bungie-credentials-card {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 24px;
+    }
+
+    .credentials-title {
+        font-weight: 600;
+        margin-bottom: 16px;
+    }
+</style>

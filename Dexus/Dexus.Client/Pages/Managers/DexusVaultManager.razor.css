@@ -1,20 +1,70 @@
-﻿.vault-grid {
+﻿.vault-manager-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-bottom: 32px;
+    position: relative;
+}
+
+.vault-header-grid {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.vault-header-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8px;
+}
+
+.vault-header-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.vault-header-image {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.vault-emblem {
+    align-self: center;
+    max-width: 220px;
+    width: 100%;
+}
+
+.vault-loading-shell {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: calc(100vh - 140px);
+}
+
+.vault-progress {
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.vault-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px; /* Adds spacing between items */
+    gap: 16px;
 }
 
 .vault-item-container {
+    align-items: center;
     display: flex;
     justify-content: center;
-    align-items: center;
 }
 
 .vault-item {
-    padding: 8px;
-    text-align: center;
     border-radius: 8px;
     cursor: pointer;
+    padding: 8px;
+    text-align: center;
 }
 
 .vault-image {
@@ -80,3 +130,155 @@
     }
 }
 
+.vault-manager-shell {
+    gap: 18px;
+    padding: 8px 16px 32px;
+}
+
+.vault-page-header {
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    display: flex;
+    gap: 18px;
+    justify-content: space-between;
+    padding: 20px;
+}
+
+.vault-page-title {
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.vault-summary-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.vault-summary-tile {
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    min-width: 112px;
+    padding: 10px 14px;
+}
+
+.vault-summary-tile span {
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.vault-summary-tile small {
+    color: rgba(255, 255, 255, 0.64);
+    font-size: 0.78rem;
+}
+
+.vault-header-grid {
+    padding: 10px;
+    align-items: stretch;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.vault-header-column {
+    min-width: 0;
+    padding: 6px;
+    width: 100%;
+}
+
+.vault-header-vault {
+    grid-column: span 3;
+}
+
+.vault-header-title {
+    margin-bottom: 6px;
+}
+
+.vault-banner-frame,
+.vault-icon-frame {
+    align-items: center;
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    display: flex;
+    height: 58px;
+    justify-content: center;
+    overflow: hidden;
+    width: 100%;
+}
+
+.vault-icon-frame {
+    min-height: 58px;
+}
+
+.vault-banner-image {
+    display: block;
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+}
+
+.vault-icon-image {
+    display: block;
+    height: 42px;
+    object-fit: contain;
+    width: 42px;
+}
+
+.vault-header-grid > .mud-grid-item {
+    flex-basis: auto;
+    flex-grow: 0;
+    max-width: none;
+}
+
+.vault-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vault-section-header {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    padding: 2px 4px;
+}
+
+.vault-section-header .mud-typography {
+    font-weight: 650;
+}
+
+@media (max-width: 720px) {
+    .vault-page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .vault-summary-row {
+        justify-content: flex-start;
+        width: 100%;
+    }
+}
+
+@media (max-width: 960px) {
+    .vault-header-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .vault-header-vault {
+        grid-column: span 1;
+    }
+}
+
+@media (max-width: 520px) {
+    .vault-header-grid {
+        grid-template-columns: 1fr;
+    }
+}

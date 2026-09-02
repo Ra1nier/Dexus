@@ -1,49 +1,90 @@
 # Dexus
 
-Dexus is a tool designed to help Destiny 2 players manage multiple aspects of the game through different "Managers" all accessible through this Destiny Nexus ;). <i>Better names appreciated lol.</i> This is really just a personal
-project to help me learn C#, .NET and Blazor.
+Dexus is a .NET 9 and Blazor application for managing Destiny 2 inventory data through Bungie's API. The current application focuses on OAuth sign-in, manifest download/caching, inventory visualization, and item transfer workflows between characters and the vault.
 
 ## Features
 
-### Dexus Vault
-- **Item Management**: Easily move items between your characters and vault.
-- **Loadout Creation**: Create and save loadouts for quick equipment changes. **Coming Soon TM**
-- **Item Search and Filters**: Quickly find items using powerful search and filtering options. **Coming Soon TM**
-- **Detailed Item Information**: View detailed stats and information for each item. **Coming Soon TM**
-- **Easily Customizable**: Customise GVM to make it yours. **Coming Soon TM**
+- Bungie OAuth sign-in with server-side application credentials.
+- Destiny 2 profile, character, equipment, inventory, and vault loading.
+- Local Destiny manifest download and SQLite-backed definition lookup.
+- Item grouping by character, equipment state, and vault location.
+- Drag-and-drop item transfer workflow through the Bungie API.
+- Docker deployment with HTTPS support for OAuth redirect requirements.
 
-### <i>More Managers on their way!</i>
+## Tech Stack
 
-## Getting Started
+- .NET 9
+- Blazor interactive server/client components
+- MudBlazor UI components
+- Bungie.net OAuth and Destiny 2 Platform APIs
+- SQLite manifest querying with `Microsoft.Data.Sqlite`
+- Docker
 
-### Prerequisites
+## Configuration
 
-- .NET Core 9.0 or later
-- Any C# IDE. *Temp solution for now. I am attempting to implement MUAI or Web App with Blazor for a desktop application later on.*
-- Your own Bungie.net application/API key. You can get one by registering a new application on the [Bungie Developer Portal](https://www.bungie.net/en/Application). You have to do this as I don't have a secure way
-of including my own API key in the project or running a backend server to route requests.
+Dexus expects Bungie application credentials from ASP.NET configuration. For local Docker runs, place values in a local `.env` file based on `.env.example`:
 
-### Installation
-
-- Clone the repository into your IDE of choice and create a JSON file at the following location:
-```angular2html
-(Dexus Solution Directory)/Dexus/Dexus/bin/Debug/net9.0/OAuthProfile
+```bash
+BungieAPIKeys__API_Key=replace-with-your-bungie-api-key
+BungieAPIKeys__Client_ID=replace-with-your-bungie-client-id
+BungieAPIKeys__Client_Secret=replace-with-your-bungie-client-secret
+ASPNETCORE_Kestrel__Certificates__Default__Password=replace-with-your-local-dev-cert-password
 ```
-- Then make a JSON file called "UserBungieAPITokens" and input the following Bungie API information with this format:
-```
-{
-  "BungieAPIKeys": {
-    "API_Key": "[YOUR_API_KEY]",
-    "Client_ID": "[YOUR_CLIENT_ID]",
-    "Client_Secret": "[YOUR_CLIENT_SECRET]",
-  }
-}
-```
-- <i>This will be handled in a better way in the future but this is the current set up.
-### Notes
 
-- This project as I have said is really just a personal project, so I don't really expect people use it. If you do decide to use it for any reason (Why? when DIM exists), I would love feedback as to how I can be a better
-developer as this is a learning exercise for me. I am still learning and would love to improve my skills.
+Do not commit `.env`, certificates, OAuth token files, or generated manifest data.
 
-## WARNING
- - I am not a front end developer. I am not a good front end designer. Even though I am using MudBlazor for all the front end, the GUI still looks terrible. Use DIM if you want a better GUI.
+## HTTPS
+
+Bungie OAuth redirect URLs require HTTPS. The Docker image expects a mounted certificate at `/https/dexus.pfx`.
+
+For local testing:
+
+```bash
+mkdir -p https
+dotnet dev-certs https -ep ./https/dexus.pfx -p "dev-password"
+dotnet dev-certs https --trust
+```
+
+Then set the matching certificate password in `.env`.
+
+## Docker
+
+Build the image:
+
+```bash
+docker build -t dexus .
+```
+
+Run the container:
+
+```bash
+docker run --env-file .env -p 5001:5001 -v "$PWD/https:/https:ro" dexus
+```
+
+Open:
+
+```text
+https://localhost:5001
+```
+
+## Security Notes
+
+- Bungie application credentials are loaded from environment/configuration, not committed source files.
+- Local OAuth tokens and generated profile data are ignored by Git and Docker build context rules.
+- The current token/profile persistence layer is file-backed. For a public multi-user deployment, replace this with isolated per-user storage or deploy the app as a private/single-user demo.
+- Avoid publishing a Docker image that contains local build output, certificates, manifest caches, or token files.
+
+## Current Limitations
+
+- File-backed user token/profile storage is not suitable for a multi-user public service.
+- Automated test coverage has not been added yet.
+- Some compiler and StyleCop warnings remain in supporting model/request projects.
+- The hosted demo should be treated as a portfolio preview unless the persistence model is hardened.
+
+## Release Checklist
+
+- Build with `dotnet build Dexus/Dexus/Dexus.csproj -c Release`.
+- Build the Docker image from a clean working tree.
+- Verify `.env`, `https/`, `.idea/`, `bin/`, `obj/`, and generated manifest/profile data are not included.
+- Confirm the Bungie application redirect URL matches the hosted HTTPS URL.
+- Test sign-in, manifest download, inventory loading, and one safe transfer workflow.

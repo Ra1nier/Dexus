@@ -3,32 +3,29 @@
 
 @inject Core Core
 
-<MudPaper Class="d-flex flex-column gap-2" @key="RenderKey">
+<MudPaper Class="management-shelf" @key="RenderKey">
     <MudDropContainer T="DItem" Items="Items.OrderByDescending(item => item.Power)"
                       ItemsSelector="@((item, dropzone) => item.Identifier == dropzone)" ItemDropped="Transfer"
-                      Class="d-flex flex-wrap flex-grow-1">
+                      Class="management-drop-container">
         <ChildContent>
-            <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
+            <MudGrid Class="management-grid" Justify="Justify.SpaceBetween">
                 @foreach (var character in Core.Content.Characters)
                 {
-                    <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
+                    <MudItem xs="12" sm="6" md="3" lg="2" Class="guardian-column">
                         @{
                             string equipped = character.Value.CharacterId + "Equipped";
                         }
                         <MudDropZone T="DItem" Identifier="@equipped"
-                                     Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1"
-                                     Style="height: 15%; width: 100%;"></MudDropZone>
+                                     Class="drop-zone equipped-zone"></MudDropZone>
                         <MudDropZone T="DItem" Identifier="@character.Value.CharacterId"
-                                     Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1"
-                                     Style="height: 85%; width: 100%;"></MudDropZone>
+                                     Class="drop-zone inventory-zone"></MudDropZone>
                     </MudItem>
                 }
                     @if (Items.Count(x => x.Identifier == "Vault") > 0)
                     {
-                        <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
+                        <MudItem xs="12" sm="12" md="6" lg="6" Class="vault-column">
                             <MudDropZone T="DItem" Identifier="Vault"
-                                     Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1"
-                                     Style="min-width: 50%; height: 100%;"/>
+                                     Class="drop-zone vault-zone"/>
                         </MudItem>
                     }
             </MudGrid>
@@ -113,3 +110,50 @@
         InvokeAsync(StateHasChanged);
     }
 }
+
+<style>
+    .management-shelf {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 12px;
+    }
+
+    .management-drop-container,
+    .management-grid {
+        width: 100%;
+    }
+
+    .guardian-column,
+    .vault-column {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 8px;
+    }
+
+    .drop-zone {
+        align-content: flex-start;
+        background: rgba(255, 255, 255, 0.045);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 10px;
+        width: 100%;
+    }
+
+    .equipped-zone {
+        aspect-ratio: 1 / 1;
+        max-height: 286px;
+        min-height: 214px;
+    }
+
+    .inventory-zone {
+        min-height: 214px;
+    }
+
+    .vault-zone {
+        min-height: 440px;
+    }
+</style>

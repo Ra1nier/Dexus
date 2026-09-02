@@ -1,35 +1,35 @@
-<MudGrid>
+<MudGrid Spacing="3">
     <!-- Avatar -->
     <MudItem xs="12" md="4">
-        <MudPaper Class="p-4" Style="border-radius: 10px;">
-            <MudText Typo="Typo.subtitle1">Dexus Profile</MudText>
-            <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="mt-2">
-                <MudAvatar Size="Size.Large" Variant="Variant.Outlined" Color="Color.Info"/>
-                <!-- TODO : Use the users bungie profile pic here -->
-                <!-- TODO : Maybe include some player stats or bungie account details -->
+        <MudPaper Class="profile-card">
+            <MudText Typo="Typo.subtitle1" Class="profile-card-title">Dexus Profile</MudText>
+            <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="profile-avatar-stack">
+                <MudAvatar Size="Size.Large" Variant="Variant.Filled" Color="Color.Info">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" />
+                </MudAvatar>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center">
+                    Local demo profile
+                </MudText>
             </MudStack>
         </MudPaper>
     </MudItem>
 
     <!-- Details -->
     <MudItem xs="12" md="8">
-        <MudPaper Class="p-4" Style="border-radius: 10px;">
-            <MudText Typo="Typo.subtitle1">Profile Details</MudText>
+        <MudPaper Class="profile-card">
+            <MudText Typo="Typo.subtitle1" Class="profile-card-title">Profile Details</MudText>
             <MudGrid Class="mt-2">
                 <MudItem xs="12" md="6">
-                    <MudTextField T="string" Label="First Name" Variant="Variant.Outlined"/>
+                    <MudTextField T="string" Label="First Name" Variant="Variant.Outlined" Disabled="true"/>
                 </MudItem>
                 <MudItem xs="12" md="6">
-                    <MudTextField T="string" Label="Last Name" Variant="Variant.Outlined"/>
+                    <MudTextField T="string" Label="Last Name" Variant="Variant.Outlined" Disabled="true"/>
                 </MudItem>
                 <MudItem xs="12">
-                    <MudTextField T="string" Label="Job Title" Variant="Variant.Outlined"/>
+                    <MudTextField T="string" Label="Profile Type" Variant="Variant.Outlined" Value="@profileType" Disabled="true"/>
                 </MudItem>
                 <MudItem xs="12">
-                    <MudTextField T="string" Label="Email" Variant="Variant.Outlined" ReadOnly="true"/>
-                </MudItem>
-                <MudItem xs="12" Class="d-flex justify-end mt-4">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary">Save Changes</MudButton>
+                    <MudTextField T="string" Label="Status" Variant="Variant.Outlined" Value="@profileStatus" Disabled="true"/>
                 </MudItem>
             </MudGrid>
         </MudPaper>
@@ -37,5 +37,24 @@
 </MudGrid>
 
 @code {
-
+    private const string profileType = "Bungie OAuth profile";
+    private const string profileStatus = "Managed by Dexus runtime";
 }
+
+<style>
+    .profile-card {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        height: 100%;
+        padding: 20px;
+    }
+
+    .profile-card-title {
+        font-weight: 600;
+        margin-bottom: 14px;
+    }
+
+    .profile-avatar-stack {
+        padding: 20px 8px;
+    }
+</style>

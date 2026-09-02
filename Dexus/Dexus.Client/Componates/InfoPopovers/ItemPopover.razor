@@ -1,4 +1,3 @@
-@using System.Text.Json
 @using GuardianServices.Models
 @using DexusCore
 
@@ -6,15 +5,7 @@
 
 <MudPopover Open=@Condition AnchorOrigin="Origin.TopCenter"
             TransformOrigin="Origin.BottomCenter">
-    <MudPaper Class="pa-3"
-              Style="min-width: 300px; 
-                     max-width: 350px; 
-                     border-radius: 12px; 
-                     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); 
-                     backdrop-filter: blur(6px);
-                     background: rgba(30, 30, 30, 0.9);
-                     color: white;
-                     animation: fadeIn 0.2s ease-out;">
+    <MudPaper Class="item-popover">
 
         <!-- Header with Name and Close Button -->
         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -111,13 +102,6 @@
             }
         }
         
-        <!-- Debug REMOVE -->
-        <MudButton Color="Color.Warning" Variant="Variant.Filled"
-                   StartIcon="@Icons.Material.Filled.KeyboardDoubleArrowDown"
-                   OnClick="() => CreateJSON()"
-                   class="postmaster-button">
-            Create Item JSON
-        </MudButton>
     </MudPaper>
 </MudPopover>
 
@@ -209,18 +193,6 @@
     }
 
     /// <summary>
-    /// TODO: Only used for Debug -- Needs to be removed.
-    /// Creates a JSON file containing the Serialized DItem for the ItemModel.
-    /// </summary>
-    private void CreateJSON()
-    {
-        string savePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "JSON", $"{Item.Details.DisplayProperties.Name}-DItem.json");
-        string itemJSON = JsonSerializer.Serialize<DItem>(Item);
-        File.WriteAllText(savePath, itemJSON);
-        Core.Snackbar.AddMessage($"Item JSON Created to {savePath}");
-    }
-
-    /// <summary>
     /// Slot that responds to changes in the content manager and informs Blazor that a refresh is needed.
     /// </summary>
     private void RefreshState()
@@ -231,6 +203,19 @@
 }
 
 <style>
+    .item-popover {
+        animation: fadeIn 0.2s ease-out;
+        backdrop-filter: blur(8px);
+        background: rgba(28, 30, 34, 0.94);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
+        color: white;
+        max-width: 360px;
+        min-width: 300px;
+        padding: 14px;
+    }
+
     .transfer-layout {
         display: flex;
         flex-direction: column;

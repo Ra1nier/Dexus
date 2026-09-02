@@ -5,14 +5,13 @@
 
 @if (Sorted)
 {
-    <MudPaper Class="d-flex flex-column gap-2" @key="RenderKey">
-        <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
+    <MudPaper Class="bucket-shelf" @key="RenderKey">
+        <MudGrid Class="bucket-grid" Justify="Justify.SpaceBetween">
             @foreach (var character in Core.Content.Characters.Values)
             {
-                <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
+                <MudItem xs="12" sm="6" md="3" lg="2" Class="bucket-column">
                     <MudDropZone T="Item" Identifier=@character.CharacterId
-                                 Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1"
-                                 Style="height: 100%; width: 100%;">
+                                 Class="bucket-drop-zone">
                         @foreach (var item in Items.Where(i => i.Identifier == character.CharacterId))
                         {
                             <ItemModel Item=@item Size="60" />
@@ -21,12 +20,11 @@
                 </MudItem>
             }
 
-            <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
+            <MudItem xs="12" sm="12" md="6" lg="6" Class="bucket-column">
                 @if ((Items.Count(x => x.Identifier == "Vault")) > 0)
                 {
                     <MudDropZone T="Item" Identifier="Vault"
-                                 Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1"
-                                 Style="min-width: 50%; height: 100%;"/>
+                                 Class="bucket-drop-zone bucket-vault-zone"/>
                 }
             </MudItem>
         </MudGrid>
@@ -34,11 +32,10 @@
 }
 else
 {
-    <MudPaper Class="d-flex flex-column gap-2" @key="RenderKey">
-        <MudGrid Class="d-flex flex-wrap gap-2" Justify="Justify.SpaceBetween" Style="padding: 25px">
+    <MudPaper Class="bucket-shelf" @key="RenderKey">
+        <MudGrid Class="bucket-grid bucket-grid-padded" Justify="Justify.SpaceBetween">
             <MudDropZone T="Item"
-                         Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1"
-                         Style="height: 100%; width: 100%;">
+                         Class="bucket-drop-zone bucket-wide-zone">
                 @foreach (var item in Items)
                 {
                     <MudItem Class="d-flex flex-column">
@@ -86,3 +83,43 @@ else
         InvokeAsync(StateHasChanged);
     }
 }
+
+<style>
+    .bucket-shelf {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 12px;
+    }
+
+    .bucket-grid {
+        width: 100%;
+    }
+
+    .bucket-grid-padded {
+        padding: 8px;
+    }
+
+    .bucket-column {
+        display: flex;
+        flex-direction: column;
+        padding: 8px;
+    }
+
+    .bucket-drop-zone {
+        align-content: flex-start;
+        background: rgba(255, 255, 255, 0.045);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        min-height: 96px;
+        padding: 10px;
+        width: 100%;
+    }
+
+    .bucket-vault-zone,
+    .bucket-wide-zone {
+        min-height: 132px;
+    }
+</style>

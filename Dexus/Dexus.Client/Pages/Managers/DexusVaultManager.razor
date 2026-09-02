@@ -14,69 +14,156 @@
 @if (initializationComplete)
 {
     <!--Main Vault Manager-->
-    <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge" Class="d-flex flex-column gap-3 position-relative">
+    <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge" Class="vault-manager-shell">
+        <MudPaper Elevation="0" Class="vault-page-header">
+            <div>
+                <MudText Typo="Typo.h4" Class="vault-page-title">Dexus Vault</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Manage equipped gear, character inventories, vault items, and account materials.
+                </MudText>
+            </div>
+            <div class="vault-summary-row">
+                <div class="vault-summary-tile">
+                    <span>@Core.Content.Characters.Count</span>
+                    <small>Guardians</small>
+                </div>
+                <div class="vault-summary-tile">
+                    <span>@TotalManagedItems</span>
+                    <small>Managed Items</small>
+                </div>
+            </div>
+        </MudPaper>
+
         <!-- Column Labels -->
-        <MudGrid Class="d-flex justify-center" Justify="Justify.SpaceBetween">
+        <div class="vault-header-grid">
             @foreach (var character in Core.Content.Characters.Values)
             {
-                <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column justify-center">
-                    <MudText Typo="Typo.h6" Class="mb-1 text-center">@character.Class</MudText>
-                    <MudImage ObjectFit=@ObjectFit.ScaleDown Src=@character.EmblemBackgroundPath Elevation="25"
-                              Class="rounded-lg"/>
-                </MudItem>
+                <div class="vault-header-column vault-header-character">
+                    <MudText Typo="Typo.subtitle1" Class="vault-header-title">@character.Class</MudText>
+                    <div class="vault-banner-frame">
+                        <img src="@character.EmblemBackgroundPath" alt="@character.Class banner" class="vault-banner-image"/>
+                    </div>
+                </div>
             }
-            <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column justify-center">
-                <MudText Typo="Typo.h6" Class="mb-1 text-center">Vault</MudText>
-                <MudImage ObjectFit=@ObjectFit.ScaleDown Height="55" Src="Resources/VaultEmblem.png" Elevation="25"
-                          Class="rounded-lg"/>
-            </MudItem>
-        </MudGrid>
+            <div class="vault-header-column vault-header-vault">
+                <MudText Typo="Typo.subtitle1" Class="vault-header-title">Vault</MudText>
+                <div class="vault-icon-frame">
+                    <img src="Resources/VaultEmblem.png" alt="Vault" class="vault-icon-image"/>
+                </div>
+            </div>
+        </div>
 
         <!-- Postmaster Section -->
-        <BucketList Items="Core.Content.Postmaster.Values" Sorted="true"/>
+        <section class="vault-section">
+            <div class="vault-section-header">
+                <MudIcon Icon="@Icons.Material.Filled.MarkunreadMailbox" Color="Color.Warning"/>
+                <MudText Typo="Typo.subtitle1">Postmaster</MudText>
+            </div>
+            <BucketList Items="Core.Content.Postmaster.Values" Sorted="true"/>
+        </section>
 
         <!-- Kinetic Weapons Section-->
-        <ManagmentList Items="Core.Content.KineticWeapons.Values"/>
+        <section class="vault-section">
+            <div class="vault-section-header">
+                <MudIcon Icon="@Icons.Material.Filled.Adjust" Color="Color.Primary"/>
+                <MudText Typo="Typo.subtitle1">Kinetic Weapons</MudText>
+            </div>
+            <ManagmentList Items="Core.Content.KineticWeapons.Values"/>
+        </section>
 
         <!-- Energy Weapons Section -->
-        <ManagmentList Items="Core.Content.EnergyWeapons.Values"/>
+        <section class="vault-section">
+            <div class="vault-section-header">
+                <MudIcon Icon="@Icons.Material.Filled.Bolt" Color="Color.Info"/>
+                <MudText Typo="Typo.subtitle1">Energy Weapons</MudText>
+            </div>
+            <ManagmentList Items="Core.Content.EnergyWeapons.Values"/>
+        </section>
 
         <!-- Power Weapons Section -->
-        <ManagmentList Items="Core.Content.PowerWeapons.Values"/>
+        <section class="vault-section">
+            <div class="vault-section-header">
+                <MudIcon Icon="@Icons.Material.Filled.Whatshot" Color="Color.Error"/>
+                <MudText Typo="Typo.subtitle1">Power Weapons</MudText>
+            </div>
+            <ManagmentList Items="Core.Content.PowerWeapons.Values"/>
+        </section>
 
         <!-- Helmets Section -->
-        <ManagmentList Items="Core.Content.Helmets.Values"/>
+        <section class="vault-section">
+            <div class="vault-section-header">
+                <MudIcon Icon="@Icons.Material.Filled.Shield" Color="Color.Secondary"/>
+                <MudText Typo="Typo.subtitle1">Helmets</MudText>
+            </div>
+            <ManagmentList Items="Core.Content.Helmets.Values"/>
+        </section>
 
         <!-- Gauntlets Section -->
-        <ManagmentList Items="Core.Content.Gauntlets.Values"/>
+        <section class="vault-section">
+            <div class="vault-section-header">
+                <MudIcon Icon="@Icons.Material.Filled.PanTool" Color="Color.Secondary"/>
+                <MudText Typo="Typo.subtitle1">Gauntlets</MudText>
+            </div>
+            <ManagmentList Items="Core.Content.Gauntlets.Values"/>
+        </section>
 
         <!-- Chests Section -->
-        <ManagmentList Items="Core.Content.Chests.Values"/>
+        <section class="vault-section">
+            <div class="vault-section-header">
+                <MudIcon Icon="@Icons.Material.Filled.HealthAndSafety" Color="Color.Secondary"/>
+                <MudText Typo="Typo.subtitle1">Chest Armor</MudText>
+            </div>
+            <ManagmentList Items="Core.Content.Chests.Values"/>
+        </section>
         
         <!-- Legs Section -->
-        <ManagmentList Items="Core.Content.Legs.Values"/>
+        <section class="vault-section">
+            <div class="vault-section-header">
+                <MudIcon Icon="@Icons.Material.Filled.DirectionsRun" Color="Color.Secondary"/>
+                <MudText Typo="Typo.subtitle1">Leg Armor</MudText>
+            </div>
+            <ManagmentList Items="Core.Content.Legs.Values"/>
+        </section>
 
         <!-- Class Items Section -->
-        <ManagmentList Items="Core.Content.Skirts.Values"/>
+        <section class="vault-section">
+            <div class="vault-section-header">
+                <MudIcon Icon="@Icons.Material.Filled.MilitaryTech" Color="Color.Secondary"/>
+                <MudText Typo="Typo.subtitle1">Class Items</MudText>
+            </div>
+            <ManagmentList Items="Core.Content.Skirts.Values"/>
+        </section>
 
         <!-- Accessories Section -->
-        <ManagmentList Items="Core.Content.Accessories.Values"/>
+        <section class="vault-section">
+            <div class="vault-section-header">
+                <MudIcon Icon="@Icons.Material.Filled.Category" Color="Color.Secondary"/>
+                <MudText Typo="Typo.subtitle1">Accessories</MudText>
+            </div>
+            <ManagmentList Items="Core.Content.Accessories.Values"/>
+        </section>
 
         <!-- Consumables Section -->
-        <BucketList Items="Core.Content.UninstantiatedItems" Sorted="false"/>
+        <section class="vault-section">
+            <div class="vault-section-header">
+                <MudIcon Icon="@Icons.Material.Filled.Inventory" Color="Color.Success"/>
+                <MudText Typo="Typo.subtitle1">Consumables And Materials</MudText>
+            </div>
+            <BucketList Items="Core.Content.UninstantiatedItems" Sorted="false"/>
+        </section>
     </MudContainer>
 }
 else
 {
     <!-- Vault loading Page -->
-    <MudContainer Fixed="true" MaxWidth="MaxWidth.ExtraLarge" Class="d-flex flex-column gap-3 justify-center">
+    <MudContainer Fixed="true" MaxWidth="MaxWidth.Medium" Class="vault-loading-shell">
         @{
             Core.Loadingbars.GetLoadingBar("Main", out int progressValue, out int bufferValue, out string progressText);
             <MudProgressLinear Color="Color.Error" Buffer="true" Value="@progressValue" BufferValue="@bufferValue"
-                               Class="my-7">
+                               Class="vault-progress">
                 @if (!string.IsNullOrEmpty(progressText))
                 {
-                    <MudText Typo="Typo.subtitle1" Color="Color.Dark">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Dark">
                         <b>@progressText</b>
                     </MudText>
                 }
@@ -89,12 +176,25 @@ else
 {
     // DexusVaultManager Variables
     private bool initializationComplete;
+
+    private int TotalManagedItems =>
+        Core.Content.KineticWeapons.Count
+        + Core.Content.EnergyWeapons.Count
+        + Core.Content.PowerWeapons.Count
+        + Core.Content.Helmets.Count
+        + Core.Content.Gauntlets.Count
+        + Core.Content.Chests.Count
+        + Core.Content.Legs.Count
+        + Core.Content.Skirts.Count
+        + Core.Content.Accessories.Count
+        + Core.Content.Postmaster.Count
+        + Core.Content.UninstantiatedItems.Count;
     
     /// <summary>
     /// Handles the first render of the webpage.
     /// </summary>
     /// <param name="firstRender">Indicates whether this is the first render of the webpage.</param>
-    protected async override void OnAfterRender(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender)
         {
@@ -103,18 +203,19 @@ else
         
         if (!initializationComplete)
         {
+            await Core.EnsureManifestLoaded();
             await Core.Content.InitializeUserContent();
             Core.Content.Transfer.AllowTransfers();
         }
 
         initializationComplete = true;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
     /// <summary>
     /// When page loads or reloads fetch load all important information.
     /// </summary>
-    protected async override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         // Refresh user content
         if (initializationComplete)

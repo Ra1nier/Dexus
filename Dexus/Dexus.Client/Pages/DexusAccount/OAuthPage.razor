@@ -7,8 +7,8 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
-<MudPaper Class="p-4 mx-auto" Style="border-radius: 12px; max-width: 600px;">
-    <MudText Typo="Typo.h5" Class="mb-2">Bungie Sign-In</MudText>
+<MudPaper Class="oauth-card mx-auto" Elevation="0">
+    <MudText Typo="Typo.h5" Class="oauth-card-title">Bungie Sign-In</MudText>
     @if (Core.OAuthStatus == 0)
     {
         <MudAlert Severity="Severity.Success" Class="mb-4">
@@ -25,8 +25,7 @@
         <MudText Typo="Typo.body1" Class="mb-3 text-muted">
             You need to sign in with your Bungie.net account to access Destiny 2 profile data.
         </MudText>
-        <MudStack AlignItems="AlignItems.Center" Spacing="2"
-                  Style="padding: 24px;margin: 24px; border-radius: 10px;">
+        <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="oauth-action-stack">
             <MudAvatar Size="Size.Large" Color="Color.Info">
                 <MudIcon Color="Color.Dark" Icon="@Icons.Material.Filled.Lock" Size="Size.Large"/>
             </MudAvatar>
@@ -66,3 +65,25 @@
         Core.Logout();
     }
 }
+
+<style>
+    .oauth-card {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        max-width: 640px;
+        padding: 24px;
+    }
+
+    .oauth-card-title {
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+
+    .oauth-action-stack {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        margin-top: 18px;
+        padding: 28px;
+    }
+</style>

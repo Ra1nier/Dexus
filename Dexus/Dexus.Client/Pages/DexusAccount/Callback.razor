@@ -11,12 +11,28 @@
 @inject IJSRuntime JS;
 
 <style>
-    /* Loader styles */
+    .oauth-callback-shell {
+        min-height: calc(100vh - 96px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 16px;
+    }
+
+    .oauth-callback-card {
+        width: min(520px, 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 32px;
+        text-align: center;
+    }
+
     .loader {
         width: 32px;
         height: 16px;
         display: flex;
-        margin-top: 20px;
+        justify-content: center;
+        margin: 28px auto;
     }
 
     .loader:before,
@@ -58,11 +74,10 @@
 </style>
 
 <!-- Centered container -->
-<MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex flex-column align-center justify-center min-vh-100 px-6">
-    <MudPaper Elevation="6" Class="p-6 text-center"
-              Style="border-radius: 16px; max-width: 480px; width: 100%; padding: 24px;">
+<MudContainer MaxWidth="MaxWidth.Medium" Class="oauth-callback-shell">
+    <MudPaper Elevation="4" Class="oauth-callback-card">
         <MudText Typo="Typo.h5" Class="mb-2" Color="Color.Primary">@message</MudText>
-        <div class="loader my-4"></div>
+        <div class="loader"></div>
         <MudText Typo="Typo.caption" Color="Color.Secondary">Please do not close this window.</MudText>
     </MudPaper>
 </MudContainer>
@@ -70,7 +85,7 @@
 @code {
 
     // local vars
-    private string message = string.Empty;
+    private string message = "Authorizing Bungie account...";
     private string reason = "We dont know what happened. You should not be seeing this.";
     private bool hasStartedOAuth = false;
 

@@ -10,9 +10,9 @@
 @inject DialogUIService DialogUIService
 @inject Core Core;
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="m-4 p-4">
-    <MudPaper Class="p-4 m-4" Elevation="3" Style="border-radius: 12px; margin: 24px; padding: 24px;">
-        <MudText Typo="Typo.h4" Class="mb-3">User Profile</MudText>
+<MudContainer MaxWidth="MaxWidth.Large" Class="account-shell">
+    <MudPaper Class="account-panel" Elevation="2">
+        <MudText Typo="Typo.h4" Class="account-title">User Profile</MudText>
 
         <MudTabs Rounded="true" Centered="false" @bind-ActivePanelIndex="activeTabIndex">
             
@@ -24,7 +24,7 @@
                 <BungieAccountPage />
             </MudTabPanel>
 
-            <MudTabPanel Text="OAuthorization">
+            <MudTabPanel Text="Authorization">
                 <OAuthPage />
             </MudTabPanel>
             
@@ -51,3 +51,20 @@
         activeTabIndex = GoToTab;
     }
 }
+
+<style>
+    .account-shell {
+        padding: 24px 16px;
+    }
+
+    .account-panel {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 24px;
+    }
+
+    .account-title {
+        font-weight: 600;
+        margin-bottom: 18px;
+    }
+</style>

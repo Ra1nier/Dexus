@@ -35,6 +35,7 @@ public class Core
 
     // Local Values
     private int oAuthStatus = 3;
+    private Task? manifestLoadTask;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Core"/> class.
@@ -152,7 +153,7 @@ public class Core
             return;
         }
 
-        await this.GetDestiny2Manifest();
+        _ = this.EnsureManifestLoaded();
 
         this.logger.LogDebug("Core started.");
     }
@@ -264,8 +265,8 @@ public class Core
         if (tokensStored && destinyIDStored)
         {
             this.logger.LogDebug("Profile has been successfully created.");
-            await this.GetDestiny2Manifest();
             this.OAuthStatus = 0;
+            _ = this.EnsureManifestLoaded();
             return true;
         }
         else
@@ -276,6 +277,26 @@ public class Core
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Ensures the Destiny 2 manifest is loaded before manifest-dependent content is queried.
+    /// </summary>
+    /// <returns>A task representing the manifest load operation.</returns>
+    public async Task EnsureManifestLoaded()
+    {
+        if (!string.IsNullOrWhiteSpace(this.manifest.ManifestPath))
+        {
+            return;
+        }
+
+        this.manifestLoadTask ??= this.GetDestiny2Manifest();
+        await this.manifestLoadTask;
+
+        if (string.IsNullOrWhiteSpace(this.manifest.ManifestPath))
+        {
+            this.manifestLoadTask = null;
+        }
     }
 
     /// <summary>
