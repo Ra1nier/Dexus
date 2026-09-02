@@ -5,6 +5,7 @@
 @inject ILogger<OAuthPage> Logger
 @inject DialogUIService DialogUIService
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 
 <MudPaper Class="p-4 mx-auto" Style="border-radius: 12px; max-width: 600px;">
     <MudText Typo="Typo.h5" Class="mb-2">Bungie Sign-In</MudText>
@@ -42,11 +43,11 @@
     /// <summary>
     /// Starts the Sign-In process at Bungie.
     /// </summary>
-    private void HandleSignIn()
+    private async Task HandleSignIn()
     {
         if (Core.OAuthStatus == 3)
         {
-            DialogUIService.SendDialog("You can not Sign In yet!", "There are no API Keys that Dexus can access yet. You must provide the API keys in the \"API Tokens\" Tab.");
+            DialogUIService.SendDialog("Bungie Sign-In is not available.", "This deployment has not been configured with Bungie application credentials yet.");
             return;
         }
 
@@ -54,6 +55,8 @@
 
         if (Core.OAuthStatus > 0)
         {
+            string state = Core.OAuthProfile.RefreshState();
+            await JS.InvokeVoidAsync("sessionStorage.setItem", "dexus.oauth.state", state);
             Navigation.NavigateTo(Core.OAuthProfile.ConstructAuthorizationURL().ToString(), true);
         }
     }

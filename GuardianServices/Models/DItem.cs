@@ -23,6 +23,8 @@ public class DItem : Item
         this.Details = details;
         this.Bucket = bucket;
         this.Identifier = identifier;
+        this.Plugs = new DItemPlugs();
+        this.Sockets = new DItemSockets();
     }
 
     /// <summary>
@@ -37,12 +39,12 @@ public class DItem : Item
     public List<Perk>? Perks { get; set; }
 
     /// <summary>
-    /// Gets or sets the plugs for the item. This structure holds and organises the Reusable Plugs for the item retrieved from the API.
+    /// Gets or sets the plugs for the item. This structure holds and organizes the Reusable Plugs for the item retrieved from the API.
     /// </summary>
     public DItemPlugs? Plugs { get; set; }
 
     /// <summary>
-    /// Gets or sets the sockets for an item. This structure holds and organises the sockets for the item retrieved from the API.
+    /// Gets or sets the sockets for an item. This structure holds and organizes the sockets for the item retrieved from the API.
     /// </summary>
     public DItemSockets? Sockets { get; set; }
 
@@ -140,7 +142,7 @@ public class DItemPlugs
     /// Gets or sets a list of plugs associated with their socket number. (Review description could be incorrect.)
     /// </summary>
     [JsonPropertyName("plugs")]
-    public Dictionary<int, List<Plug>> ReusablePlugs { get; set; }
+    public Dictionary<int, List<Plug>> ReusablePlugs { get; set; } = new Dictionary<int, List<Plug>>();
 
     /// <summary>
     /// Represents a Plug for an Item.
@@ -222,7 +224,7 @@ public class DItemSockets
     /// Gets or sets a dictionary that contains the socket data from bungie about an item.
     /// </summary>
     [JsonPropertyName("sockets")]
-    public Dictionary<uint, Socket> Data { get; set; }
+    public Dictionary<uint, Socket> Data { get; set; } = new Dictionary<uint, Socket>();
 
     /// <summary>
     /// Represents socket information.
@@ -273,9 +275,8 @@ public static class DItemExtensions
     /// <returns>True if the item is a weapon. False if not or the item was not found.</returns>
     public static bool IsWeapon(this DItem item)
     {
-        bool isWeapon = false;
         string[] weaponDef = ["Kinetic Weapons", "Energy Weapons", "Power Weapons"];
-        isWeapon = weaponDef.Contains(item.Bucket);
+        bool isWeapon = weaponDef.Contains(item.Bucket);
 
         return isWeapon || (item.Perks != null && item.Perks.Any());
     }

@@ -102,7 +102,7 @@ public class SnackbarService
 }
 
 /// <summary>
-/// Contains the logic for the loading bar service. NOT FUNCTIONAL YET.
+/// Contains the logic for the loading bar service. TODO: NOT FUNCTIONAL YET.
 /// </summary>
 public class LoadingbarService
 {

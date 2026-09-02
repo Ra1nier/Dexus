@@ -10,7 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\DexusCore\DexusCore.csproj" />
     <ProjectReference Include="..\Dexus.Client\Dexus.Client.csproj" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.*" />
   </ItemGroup>
 
 </Project>

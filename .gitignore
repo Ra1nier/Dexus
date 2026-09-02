@@ -233,6 +233,9 @@ _pkginfo.txt
 ClientBin/
 ~$*
 *~
+*.env
+!.env.example
+https/
 *.dbmdl
 *.dbproj.schemaview
 *.jfm

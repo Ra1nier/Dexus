@@ -23,14 +23,14 @@
                                      Style="height: 85%; width: 100%;"></MudDropZone>
                     </MudItem>
                 }
-                <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
                     @if (Items.Count(x => x.Identifier == "Vault") > 0)
                     {
-                        <MudDropZone T="DItem" Identifier="Vault"
+                        <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
+                            <MudDropZone T="DItem" Identifier="Vault"
                                      Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1"
                                      Style="min-width: 50%; height: 100%;"/>
+                        </MudItem>
                     }
-                </MudItem>
             </MudGrid>
         </ChildContent>
         <ItemRenderer>
@@ -66,7 +66,7 @@
     /// Supports Vault to Character, Character to Vault, and Character to Character transfers.
     /// </summary>
     /// <param name="item">Item being transferred.</param>
-    private async void Transfer(MudItemDropInfo<DItem> item)
+    private async Task Transfer(MudItemDropInfo<DItem> item)
     {
         if (item.Item == null || !Core.Content.Transfer.TransfersAllowed || !(await Core.ConfirmOAuthStatus()))
         {

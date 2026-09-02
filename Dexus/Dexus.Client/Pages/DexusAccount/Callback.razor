@@ -8,6 +8,7 @@
 @inject ILogger<Callback> Logger;
 @inject DialogUIService DialogService;
 @inject Core Core;
+@inject IJSRuntime JS;
 
 <style>
     /* Loader styles */
@@ -74,19 +75,19 @@
     private bool hasStartedOAuth = false;
 
     /// <summary>
-    /// Activates after the component has been initialized.
+    /// Activates after the component has been rendered.
     /// </summary>
     /// <returns>A Task representing the process.</returns>
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (hasStartedOAuth)
+        if (!firstRender || hasStartedOAuth)
+        {
             return;
+        }
 
         hasStartedOAuth = true;
 
-        Logger.LogInformation($"Dexus State val: {Core.OAuthProfile.State}");
         bool result = await HandleOAuth();
-        Logger.LogInformation($"Dexus State val: {Core.OAuthProfile.State}");
 
         if (!result)
         {
@@ -108,13 +109,16 @@
     {
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var queryParams = QueryHelpers.ParseQuery(uri.Query);
+        string? expectedState = await JS.InvokeAsync<string?>("sessionStorage.getItem", "dexus.oauth.state");
 
-        if (!queryParams.TryGetValue("state", out var state) || state != Core.OAuthProfile.State)
+        if (!queryParams.TryGetValue("state", out var state) || state != expectedState)
         {
-            Logger.LogCritical($"State val returned incorrect. REASON: {(state != Core.OAuthProfile.State ? "The state val from Bungie did not match dexus saved value." : "A state val was not returned.")}");
+            Logger.LogCritical($"State val returned incorrect. REASON: {(state != expectedState ? "The state val from Bungie did not match dexus saved value." : "A state val was not returned.")}");
             reason = "Bungie either did not return the correct state value or did not return one at all";
             return false;
         }
+
+        await JS.InvokeVoidAsync("sessionStorage.removeItem", "dexus.oauth.state");
 
         if (queryParams.TryGetValue("code", out var codeValue))
         {
@@ -123,15 +127,7 @@
             if (!string.IsNullOrEmpty(code))
             {
                 Logger.LogDebug("Code retrieved. Starting Sign In");
-                Core.StartOAuth(code);
-
-                // Wait for OAuth to be completed before rerouting the user to the account page.
-                while (Core.OAuthStatus != 0)
-                {
-                    await Task.Delay(500);
-                }
-
-                return true;
+                return await Core.StartOAuth(code);
             }
         }
 

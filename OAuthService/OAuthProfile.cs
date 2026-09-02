@@ -5,6 +5,7 @@
 namespace OAuthService;
 
 using Microsoft.Extensions.Configuration;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
@@ -18,27 +19,35 @@ public class OAuthProfile
     private readonly string userTokenFileLocation;
 
     // OAuth Variables
-    private readonly string state;
     private readonly string authorizationURL = "https://www.bungie.net/en/OAuth/Authorize";
     private readonly string tokenEndpoint = "https://www.bungie.net/Platform/App/OAuth/Token/";
+    private string state;
     private string apiKey = string.Empty;
     private string clientID = string.Empty;
     private string clientSecret = string.Empty;
+    private bool usesConfiguredAPIKeys;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OAuthProfile"/> class.
     /// </summary>
     public OAuthProfile()
+        : this(null)
     {
-        // Grab information from user secrets file
-        // var bungieSecrets = new ConfigurationBuilder().AddUserSecrets<OAuthProfile>();
-        // IConfigurationRoot configuration = bungieSecrets.Build();
-        // var secrets = configuration.GetSection("BungieAPIKeys");
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OAuthProfile"/> class.
+    /// </summary>
+    /// <param name="configuration">Application configuration used to load hosted Bungie API keys.</param>
+    public OAuthProfile(IConfiguration? configuration)
+    {
         this.dataFolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "OAuthProfile");
         this.userTokenFileLocation = Path.Combine(this.dataFolderPath, "UserBungieAPITokens.json");
 
         // Profile Configuration
         this.state = this.GenerateRandomStateValue();
+
+        this.LoadConfiguredAPIKeys(configuration);
     }
 
     /// <summary>
@@ -55,6 +64,11 @@ public class OAuthProfile
     /// Gets the Client Secret key for GuardianVaultManger given by Bungie.
     /// </summary>
     public string Client_Secret => this.clientSecret;
+
+    /// <summary>
+    /// Gets a value indicating whether API keys were loaded from application configuration.
+    /// </summary>
+    public bool UsesConfiguredAPIKeys => this.usesConfiguredAPIKeys;
 
     /// <summary>
     /// Gets the Application State Code. Used to prevent Cross site forgery.
@@ -78,6 +92,16 @@ public class OAuthProfile
     public bool HasValidAPIKeys()
     {
         return !string.IsNullOrEmpty(this.apiKey) && !string.IsNullOrEmpty(this.clientID) && !string.IsNullOrEmpty(this.clientSecret);
+    }
+
+    /// <summary>
+    /// Creates a fresh OAuth state value for a new authorization request.
+    /// </summary>
+    /// <returns>The new state value.</returns>
+    public string RefreshState()
+    {
+        this.state = this.GenerateRandomStateValue();
+        return this.state;
     }
 
     /// <summary>
@@ -112,6 +136,11 @@ public class OAuthProfile
     /// <returns>True if completed successfully, False otherwise.</returns>
     public bool ConstructUserAPIFile(string apiKey, string clientID, string clientSecret)
     {
+        if (this.UsesConfiguredAPIKeys)
+        {
+            return false;
+        }
+
         this.EnsureDataFolderExists();
 
         try
@@ -142,6 +171,11 @@ public class OAuthProfile
     /// <returns>True if completed successfully, False otherwise.</returns>
     public bool LoadUserAPIKeys()
     {
+        if (this.HasValidAPIKeys())
+        {
+            return true;
+        }
+
         try
         {
             var apiKeys = JsonDocument.Parse(File.ReadAllText(this.userTokenFileLocation)).RootElement.GetProperty("BungieAPIKeys");
@@ -169,10 +203,40 @@ public class OAuthProfile
 
         for (int i = 0; i < 20; i++)
         {
-            builder.Append(pool[new Random().Next(0, pool.Length)]);
+            builder.Append(pool[RandomNumberGenerator.GetInt32(0, pool.Length)]);
         }
 
         return builder.ToString();
+    }
+
+    /// <summary>
+    /// Loads Bungie API keys from application configuration.
+    /// </summary>
+    /// <param name="configuration">Application configuration.</param>
+    private void LoadConfiguredAPIKeys(IConfiguration? configuration)
+    {
+        if (configuration is null)
+        {
+            return;
+        }
+
+        IConfigurationSection apiKeys = configuration.GetSection("BungieAPIKeys");
+
+        string configuredApiKey = apiKeys["API_Key"] ?? string.Empty;
+        string configuredClientID = apiKeys["Client_ID"] ?? string.Empty;
+        string configuredClientSecret = apiKeys["Client_Secret"] ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(configuredApiKey)
+            || string.IsNullOrWhiteSpace(configuredClientID)
+            || string.IsNullOrWhiteSpace(configuredClientSecret))
+        {
+            return;
+        }
+
+        this.apiKey = configuredApiKey;
+        this.clientID = configuredClientID;
+        this.clientSecret = configuredClientSecret;
+        this.usesConfiguredAPIKeys = true;
     }
 
     /// <summary>

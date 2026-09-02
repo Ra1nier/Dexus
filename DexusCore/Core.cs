@@ -4,8 +4,8 @@
 
 namespace DexusCore;
 
-using GuardianServices.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using ClientProfile;
 using OAuthService;
 using RequestManager;
@@ -40,6 +40,15 @@ public class Core
     /// Initializes a new instance of the <see cref="Core"/> class.
     /// </summary>
     public Core()
+        : this(null)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Core"/> class.
+    /// </summary>
+    /// <param name="configuration">Application configuration.</param>
+    public Core(IConfiguration? configuration)
     {
         // Create logger
         using var loggerFactory = LoggerFactory.Create(builder =>
@@ -58,8 +67,8 @@ public class Core
 
         // Start local instances of libraries needed by core
         this.profile = new Profile();
-        this.oauthProfile = new OAuthProfile();
-        this.logger.LogDebug($"OAuth Profile Created. State = {this.oauthProfile.State}");
+        this.oauthProfile = new OAuthProfile(configuration);
+        this.logger.LogDebug("OAuth Profile Created.");
         this.oauth = new OAuthServer(this.logger, this.oauthProfile);
         this.request = new RequestServer(this.logger, this.profile, this.oauthProfile);
         this.manifest = new ManifestServer(this.logger);
@@ -143,7 +152,7 @@ public class Core
             return;
         }
 
-        this.GetDestiny2Manifest();
+        await this.GetDestiny2Manifest();
 
         this.logger.LogDebug("Core started.");
     }
@@ -209,8 +218,9 @@ public class Core
     /// Handles signing in the user to bungie to retrieve necessary data.
     /// </summary>
     /// <param name="code">Authorization code.</param>
+    /// <returns>True if OAuth completed successfully.</returns>
     /// <exception cref="Exception">If the Exchange could not take place.</exception>
-    public async void StartOAuth(string code)
+    public async Task<bool> StartOAuth(string code)
     {
         bool tokensStored = false;
         bool destinyIDStored = false;
@@ -254,7 +264,9 @@ public class Core
         if (tokensStored && destinyIDStored)
         {
             this.logger.LogDebug("Profile has been successfully created.");
+            await this.GetDestiny2Manifest();
             this.OAuthStatus = 0;
+            return true;
         }
         else
         {
@@ -263,8 +275,7 @@ public class Core
             this.logger.LogError($"Profile failed to initialize. {reason}");
         }
 
-        // Get the most current version of the Destiny 2 manifest.
-        this.GetDestiny2Manifest();
+        return false;
     }
 
     /// <summary>
@@ -300,7 +311,7 @@ public class Core
     /// <summary>
     /// Gets the Destiny 2 manifest from bungie and saves the path to it in the manifest manager.
     /// </summary>
-    private async void GetDestiny2Manifest()
+    private async Task GetDestiny2Manifest()
     {
         string englishManifestPath = await this.request.Destiny2Manifest_Request_GetManifestPath("en");
         this.manifest.ManifestPath = await this.request.Destiny2Manifest_Request_GetCurrentManifest(englishManifestPath);

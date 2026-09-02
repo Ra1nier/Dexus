@@ -4,7 +4,20 @@
 
 <MudItem xs="12" md="8" Class="mx-auto mt-6">
     <MudPaper Elevation="4" Class="p-6" Style="border-radius: 12px;">
-        <MudText Typo="Typo.h6" Class="mb-4" Color="Color.Primary">Bungie API Tokens</MudText>
+        <MudText Typo="Typo.h6" Class="mb-4" Color="Color.Primary">Bungie Application Credentials</MudText>
+
+        @if (Core.OAuthProfile.UsesConfiguredAPIKeys)
+        {
+            <MudAlert Severity="Severity.Success" Class="mb-4">
+                Bungie application credentials are configured by the server.
+            </MudAlert>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Warning" Class="mb-4">
+                Bungie application credentials have not been configured for this deployment.
+            </MudAlert>
+        }
 
         <MudForm @ref="apiTokenForm">
             <MudGrid Spacing="3">
@@ -15,6 +28,7 @@
                                   Adornment="Adornment.Start"
                                   AdornmentIcon="@Icons.Material.Filled.VpnKey"
                                   FullWidth="true"
+                                  Disabled="@Core.OAuthProfile.UsesConfiguredAPIKeys"
                                   @bind-Value="APIKey"/>
                 </MudItem>
 
@@ -25,6 +39,7 @@
                                   Adornment="Adornment.Start"
                                   AdornmentIcon="@Icons.Material.Filled.PermIdentity"
                                   FullWidth="true"
+                                  Disabled="@Core.OAuthProfile.UsesConfiguredAPIKeys"
                                   @bind-Value="ClientID"/>
                 </MudItem>
 
@@ -35,17 +50,21 @@
                                   Adornment="Adornment.Start"
                                   AdornmentIcon="@Icons.Material.Filled.Lock"
                                   FullWidth="true"
+                                  Disabled="@Core.OAuthProfile.UsesConfiguredAPIKeys"
                                   @bind-Value="ClientSecret"/>
                 </MudItem>
 
-                <MudItem xs="12" Class="d-flex justify-end mt-4">
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Primary"
-                               StartIcon="@Icons.Material.Filled.Save"
-                               OnClick="SaveAPIKeys">
-                        Save Changes
-                    </MudButton>
-                </MudItem>
+                @if (!Core.OAuthProfile.UsesConfiguredAPIKeys)
+                {
+                    <MudItem xs="12" Class="d-flex justify-end mt-4">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Save"
+                                   OnClick="SaveAPIKeys">
+                            Save Changes
+                        </MudButton>
+                    </MudItem>
+                }
             </MudGrid>
         </MudForm>
     </MudPaper>
@@ -62,9 +81,9 @@
     /// </summary>
     protected override void OnInitialized()
     {
-        APIKey = Core.OAuthProfile.API_Key;
-        ClientID = Core.OAuthProfile.Client_ID;
-        ClientSecret = Core.OAuthProfile.Client_Secret;
+        APIKey = Core.OAuthProfile.UsesConfiguredAPIKeys ? "Configured by server" : Core.OAuthProfile.API_Key;
+        ClientID = Core.OAuthProfile.UsesConfiguredAPIKeys ? Core.OAuthProfile.Client_ID : Core.OAuthProfile.Client_ID;
+        ClientSecret = Core.OAuthProfile.UsesConfiguredAPIKeys ? "Configured by server" : Core.OAuthProfile.Client_Secret;
     }
 
     /// <summary>
@@ -72,6 +91,9 @@
     /// </summary>
     private async Task SaveAPIKeys()
     {
+        if (Core.OAuthProfile.UsesConfiguredAPIKeys)
+            return;
+
         if (apiTokenForm is null)
             return;
 

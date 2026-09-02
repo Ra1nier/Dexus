@@ -37,8 +37,8 @@ public class UICore
         {
             case 3:
                 Dialog.SendDialog("No API Tokens.",
-                    "Dexus does not have any saved API Tokens for Bungie. Would you like to be redirected to a page where they can be inputted?",
-                    () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=false&inputTokenRedirect=true"); });
+                    "This deployment has not been configured with Bungie application credentials yet.",
+                    () => { Navigation.NavigateTo("/DexusAccount?goToTab=1"); });
                 return;
             case 2:
                 Dialog.SendDialog("Not Authorized with Bungie.",

@@ -187,6 +187,12 @@ public class ManifestServer
     /// <returns>A Tuple where Item1 is a bool indicating whether the associated JSON was found, and Item2 is a string containing the JSON.</returns>
     private async Task<Tuple<bool, string>> QueryManifest(string query)
     {
+        if (string.IsNullOrWhiteSpace(this.ManifestPath) || !File.Exists(this.ManifestPath))
+        {
+            this.logger.LogWarning("Manifest database path is not ready.");
+            return new Tuple<bool, string>(false, "{}");
+        }
+
         string connectionString = $"Data Source={this.ManifestPath};";
 
         try

@@ -413,10 +413,13 @@ public class ContentManager
 
                     foreach (JsonElement itemJson in characterInventory.EnumerateArray())
                     {
-                        DItem item = await this.BuildDItem(itemJson, $"{character.CharacterId}Equipped", perksDataArray,
+                        DItem? item = await this.BuildDItem(itemJson, $"{character.CharacterId}Equipped", perksDataArray,
                             plugsDataArray, socketsDataArray, instanceDataArray);
-                        this.AddItemToStore(item);
-                        itemsLoaded++;
+                        if (item != null)
+                        {
+                            this.AddItemToStore(item);
+                            itemsLoaded++;
+                        }
                     }
                 }
             }
@@ -468,10 +471,13 @@ public class ContentManager
 
                     foreach (JsonElement itemJson in characterInventory.EnumerateArray())
                     {
-                        DItem item = await this.BuildDItem(itemJson, character.CharacterId, perksDataArray,
+                        DItem? item = await this.BuildDItem(itemJson, character.CharacterId, perksDataArray,
                             plugsDataArray, socketsDataArray, instanceDataArray);
-                        this.AddItemToStore(item);
-                        itemsLoaded++;
+                        if (item != null)
+                        {
+                            this.AddItemToStore(item);
+                            itemsLoaded++;
+                        }
                     }
                 }
             }
@@ -519,10 +525,13 @@ public class ContentManager
             int itemsLoaded = 0;
             foreach (JsonElement itemElement in vaultArray.EnumerateArray())
             {
-                DItem item = await this.BuildDItem(itemElement, "Vault", perksDataArray, plugsDataArray,
+                DItem? item = await this.BuildDItem(itemElement, "Vault", perksDataArray, plugsDataArray,
                     socketsDataArray, instanceDataArray);
-                this.AddItemToStore(item);
-                itemsLoaded++;
+                if (item != null)
+                {
+                    this.AddItemToStore(item);
+                    itemsLoaded++;
+                }
             }
 
             this.logger.LogInformation($"Loaded {itemsLoaded} items into Vault.");
@@ -577,7 +586,7 @@ public class ContentManager
     /// <param name="socketDataArray">Data for the item's sockets.</param>
     /// <param name="instanceDataArray">Data for all the items instance data.</param>
     /// <returns>The Item object that was built.</returns>
-    private async Task<DItem> BuildDItem(JsonElement itemJson, string itemIdentifier, JsonElement perksDataArray,
+    private async Task<DItem?> BuildDItem(JsonElement itemJson, string itemIdentifier, JsonElement perksDataArray,
         JsonElement plugsDataArray, JsonElement socketDataArray, JsonElement instanceDataArray)
     {
         Item bungieItem = itemJson.Deserialize<Item>() ?? new Item();
@@ -586,6 +595,12 @@ public class ContentManager
         {
             // This operation needs to occur first as many operations below depend on this being done.
             ItemDetails details = await this.QueryManifestForGeneralItemDetails(bungieItem);
+            if (!this.HasUsableItemDetails(details))
+            {
+                this.logger.LogWarning($"Skipping itemHash={bungieItem.ItemHash}; item details could not be loaded.");
+                return null;
+            }
+
             string bucket = await this.QueryManifestForBucket(bungieItem, itemIdentifier);
             item = DItem.FromBungieItem(bungieItem, details, bucket, itemIdentifier);
 
@@ -674,6 +689,7 @@ public class ContentManager
         if (plugData.TryGetProperty(item.ItemInstanceId, out JsonElement itemPlugs))
         {
             var plugs = itemPlugs.Deserialize<DItemPlugs>() ?? new DItemPlugs();
+            plugs.ReusablePlugs ??= new Dictionary<int, List<DItemPlugs.Plug>>();
 
             foreach (var plug in plugs.ReusablePlugs)
             {
@@ -806,14 +822,17 @@ public class ContentManager
     {
         uint hash = item.ItemHash;
 
-        if (identifier == "Vault")
+        if (identifier == "Vault" && this.itemDetails.TryGetValue(hash, out ItemDetails? details) && details.Inventory != null)
         {
-            return await this.GetBucketDefinition(this.itemDetails[hash].Inventory.BucketTypeHash);
+            return await this.GetBucketDefinition(details.Inventory.BucketTypeHash);
         }
-        else
+
+        if (identifier != "Vault")
         {
             return await this.GetBucketDefinition(item.BucketHash);
         }
+
+        return string.Empty;
     }
 
     /// <summary>
@@ -833,6 +852,18 @@ public class ContentManager
         }
 
         return details;
+    }
+
+    /// <summary>
+    /// Checks whether item details contain enough display data to render safely.
+    /// </summary>
+    /// <param name="details">Item details to check.</param>
+    /// <returns>True if item details can be rendered.</returns>
+    private bool HasUsableItemDetails(ItemDetails details)
+    {
+        return details.DisplayProperties != null
+            && !string.IsNullOrWhiteSpace(details.DisplayProperties.Icon)
+            && !string.IsNullOrWhiteSpace(details.DisplayProperties.Name);
     }
 
     /// <summary>

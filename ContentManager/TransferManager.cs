@@ -129,7 +129,7 @@ public class TransferManager
     }
 
     /// <summary>
-    /// Allows content manager to start processing transfers.
+    /// Allows transfer manager to start processing transfers.
     /// </summary>
     public void AllowTransfers()
     {
@@ -308,7 +308,7 @@ public class TransferManager
         {
             this.logger.LogCritical("MembershipType is null. Unable to transfer item.");
             this.snackbar.AddMessage(
-                "Something went wrong. GVM is unable to access your bungie data. Transfer cannot be completed. Try logging back in to solve this issue.",
+                "Something went wrong. Deuxs is unable to access your Bungie data. Transfer cannot be completed. Try logging back in to solve this issue.",
                 "Error");
             return false;
         }
@@ -321,50 +321,50 @@ public class TransferManager
             return await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID,
                 stackSize, origin, true);
         }
-        else if (origin == "Vault")
+
+        if (origin == "Vault")
         {
             // Transfer to Character
             return await this.request.ActionItem_Request_TransferItem(this.profile.MembershipType, itemHash, itemID,
                 stackSize, destination, false);
         }
-        else
+
+        // Transfer to Vault then to the Character
+        bool firstTransfer = await this.request.ActionItem_Request_TransferItem(
+            this.profile.MembershipType, itemHash, itemID, stackSize, origin, true);
+
+        bool secondTransfer = false;
+        if (firstTransfer)
         {
-            // Transfer to Vault then to the Character
-            bool firstTransfer = await this.request.ActionItem_Request_TransferItem(
-                this.profile.MembershipType, itemHash, itemID, stackSize, origin, true);
-
-            bool secondTransfer = false;
-            if (firstTransfer)
-            {
-                secondTransfer = await this.request.ActionItem_Request_TransferItem(
-                    this.profile.MembershipType, itemHash, itemID, stackSize, destination, false);
-            }
-
-            if (firstTransfer && secondTransfer)
-            {
-                return true;
-            }
-            else if (!secondTransfer)
-            {
-                this.snackbar.AddMessage(
-                    $"Transfer of {transfer.Details.DisplayProperties.Name} failed. Returning the item to the origin.",
-                    "Warning");
-                bool returnSuccessful = await this.request.ActionItem_Request_TransferItem(
-                    this.profile.MembershipType, itemHash, itemID, stackSize, origin, false);
-
-                if (!returnSuccessful)
-                {
-                    this.SetIdentifier?.Invoke((transfer, "Vault"));
-                    this.snackbar.AddMessage(
-                        $"Transfer failed. {transfer.Details.DisplayProperties.Name} " +
-                        "has ended up in the Vault as GVM was unable to return it.", "Warning");
-                }
-
-                return returnSuccessful;
-            }
-
-            return false;
+            secondTransfer = await this.request.ActionItem_Request_TransferItem(
+                this.profile.MembershipType, itemHash, itemID, stackSize, destination, false);
         }
+
+        if (firstTransfer && secondTransfer)
+        {
+            return true;
+        }
+
+        if (!secondTransfer)
+        {
+            this.snackbar.AddMessage(
+                $"Transfer of {transfer.Details.DisplayProperties.Name} failed. Returning the item to the origin.",
+                "Warning");
+            bool returnSuccessful = await this.request.ActionItem_Request_TransferItem(
+                this.profile.MembershipType, itemHash, itemID, stackSize, origin, false);
+
+            if (!returnSuccessful)
+            {
+                this.SetIdentifier?.Invoke((transfer, "Vault"));
+                this.snackbar.AddMessage(
+                    $"Transfer failed. {transfer.Details.DisplayProperties.Name} " +
+                    "has ended up in the Vault as GVM was unable to return it.", "Warning");
+            }
+
+            return returnSuccessful;
+        }
+
+        return false;
     }
 
     /// <summary>
