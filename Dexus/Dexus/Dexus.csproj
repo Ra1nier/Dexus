@@ -4,13 +4,14 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>b52272f6-cde4-401d-95b2-1ffa66ad613a</UserSecretsId>
   </PropertyGroup>
 
 
   <ItemGroup>
     <ProjectReference Include="..\..\DexusCore\DexusCore.csproj" />
     <ProjectReference Include="..\Dexus.Client\Dexus.Client.csproj" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.19" />
   </ItemGroup>
 
 </Project>

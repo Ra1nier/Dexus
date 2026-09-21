@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -7,14 +7,15 @@
     <base href="/" />
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
-    <link href="Pages/Callback.razor.css" rel="stylesheet" />
-    <link href="GVM.css" rel="stylesheet" />
+    <link href="Dexus.styles.css" rel="stylesheet" />
+    <link href="css/dexus.css" rel="stylesheet" />
+    <link href="css/vault.css" rel="stylesheet" />
     <link rel="icon" type="image/ico" href="favicon.ico" />
     <HeadOutlet @rendermode="RenderMode.InteractiveServer" />
 </head>
 
 <body>
-    <Routes @rendermode="RenderMode.InteractiveServer" />
+    <SessionRoutes @rendermode="RenderMode.InteractiveServer" />
     <script src="_framework/blazor.web.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
 </body>

@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Restore
+        run: dotnet restore Dexus.sln
+      - name: Build
+        run: dotnet build Dexus/Dexus/Dexus.csproj -c Release --no-restore
+      - name: Security regression checks
+        run: dotnet run --project tests/Dexus.SecurityChecks -c Release
+      - name: Check vulnerable dependencies
+        run: dotnet list Dexus.sln package --vulnerable --include-transitive

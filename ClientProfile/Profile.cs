@@ -1,4 +1,4 @@
-﻿// <copyright file="Profile.cs" company="PlaceholderCompany">
+// <copyright file="Profile.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
@@ -7,325 +7,179 @@ namespace ClientProfile;
 using System.Text.Json;
 
 /// <summary>
-/// Contains the definition of a Profile created from Bungie.
+/// Server-side session credentials shared only by circuits authenticated to that session.
 /// </summary>
 public class Profile
 {
-    /// <summary>
-    /// Path to store files related to user tokens.
-    /// </summary>
-    private string dataFolderPath;
-    private string userTokenFileLocation;
-    private string destinyMembershipsFileLocation;
-    private string expiryDatesFileLocation;
+    private SessionState state = new SessionState();
 
-    /// <summary>
-    /// Stores all user tokens.
-    /// </summary>
-    private Tokens tokens;
+    /// <summary>Gets the current access token, or empty after logout/session expiry.</summary>
+    public string AccessToken => this.IsActive ? this.state.Data.AccessToken : string.Empty;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="Profile"/> class.
-    /// </summary>
-    public Profile()
+    /// <summary>Gets the current refresh token, or empty after logout/session expiry.</summary>
+    public string RefreshToken => this.IsActive ? this.state.Data.RefreshToken : string.Empty;
+
+    /// <summary>Gets the Bungie membership ID returned by the token endpoint.</summary>
+    public string MembershipID => this.IsActive ? this.state.Data.MembershipID : string.Empty;
+
+    /// <summary>Gets the selected Destiny membership ID.</summary>
+    public string? DestinyMembershipID => this.IsActive ? this.state.Data.DestinyID : null;
+
+    /// <summary>Gets the selected Destiny membership type.</summary>
+    public string? MembershipType => this.IsActive ? this.state.Data.MembershipType : null;
+
+    /// <summary>Gets the UTC access token expiry.</summary>
+    public DateTime AccessTokenExpireDate => this.state.Data.AccessExpiry;
+
+    /// <summary>Gets the UTC refresh token expiry.</summary>
+    public DateTime RefreshTokenExpireDate => this.state.Data.RefreshExpiry;
+
+    /// <summary>Gets the lock coordinating refreshes across tabs of the same session.</summary>
+    public SemaphoreSlim RefreshLock => this.state.RefreshLock;
+
+    /// <summary>Gets a value indicating whether this session has not expired or been revoked.</summary>
+    public bool IsActive => !this.state.Revoked && DateTimeOffset.UtcNow < this.state.ExpiresUtc;
+
+    /// <summary>Binds a circuit to a session resolved by the host from an authenticated principal.</summary>
+    /// <param name="session">Server-resolved session profile, never a browser-provided owner.</param>
+    public void BindTo(Profile session)
     {
-        this.tokens = new Tokens();
-
-        // Make user paths
-        this.dataFolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ClientProfile", "data");
-        this.userTokenFileLocation = Path.Combine(this.dataFolderPath, "UserTokens.json");
-        this.destinyMembershipsFileLocation = Path.Combine(this.dataFolderPath, "DestinyMemberships.json");
-        this.expiryDatesFileLocation = Path.Combine(this.dataFolderPath, "ExpiryDates.json");
+        this.state = session.state;
     }
 
-    /// <summary>
-    /// Gets the Access Token for the client.
-    /// </summary>
-    public string AccessToken { get => this.tokens.AccessToken ?? string.Empty; }
-
-    /// <summary>
-    /// Gets the Access Token Expire Date for the client.
-    /// </summary>
-    public DateTime AccessTokenExpireDate { get; private set; }
-
-    /// <summary>
-    /// Gets the Refresh Token for the client.
-    /// </summary>
-    public string RefreshToken { get => this.tokens.RefreshToken ?? string.Empty; }
-
-    /// <summary>
-    /// Gets the Refresh Token Expire Date for the client.
-    /// </summary>
-    public DateTime RefreshTokenExpireDate { get; private set; }
-
-    /// <summary>
-    /// Gets the Membership ID for the client.
-    /// </summary>
-    public string MembershipID { get => this.tokens.MembershipId ?? string.Empty; }
-
-    /// <summary>
-    /// Gets the Destiny Membership ID for the client.
-    /// </summary>
-    public string? DestinyMembershipID { get; private set; }
-
-    /// <summary>
-    /// Gets the Membership Type for the client.
-    /// </summary>
-    public string? MembershipType { get; private set; }
-
-    /// <summary>
-    /// Creates a new Client Profile containing the necessary keys for the user.
-    /// </summary>
-    /// <returns>True if the operation was completed successfully.</returns>
-    /// <exception cref="Exception">Thrown if the profile fails to create. Will not stop the program.</exception>
-    public bool Create()
+    /// <summary>Sets the absolute server-session expiration.</summary>
+    /// <param name="expiresUtc">UTC expiration matching the authentication cookie.</param>
+    public void SetSessionExpiry(DateTimeOffset expiresUtc)
     {
-        try
-        {
-            this.EnsureDataFolderExists();
-
-            this.LoadUserTokens(this.userTokenFileLocation);
-
-            this.LoadExpiryDates(this.expiryDatesFileLocation);
-        }
-        catch (Exception)
-        {
-            return false;
-        }
-
-        return true;
+        this.state.ExpiresUtc = expiresUtc;
     }
 
-    /// <summary>
-    /// Removes all Bungie Authorization data corresponding to the user.
-    /// </summary>
-    /// <returns>True if the operation completed successfully, False otherwise.</returns>
+    /// <summary>Checks whether this session contains token values.</summary>
+    /// <returns>True when both tokens exist in an active session.</returns>
+    public bool Create() => !string.IsNullOrWhiteSpace(this.AccessToken) && !string.IsNullOrWhiteSpace(this.RefreshToken);
+
+    /// <summary>Revokes this session, including all circuits bound to it.</summary>
+    /// <returns>True after the credentials are cleared.</returns>
     public bool ThrowOut()
     {
-        try
+        lock (this.state)
         {
-            this.EnsureDataFolderExists();
-
-            return this.DeleteUser(this.dataFolderPath);
-        }
-        catch (Exception)
-        {
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Loads the Destiny Membership ID from file.
-    /// </summary>
-    /// <returns>True if the operation completed successfully, False otherwise.</returns>
-    public bool LoadDestinyID()
-    {
-        try
-        {
-            this.LoadDestinyID(this.destinyMembershipsFileLocation);
-        }
-        catch (Exception)
-        {
-            return false;
+            this.state.Revoked = true;
+            this.state.Data = new TokenData();
         }
 
         return true;
     }
 
-    /// <summary>
-    /// Stores the current tokens in te profile object into the file.
-    /// </summary>
-    /// <exception cref="IOException">Thrown if the file containing the user tokens could not be created.</exception>
-    /// <returns>True of tokens were stored.</returns>
-    public bool StoreUserTokens()
-    {
-        try
-        {
-            string userTokensJSON = JsonSerializer.Serialize(this.tokens);
+    /// <summary>Checks whether this session has a Destiny membership.</summary>
+    /// <returns>True if the membership and type are present.</returns>
+    public bool LoadDestinyID() => !string.IsNullOrWhiteSpace(this.DestinyMembershipID) && !string.IsNullOrWhiteSpace(this.MembershipType);
 
-            File.WriteAllText(this.userTokenFileLocation, userTokensJSON);
+    /// <summary>Checks whether this session contains token values.</summary>
+    /// <returns>True if token values exist.</returns>
+    public bool StoreUserTokens() => this.Create();
 
-            return true;
-        }
-        catch (Exception)
-        {
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Stores the current tokens in the profile object into the file. When stored the method will also calculate and the expiry dates of the tokens.
-    /// </summary>
-    /// <param name="json">Json text to write file to.</param>
-    /// <returns>Thrown if the file containing the user tokens could not be created.</returns>
-    /// <exception cref="IOException">The file could not be written to.</exception>
+    /// <summary>Validates a token response and atomically updates credentials and expiry dates.</summary>
+    /// <param name="json">Token response JSON from Bungie.</param>
+    /// <returns>False for malformed responses or revoked sessions.</returns>
     public bool StoreUserTokens(string json)
     {
         try
         {
-            File.WriteAllText(this.userTokenFileLocation, json);
+            Tokens? candidate = JsonSerializer.Deserialize<Tokens>(json);
+            if (candidate is null || string.IsNullOrWhiteSpace(candidate.AccessToken)
+                || string.IsNullOrWhiteSpace(candidate.RefreshToken)
+                || candidate.ExpiresIn <= 0 || candidate.RefreshExpiresIn <= 0)
+            {
+                return false;
+            }
 
-            JsonDocument tokens = JsonDocument.Parse(json);
+            DateTime now = DateTime.UtcNow;
+            lock (this.state)
+            {
+                if (!this.IsActive)
+                {
+                    return false;
+                }
 
-            int accessExpiryTime = tokens.RootElement.GetProperty("expires_in").GetInt32();
-            int refreshExpiryTime = tokens.RootElement.GetProperty("refresh_expires_in").GetInt32();
-
-            this.StoreExpiryDates(accessExpiryTime, refreshExpiryTime);
+                this.state.Data = new TokenData
+                {
+                    DestinyID = this.state.Data.DestinyID,
+                    MembershipType = this.state.Data.MembershipType,
+                    AccessToken = candidate.AccessToken,
+                    RefreshToken = candidate.RefreshToken,
+                    MembershipID = candidate.MembershipId ?? this.state.Data.MembershipID,
+                    AccessExpiry = now.AddSeconds(candidate.ExpiresIn),
+                    RefreshExpiry = now.AddSeconds(candidate.RefreshExpiresIn),
+                };
+            }
 
             return true;
         }
-        catch (Exception e)
+        catch (JsonException)
         {
-            Console.WriteLine($"Exception occurred when attempting to store user tokens: {e.Message}");
             return false;
         }
     }
 
-    /// <summary>
-    /// Stores the DestinyMembershipID into the file.
-    /// </summary>
-    /// <param name="destinyMembershipID">Destiny ID retrieved from Bungie.</param>
-    /// <param name="membershipType">Membership Type retrieved from Bungie.</param>
-    /// <returns>Thrown if the file containing the user tokens could not be created.</returns>
-    /// <exception cref="IOException">The file could not be written to.</exception>
+    /// <summary>Stores the Destiny identity returned by Bungie for this session.</summary>
+    /// <param name="destinyMembershipID">Provider-returned Destiny membership ID.</param>
+    /// <param name="membershipType">Provider-returned membership type.</param>
+    /// <returns>True if this active session was updated.</returns>
     public bool StoreDestinyMembershipID(string destinyMembershipID, string membershipType)
     {
-        try
+        if (string.IsNullOrWhiteSpace(destinyMembershipID) || string.IsNullOrWhiteSpace(membershipType))
         {
-            string jsonString = $"{{\"MembershipID\":\"{destinyMembershipID}\",\"MembershipType\":\"{membershipType}\"}}";
-
-            File.WriteAllText(this.destinyMembershipsFileLocation, jsonString);
-
-            return true;
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine($"Exception occurred when trying to write the users membershipID: {e.Message}");
             return false;
         }
+
+        lock (this.state)
+        {
+            if (!this.IsActive)
+            {
+                return false;
+            }
+
+            this.state.Data = new TokenData
+            {
+                AccessToken = this.state.Data.AccessToken,
+                RefreshToken = this.state.Data.RefreshToken,
+                AccessExpiry = this.state.Data.AccessExpiry,
+                RefreshExpiry = this.state.Data.RefreshExpiry,
+                MembershipID = this.state.Data.MembershipID,
+                DestinyID = destinyMembershipID,
+                MembershipType = membershipType,
+            };
+        }
+
+        return true;
     }
 
-    /// <summary>
-    /// Loads the user tokens stored in the file.
-    /// </summary>
-    /// <param name="tokenPath">Path to the user tokens file.</param>
-    /// <exception cref="IOException">Thrown if the tokens could not be loaded from the file.</exception>
-    private void LoadUserTokens(string tokenPath)
+    private sealed class SessionState
     {
-        try
-        {
-            string json = File.ReadAllText(tokenPath);
+        public TokenData Data { get; set; } = new TokenData();
 
-            this.tokens = JsonSerializer.Deserialize<Tokens>(json) ?? new Tokens(); // Find better solution then just assigning empty token object.
-        }
-        catch (Exception e)
-        {
-            throw new IOException($"Could not load tokens from the specified user tokens file: {e.Message}");
-        }
+        public bool Revoked { get; set; }
+
+        public DateTimeOffset ExpiresUtc { get; set; } = DateTimeOffset.MaxValue;
+
+        public SemaphoreSlim RefreshLock { get; } = new SemaphoreSlim(1, 1);
     }
 
-    /// <summary>
-    /// Loads the user tokens stored in the file.
-    /// </summary>
-    /// <param name="destinyIDPath">Path to the user tokens file.</param>
-    /// <exception cref="IOException">Thrown if the tokens could not be loaded from the file.</exception>
-    private void LoadDestinyID(string destinyIDPath)
+    private sealed class TokenData
     {
-        try
-        {
-            JsonDocument membershipsFile = JsonDocument.Parse(File.ReadAllText(destinyIDPath));
+        public string AccessToken { get; set; } = string.Empty;
 
-            this.DestinyMembershipID = membershipsFile.RootElement.GetProperty("MembershipID").GetString();
-            this.MembershipType = membershipsFile.RootElement.GetProperty("MembershipType").GetString();
-        }
-        catch (Exception e)
-        {
-            throw new IOException($"Could not load tokens from the specified user tokens file: {e.Message}");
-        }
-    }
+        public string RefreshToken { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Stores the calculated expiry times for the access and refresh tokens.
-    /// </summary>
-    /// <param name="accessExpiryTime">Time until the access token expires.</param>
-    /// <param name="refreshExpiryTime">Time until the refresh token expires.</param>
-    private bool StoreExpiryDates(int accessExpiryTime, int refreshExpiryTime)
-    {
-        try
-        {
-            DateTime accessExpiryDate = DateTime.Now.AddSeconds(accessExpiryTime);
-            DateTime refreshExpiryDate = DateTime.Now.AddSeconds(refreshExpiryTime);
+        public string MembershipID { get; set; } = string.Empty;
 
-            // Manually construct the JSON string
-            string jsonString = $"{{\"AccessExpiryDate\":\"{accessExpiryDate:O}\",\"RefreshExpiryDate\":\"{refreshExpiryDate:O}\"}}";
+        public string? DestinyID { get; set; }
 
-            File.WriteAllText(this.expiryDatesFileLocation, jsonString);
+        public string? MembershipType { get; set; }
 
-            return true;
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine($"Exception occurred when trying to store key expiry dates: {e.Message}");
-            return false;
-        }
-    }
+        public DateTime AccessExpiry { get; set; }
 
-    /// <summary>
-    /// Stores the calculated expiry times for the access and refresh tokens.
-    /// </summary>
-    private bool LoadExpiryDates(string expiryDatesLocation)
-    {
-        try
-        {
-            JsonDocument expiryTimes = JsonDocument.Parse(File.ReadAllText(expiryDatesLocation));
-
-            this.AccessTokenExpireDate = expiryTimes.RootElement.GetProperty("AccessExpiryDate").GetDateTime();
-            this.RefreshTokenExpireDate = expiryTimes.RootElement.GetProperty("RefreshExpiryDate").GetDateTime();
-
-            return true;
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine($"Exception occurred when attempting to read key expiry dates: {e.Message}");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Removes the data folder containing the user tokens. Effectively logging out the user.
-    /// </summary>
-    /// <param name="dataPath">Path to the data folder.</param>
-    /// <returns>True if the data folder was deleted, False otherwise.</returns>
-    /// <exception cref="IOException">Thrown if the folder is not found or operation could not be completed.</exception>
-    private bool DeleteUser(string dataPath)
-    {
-        try
-        {
-            Directory.Delete(dataPath, true);
-
-            this.tokens = new Tokens();
-
-            this.AccessTokenExpireDate = DateTime.MinValue;
-            this.RefreshTokenExpireDate = DateTime.MinValue;
-            this.DestinyMembershipID = string.Empty;
-            this.MembershipType = string.Empty;
-
-            return true;
-        }
-        catch (Exception e)
-        {
-            throw new IOException($"Could not delete tokens from the specified user tokens file: {e.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Ensures that the data folder exists.
-    /// </summary>
-    private void EnsureDataFolderExists()
-    {
-        if (!Directory.Exists(this.dataFolderPath))
-        {
-            Directory.CreateDirectory(this.dataFolderPath);
-        }
+        public DateTime RefreshExpiry { get; set; }
     }
 }

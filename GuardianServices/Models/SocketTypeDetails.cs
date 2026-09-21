@@ -1,14 +1,14 @@
-using System.Text.Json.Serialization;
-
 namespace GuardianServices.Models;
+
+using System.Text.Json.Serialization;
 
 public class SocketTypeDetails
 {
     [JsonPropertyName("displayProperties")]
-    public DisplayProperties DisplayProperties { get; set; }
+    public DisplayPropertiesData DisplayProperties { get; set; }
 
     [JsonPropertyName("insertAction")]
-    public InsertAction InsertAction { get; set; }
+    public InsertActionData InsertAction { get; set; }
 
     [JsonPropertyName("plugWhitelist")]
     public List<PlugWhitelistEntry> PlugWhitelist { get; set; }
@@ -48,40 +48,40 @@ public class SocketTypeDetails
 
     [JsonPropertyName("blacklisted")]
     public bool Blacklisted { get; set; }
-}
 
-public class DisplayProperties
-{
-    [JsonPropertyName("description")]
-    public string Description { get; set; }
+    public class DisplayPropertiesData
+    {
+        [JsonPropertyName("description")]
+        public string Description { get; set; }
 
-    [JsonPropertyName("name")]
-    public string Name { get; set; }
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
 
-    [JsonPropertyName("hasIcon")]
-    public bool HasIcon { get; set; }
-}
+        [JsonPropertyName("hasIcon")]
+        public bool HasIcon { get; set; }
+    }
 
-public class InsertAction
-{
-    [JsonPropertyName("actionExecuteSeconds")]
-    public int ActionExecuteSeconds { get; set; }
+    public class InsertActionData
+    {
+        [JsonPropertyName("actionExecuteSeconds")]
+        public int ActionExecuteSeconds { get; set; }
 
-    [JsonPropertyName("actionSoundHash")]
-    public int ActionSoundHash { get; set; }
+        [JsonPropertyName("actionSoundHash")]
+        public int ActionSoundHash { get; set; }
 
-    [JsonPropertyName("isPositiveAction")]
-    public bool IsPositiveAction { get; set; }
+        [JsonPropertyName("isPositiveAction")]
+        public bool IsPositiveAction { get; set; }
 
-    [JsonPropertyName("actionType")]
-    public int ActionType { get; set; }
-}
+        [JsonPropertyName("actionType")]
+        public int ActionType { get; set; }
+    }
 
-public class PlugWhitelistEntry
-{
-    [JsonPropertyName("categoryHash")]
-    public long CategoryHash { get; set; }
+    public class PlugWhitelistEntry
+    {
+        [JsonPropertyName("categoryHash")]
+        public long CategoryHash { get; set; }
 
-    [JsonPropertyName("categoryIdentifier")]
-    public string CategoryIdentifier { get; set; }
+        [JsonPropertyName("categoryIdentifier")]
+        public string CategoryIdentifier { get; set; }
+    }
 }

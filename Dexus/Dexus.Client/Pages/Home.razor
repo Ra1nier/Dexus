@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @rendermode InteractiveServer
 
 @using DexusCore
@@ -12,8 +12,41 @@
 <PageTitle>Dexus</PageTitle>
 
 <!-- Main content -->
-<MudContainer Fixed="true">
-    <MudPaper Height="400px" Width="100%" Square="true">This Page is under construction.</MudPaper>
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
+    <MudGrid Spacing="4" Class="align-center">
+        <MudItem xs="12" md="7">
+            <MudText Typo="Typo.h3" Class="mb-3">Dexus</MudText>
+            <MudText Typo="Typo.h6" Class="mb-4" Color="Color.Secondary">
+                A Destiny 2 inventory manager built with .NET 9, Blazor, MudBlazor, and Bungie's Platform API.
+            </MudText>
+            <MudText Typo="Typo.body1" Class="mb-5">
+                Sign in with Bungie to load characters, equipment, inventory, and vault items, then manage transfers from a browser-based interface.
+            </MudText>
+            <MudStack Row="true" Spacing="2" Class="flex-wrap">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Inventory2"
+                           OnClick="@(() => Navigation.NavigateTo("/DexusVaultManager"))">
+                    Open Vault Manager
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.AccountCircle"
+                           OnClick="@(() => Navigation.NavigateTo("/DexusAccount?goToTab=2"))">
+                    Bungie Account
+                </MudButton>
+            </MudStack>
+        </MudItem>
+        <MudItem xs="12" md="5">
+            <MudPaper Elevation="2" Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-3">Demo Scope</MudText>
+                <MudList T="string" Dense="true">
+                    <MudListItem Icon="@Icons.Material.Filled.Lock">Bungie OAuth over HTTPS</MudListItem>
+                    <MudListItem Icon="@Icons.Material.Filled.Storage">Local manifest cache and SQLite lookup</MudListItem>
+                    <MudListItem Icon="@Icons.Material.Filled.SwapHoriz">Authenticated item transfer workflow</MudListItem>
+                    <MudListItem Icon="@Icons.Material.Filled.VerifiedUser">Access your own Bungie account</MudListItem>
+                </MudList>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
 </MudContainer>
 
 @code

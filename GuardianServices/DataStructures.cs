@@ -118,3 +118,97 @@ public class TimedDictionary<TKey, TValue>
         }
     }
 }
+
+/// <summary>
+/// Represents an ordered dictionary where items are assigned int values based on their addition into the ordered dictionary.
+/// </summary>
+/// <typeparam name="TValue">Item type the dictionary stores.</typeparam>
+public class OrderedDictionary<TValue>
+{
+    private Dictionary<int, TValue> storage = new Dictionary<int, TValue>();
+    private int counter;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OrderedDictionary{TValue}"/> class.
+    /// </summary>
+    /// <param name="startIndex">Starting index of the ordered dictionary.</param>
+    public OrderedDictionary(int startIndex)
+    {
+        this.counter = startIndex;
+    }
+
+    /// <summary>
+    /// Adds the KeyValuePair to the TimedDictionary.
+    /// </summary>
+    /// <param name="value">The item itself.</param>
+    public void Add(TValue value)
+    {
+        this.storage[this.counter] = value;
+        this.counter++;
+    }
+
+    /// <summary>
+    /// Inserts the KeyValuePair to the TimedDictionary. If item is inserted above the max index, the counter is adjusted accordingly.
+    /// </summary>
+    /// <param name="key">Where to insert it.</param>
+    /// <param name="value">The item itself.</param>
+    public void Insert(int key, TValue value)
+    {
+        this.storage[key] = value;
+
+        if (key >= this.counter)
+        {
+            this.counter = key + 1;
+        }
+    }
+
+    /// <summary>
+    /// Tries to get the value associated with the key.
+    /// </summary>
+    /// <param name="key">Key to find.</param>
+    /// <param name="value">Value that the key is associated with.</param>
+    /// <returns>True of a value was associated with a key. False otherwise.</returns>
+    public bool TryGetValue(int key, out TValue value)
+    {
+        if (!this.storage.TryGetValue(key, out var entry))
+        {
+            value = default!;
+            return false;
+        }
+
+        value = entry;
+        return true;
+    }
+
+    /// <summary>
+    /// Rebases the entire dictionary onto the new baseIndex.
+    /// </summary>
+    /// <param name="baseIndex">Index to start the new dictionary at.</param>
+    public void Rebase(int baseIndex = 0)
+    {
+        Dictionary<int, TValue> newStorage = new Dictionary<int, TValue>();
+        foreach (var item in this.storage)
+        {
+            newStorage[baseIndex++] = item.Value;
+        }
+
+        this.storage = newStorage;
+    }
+
+    /// <summary>
+    /// Checks if there are any keys in the dictionary.
+    /// </summary>
+    /// <returns>True if there are keys, False otherwise.</returns>
+    public bool Any()
+    {
+        return this.storage.Count > 0;
+    }
+
+    /// <summary>
+    /// Removes all objects currently in the Timed Dictionary.
+    /// </summary>
+    public void Clear()
+    {
+        this.storage.Clear();
+    }
+}

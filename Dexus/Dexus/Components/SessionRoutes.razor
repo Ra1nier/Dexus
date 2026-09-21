@@ -1,0 +1,27 @@
+@using Dexus.Authentication
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationState
+@inject BungieSessionStore Sessions
+@inject ClientProfile.Profile Profile
+@inject DexusCore.Core Core
+
+@if (initialized)
+{
+    <Routes />
+}
+
+@code {
+    private bool initialized;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authentication = await AuthenticationState.GetAuthenticationStateAsync();
+        var session = Sessions.Find(authentication.User);
+        if (session is not null)
+        {
+            Profile.BindTo(session);
+            await Core.SignIn();
+        }
+        initialized = true;
+    }
+}

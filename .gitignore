@@ -233,6 +233,9 @@ _pkginfo.txt
 ClientBin/
 ~$*
 *~
+*.env
+!.env.example
+https/
 *.dbmdl
 *.dbproj.schemaview
 *.jfm
@@ -368,3 +371,23 @@ FodyWeavers.xsd
 /ClientProfile/data/ExpiryDates.json
 /RequestManager/Manifest/world_sql_content_en.content
 /RequestManager/Manifest
+
+# JetBrains/Rider workspace state
+.idea/
+
+# Local environment and runtime secrets
+.env
+*.env
+!.env.example
+*.pfx
+https/
+**/https/
+OAuthProfile/
+ClientProfile/data/
+**/OAuthProfile/
+**/ClientProfile/data/
+
+# Generated runtime/cache data
+**/RequestManager/Manifest/
+**/FullItemComponents.json
+**/JSON/

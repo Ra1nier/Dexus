@@ -5,48 +5,46 @@
 
 @if (Sorted)
 {
-    <MudPaper Class="d-flex flex-column gap-2" @key="RenderKey">
-        <MudGrid Class="d-flex" Justify="Justify.SpaceBetween">
+    <MudPaper Class="bucket-shelf" @key="RenderKey">
+        <div class="bucket-grid">
             @foreach (var character in Core.Content.Characters.Values)
             {
-                <MudItem xs="6" sm="3" md="2" lg="2" Class="d-flex flex-column">
+                <div class="bucket-column">
+                    <span class="vault-location-label">@character.Class</span>
                     <MudDropZone T="Item" Identifier=@character.CharacterId
-                                 Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1"
-                                 Style="height: 100%; width: 100%;">
+                                 Class="bucket-drop-zone">
                         @foreach (var item in Items.Where(i => i.Identifier == character.CharacterId))
                         {
-                            <ItemModel Item=@item />
+                            <ItemModel Item=@item Size="60" />
                         }
                     </MudDropZone>
-                </MudItem>
+                </div>
             }
 
-            <MudItem xs="6" sm="6" md="6" lg="6" Class="d-flex flex-column">
+            <div class="bucket-column bucket-vault-column">
                 @if ((Items.Count(x => x.Identifier == "Vault")) > 0)
                 {
                     <MudDropZone T="Item" Identifier="Vault"
-                                 Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1"
-                                 Style="min-width: 50%; height: 100%;"/>
+                                 Class="bucket-drop-zone bucket-vault-zone"/>
                 }
-            </MudItem>
-        </MudGrid>
+            </div>
+        </div>
     </MudPaper>
 }
 else
 {
-    <MudPaper Class="d-flex flex-column gap-2" @key="RenderKey">
-        <MudGrid Class="d-flex flex-wrap gap-2" Justify="Justify.SpaceBetween" Style="padding: 25px">
+    <MudPaper Class="bucket-shelf" @key="RenderKey">
+        <div class="bucket-wide-grid">
             <MudDropZone T="Item"
-                         Class="rounded mud-background-gray pa-4 ma-4 d-flex flex-wrap gap-1"
-                         Style="height: 100%; width: 100%;">
+                         Class="bucket-drop-zone bucket-wide-zone">
                 @foreach (var item in Items)
                 {
-                    <MudItem Class="d-flex flex-column">
+                    <div>
                         <ItemModel Item=@item />
-                    </MudItem>
+                    </div>
                 }
             </MudDropZone>
-        </MudGrid>
+        </div>
     </MudPaper>
 }
 
@@ -61,7 +59,7 @@ else
     /// Items to display in the bucket list.
     /// </summary>
     [Parameter]
-    public required IEnumerable<Item> Items { get; set; }
+    public required IEnumerable<DItem> Items { get; set; }
 
     /// <summary>
     /// A bool value used to determine if the items should be sorted by character.
@@ -75,7 +73,7 @@ else
     protected override void OnInitialized()
     {
         // Connects
-        Core.Content.TransferOccured += RefreshState;
+        Core.Content.Transfer.TransferOccured += RefreshState;
     }
     
     /// <summary>

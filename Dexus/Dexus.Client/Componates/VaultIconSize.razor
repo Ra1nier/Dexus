@@ -1,0 +1,33 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<div class="vault-size-control" @ref="control">
+    <label>
+        <span>Icon size</span>
+        <input type="range" min="75" max="150" step="5" value="100" aria-label="Icon size" />
+    </label>
+    <output aria-live="off">100%</output>
+    <button type="button" class="vault-size-reset">Reset</button>
+</div>
+
+@code {
+    private ElementReference control;
+    private IJSObjectReference? module;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/vault-icon-size.js");
+            await module.InvokeVoidAsync("initialize", control);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (module is null) return;
+        // DOM listeners are removed by the module when the control leaves the page.
+        try { await module.DisposeAsync(); }
+        catch (JSDisconnectedException) { }
+    }
+}

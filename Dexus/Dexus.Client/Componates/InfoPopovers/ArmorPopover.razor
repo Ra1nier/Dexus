@@ -3,77 +3,90 @@
 
 @inject Core Core
 
-<ItemPopover Item="Item" Condition="@Condition">
-    <!-- TODO: Convert to armor formating -->
-    <!-- Slot Details Grid -->
-    <div class="mt-2"
-         style="display: grid; 
+<!-- TODO: Convert to armor formating -->
+<!-- Slot Details Grid -->
+<div class="mt-2"
+     style="display: grid; 
                         grid-template-columns: 1fr 3fr 1fr; 
                         gap: 6px; 
                         text-align: center;">
 
-        <div class="slot-header">Archetype</div>
-        <div class="slot-header">Perks</div>
-        <div class="slot-header">Masterwork</div>
+    <div class="slot-header">Archetype</div>
+    <div class="slot-header">Perks</div>
+    <div class="slot-header">Masterwork</div>
 
-        <!-- Archetype -->
-        <div class="slot-icon">
-            @{
-                string archIconPath = $"https://www.bungie.net{Item.Perks.FirstOrDefault(i => i.IsVisible)?.IconPath}";
-            }
-            <MudTooltip Text="Placeholder">
-                <img src="@archIconPath" class="perk-icon"/>
-            </MudTooltip>
-        </div>
-
-        <!-- Perk Slots -->
-        <div style="display: flex; justify-content: center; gap: 6px;">
-            @for (int i = 1; i <= 4; i++)
-            {
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                    @if (Item.Sockets.Plugs.TryGetValue(i, out var plug))
-                    {
-                        @foreach (var perk in plug)
-                        {
-                            string iconPath = $"https://www.bungie.net{Core.Content.PerkDetails[perk.PlugItemHash].DisplayProperties.Icon}";
-                            string altText = Core.Content.PerkDetails[perk.PlugItemHash].DisplayProperties.Name;
-                            <MudTooltip Text="@altText">
-                                <img src="@iconPath" class="perk-icon"/>
-                            </MudTooltip>
-                        }
-                    }
-                </div>
-            }
-        </div>
-
-        <!-- Masterwork Placeholder -->
-        <div class="slot-icon">
-            Placeholder
-        </div>
+    <!-- Archetype -->
+    <div class="slot-icon">
+        <MudTooltip Text="Placeholder">
+            <!-- <img src="@archIconPath" class="perk-icon"/> -->
+        </MudTooltip>
     </div>
 
-    <!-- Weapon Stats -->
-    <MudExpansionPanel Text="Weapon Stats" MaxHeight="150">
-        <MudList T="string">
-            <MudListItem Text="Range" Icon="@Icons.Material.Filled.GpsFixed"/>
-            <MudListItem Text="Stability" Icon="@Icons.Material.Filled.ShowChart"/>
-            <MudListItem Text="Reload Speed" Icon="@Icons.Material.Filled.Sync"/>
-        </MudList>
-    </MudExpansionPanel>
-</ItemPopover>
+    <!-- Perk Slots -->
+    <div style="display: flex; justify-content: center; gap: 6px;">
+        <!-- @for (int i = 1; i <= 4; i++)
+        {
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                @if (Item.Sockets.Plugs.TryGetValue(i, out var plug))
+                {
+                    @foreach (var perk in plug)
+                    {
+                        string iconPath = $"https://www.bungie.net{Core.Content.PerkDetails[perk.PlugItemHash].DisplayProperties.Icon}";
+                        string altText = Core.Content.PerkDetails[perk.PlugItemHash].DisplayProperties.Name;
+                        <MudTooltip Text="@altText">
+                            <img src="@iconPath" class="perk-icon"/>
+                        </MudTooltip>
+                    }
+                }
+            </div>
+        } -->
+
+        @if (Item.Plugs != null)
+        {
+            <div style="display: flex; justify-content: center; gap: 6px;">
+                @for (int i = 1; i <= 4; i++)
+                {
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                        @if (Item.Plugs.ReusablePlugs.TryGetValue(i, out var plug))
+                        {
+                            @foreach (var reusablePlug in plug)
+                            {
+                                string iconPath = $"https://www.bungie.net{reusablePlug.Details.DisplayProperties.Icon}";
+                                string altText = reusablePlug.Details.DisplayProperties.Name;
+                                <MudTooltip Text="@altText">
+                                    <img src="@iconPath" class="perk-icon"/>
+                                </MudTooltip>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Masterwork Placeholder -->
+    <div class="slot-icon">
+        Placeholder
+    </div>
+</div>
+
+<!-- Weapon Stats -->
+<MudExpansionPanel Text="Weapon Stats" MaxHeight="150">
+    <MudList T="string">
+        <MudListItem Text="Range" Icon="@Icons.Material.Filled.GpsFixed"/>
+        <MudListItem Text="Stability" Icon="@Icons.Material.Filled.ShowChart"/>
+        <MudListItem Text="Reload Speed" Icon="@Icons.Material.Filled.Sync"/>
+    </MudList>
+</MudExpansionPanel>
 
 @code {
+
     /// <summary>
     /// Item to display Info About.
     /// </summary>
     [Parameter]
-    public required Item Item { get; set; }
+    public required DItem Item { get; set; }
 
-    /// <summary>
-    /// Bool liked to whether the popover should be displayed.
-    /// </summary>
-    [Parameter]
-    public required bool Condition { get; set; }
 }
 
 <style>

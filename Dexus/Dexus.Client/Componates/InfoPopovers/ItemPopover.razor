@@ -5,73 +5,103 @@
 
 <MudPopover Open=@Condition AnchorOrigin="Origin.TopCenter"
             TransformOrigin="Origin.BottomCenter">
-    <MudPaper Class="pa-3"
-              Style="min-width: 300px; 
-                     max-width: 350px; 
-                     border-radius: 12px; 
-                     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); 
-                     backdrop-filter: blur(6px);
-                     background: rgba(30, 30, 30, 0.9);
-                     color: white;
-                     animation: fadeIn 0.2s ease-out;">
+    <MudPaper Class="item-popover">
 
         <!-- Header with Name and Close Button -->
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <MudText Typo="Typo.h6"
-                     Style="flex-grow: 1; font-weight: 600;">@Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name</MudText>
+                     Style="flex-grow: 1; font-weight: 600;">@Item.Details.DisplayProperties.Name</MudText>
             <MudIconButton Icon="@Icons.Material.Outlined.Close" OnClick="() => Condition = false"
                            Size="Size.Small" Style="color: white;"/>
         </div>
-        
-        @ChildContent
+
+        <!-- Additional Item Info Panel -->
+        @if (Item.IsWeapon())
+        {
+            <WeaponPopover Item="@Item" />
+        }
+        else if (Item.IsArmor())
+        {
+            <ArmorPopover Item="@Item" />
+        }
 
         @if (!string.IsNullOrEmpty(Item.ItemInstanceId))
         {
-            <!-- Transfer and Postmaster Actions -->
-            <div class="mt-3" style="display: flex; justify-content: space-between; gap: 8px;">
-                @if (Item.Bucket == "Lost Items")
-                {
+            if (Item.Bucket == "Lost Items")
+            {
+                <div class="transfer-layout">
                     <MudButton Color="Color.Warning" Variant="Variant.Filled"
                                StartIcon="@Icons.Material.Filled.KeyboardDoubleArrowDown"
                                OnClick="() => PullFromPostmaster()"
-                               Style="flex-grow: 1;">
+                               class="postmaster-button">
                         Pull From Postmaster
                     </MudButton>
-                }
-                else
-                {
-                    <div class="transfer-options">
-                        @foreach (Character character in Core.Content.Characters.Values.Where(c => c.CharacterId != Item.Identifier?.Replace("Equipped", string.Empty)))
-                        {
-                            string iconPath = $"/Resources/{character.Class}_Emblem.jpg";
-
-                            <MudTooltip Text=@character.Class>
-                                <MudIconButton Disabled="@processing" Tag=@character.CharacterId
-                                               OnClick="() => Transfer(character.CharacterId ?? string.Empty)"
-                                               Variant="Variant.Filled" Color="Color.Dark"
-                                               Style="width: 48px; height: 48px; padding: 0; display: flex; justify-content: center; align-items: center; overflow: hidden;">
-                                    <img src="@iconPath" alt="@character.Class" class="transfer-icon"/>
-                                </MudIconButton>
-
-                            </MudTooltip>
-                        }
-
-                        @if (Item.Identifier != "Vault")
-                        {
-                            string vault = "Vault";
-                            <MudTooltip Text="Vault">
-                                <MudIconButton Disabled="@processing" Tag="@vault"
-                                               OnClick="() => Transfer(vault)"
-                                               Variant="Variant.Filled" Color="Color.Dark"
-                                               Style="width: 48px; height: 48px; overflow: hidden; padding: 0;">
-                                    <img src="/Resources/VaultEmblem.png" alt="Vault" class="transfer-icon"/>
-                                </MudIconButton>
-                            </MudTooltip>
-                        }
+                </div>
+            }
+            else
+            {
+                <div class="transfer-layout">
+                    <div class="transfer-label-row">
+                        <span>Transfer</span>
+                        <span>Equip</span>
                     </div>
-                }
-            </div>
+
+                    <div class="transfer-button-row">
+                        <!-- Transfer Buttons -->
+                        <div class="transfer-group">
+                            @foreach (var character in Core.Content.Characters.Values
+                                              .Where(c => c.CharacterId != Item.Identifier?.Replace("Equipped", string.Empty)))
+                            {
+                                string iconPath = $"/Resources/{character.Class}_Emblem.svg";
+                                string toolText = $"Transfer to {character.Class}";
+
+                                <MudTooltip Text="@toolText">
+                                    <MudIconButton Disabled="@processing" Tag="@character.CharacterId"
+                                                   OnClick="() => Transfer(character.CharacterId ?? string.Empty)"
+                                                   Variant="Variant.Filled" Color="Color.Default"
+                                                   class="transfer-icon-button">
+                                        <img src="@iconPath" alt="@character.Class" class="transfer-icon"/>
+                                    </MudIconButton>
+                                </MudTooltip>
+                            }
+
+                            @if (Item.Identifier != "Vault")
+                            {
+                                string vault = "Vault";
+                                <MudTooltip Text="Transfer to Vault">
+                                    <MudIconButton Disabled="@processing" Tag="vault"
+                                                   OnClick="() => Transfer(vault)"
+                                    Variant="Variant.Filled" Color="Color.Default"
+                                    class="transfer-icon-button">
+                                    <img src="/Resources/VaultEmblem.png" alt="Vault" class="transfer-icon"/>
+                                    </MudIconButton>
+                                </MudTooltip>
+                            }
+                        </div>
+
+                        <!-- Equip Buttons -->
+                        <div class="transfer-group">
+                            @foreach (var character in Core.Content.Characters.Values)
+                            {
+                                string iconPath = $"/Resources/{character.Class}_Emblem.svg";
+                                string destination = $"{character.CharacterId}Equipped";
+                                string toolText = $"Equip on {character.Class}";
+
+                                <MudTooltip Text="@toolText">
+                                    <MudIconButton Disabled="@processing" Tag="@character.CharacterId"
+                                                   OnClick="() => Transfer(destination)"
+                                                   Variant="Variant.Filled" Color="Color.Default"
+                                                   class="transfer-icon-button">
+                                        <img src="@iconPath" alt="@character.Class" class="transfer-icon"/>
+                                    </MudIconButton>
+                                </MudTooltip>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
         }
+        
     </MudPaper>
 </MudPopover>
 
@@ -81,18 +111,19 @@
     /// Item to display Info About.
     /// </summary>
     [Parameter]
-    public required Item Item { get; set; }
+    public required DItem Item { get; set; }
 
     /// <summary>
     /// Bool liked to whether the popover should be displayed.
     /// </summary>
     [Parameter]
     public required bool Condition { get; set; }
-    
+
     /// <summary>
     /// Derived component HTML content.
     /// </summary>
-    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
 
     /// <summary>
     /// Indicates whether an action is currently being processed for the item. 
@@ -114,12 +145,12 @@
     /// <param name="destination">Location to transfer the item to.</param>
     protected async Task Transfer(string destination)
     {
-        if (!(await Core.ConfirmOAuthStatus()) || !Core.Content.TransfersAllowed)
+        if (!(await Core.ConfirmOAuthStatus()) || !Core.Content.Transfer.TransfersAllowed)
         {
             return;
         }
 
-        string origin = Item.Identifier ?? string.Empty;
+        string origin = Item.Identifier;
 
         string characterName = destination;
         if (destination != "Vault")
@@ -127,18 +158,18 @@
             characterName = Core.Content.Characters.FirstOrDefault(x => x.Value.CharacterId == destination).Value.Class ?? destination;
         }
 
-        Core.Snackbar.AddMessage($"Transferring {Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name} to {characterName}.", "Info");
+        Core.Snackbar.AddMessage($"Transferring {Item.Details.DisplayProperties.Name} to {characterName}.", "Info");
 
-        string itemID = Core.Content.QueueTransfer(TransferType.Push, Item, origin, destination);
+        string itemID = Core.Content.Transfer.QueueTransfer(TransferType.Push, Item, destination);
 
-        while (Core.Content.GetTransferStatus(itemID) == 2)
+        while (Core.Content.Transfer.GetTransferStatus(itemID) == 2)
         {
             await Task.Delay(100);
         }
 
-        if (Core.Content.GetTransferStatus(itemID) == 0)
+        if (Core.Content.Transfer.GetTransferStatus(itemID) == 0)
         {
-            Core.Snackbar.AddMessage($"Transfer of {Core.Content.ItemDetails[Item.ItemHash].DisplayProperties.Name} to {characterName} was Successful.", "Success");
+            Core.Snackbar.AddMessage($"Transfer of {Item.Details.DisplayProperties.Name} to {characterName} was Successful.", "Success");
         }
     }
 
@@ -172,22 +203,59 @@
 }
 
 <style>
-    @@keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: scale(0.95);
-        }
-        to {
-            opacity: 1;
-            transform: scale(1);
-        }
+    .item-popover {
+        animation: fadeIn 0.2s ease-out;
+        backdrop-filter: blur(8px);
+        background: rgba(28, 30, 34, 0.94);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
+        color: white;
+        max-width: 360px;
+        min-width: 300px;
+        padding: 14px;
     }
 
-    .transfer-options {
+    .transfer-layout {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        margin-top: 16px;
+    }
+
+    .transfer-label-row {
+        display: flex;
+        justify-content: space-around;
+        width: 100%;
+        max-width: 400px;
+        font-weight: bold;
+        font-size: 0.95rem;
+    }
+
+    .transfer-button-row {
+        display: flex;
+        justify-content: space-around;
+        width: 100%;
+        max-width: 400px;
+        gap: 20px;
+    }
+
+    .transfer-group {
         display: flex;
         gap: 6px;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+    }
+
+    .transfer-icon-button {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border-radius: 8px;
+        display: flex;
         justify-content: center;
+        align-items: center;
+        overflow: hidden;
     }
 
     .transfer-icon {
@@ -200,5 +268,10 @@
 
     .transfer-icon:hover {
         transform: scale(1.1);
+    }
+
+    .postmaster-button {
+        height: 40px;
+        white-space: nowrap;
     }
 </style>

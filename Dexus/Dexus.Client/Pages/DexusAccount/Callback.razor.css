@@ -1,45 +1,44 @@
 ﻿.loader {
-        width: 32px;
-        height: 16px;
-        display: flex;
-    }
+    display: flex;
+    height: 16px;
+    justify-content: center;
+    margin: 28px auto;
+    width: 32px;
+}
 
-        .loader:before,
-        .loader:after {
-            content: "";
-            flex: 1;
-            background: #3FB8AF;
-            transform-origin: top right;
-            animation: l10-1 2s infinite;
-        }
+.loader::before,
+.loader::after {
+    animation: l10-1 2s infinite;
+    background: #3fb8af;
+    content: "";
+    flex: 1;
+    transform-origin: top right;
+}
 
-        .loader:after {
-            background: #FF3D7F;
-            transform-origin: top left;
-            animation-delay: .25s;
-        }
+.loader::after {
+    animation-delay: .25s;
+    background: #ff3d7f;
+    transform-origin: top left;
+}
 
-    @keyframes l10-1 {
-        0%,5%
-
-    {
-        transform: rotate(0)
+@keyframes l10-1 {
+    0%, 5% {
+        transform: rotate(0);
     }
 
     20%, 30% {
-        transform: rotate(90deg)
+        transform: rotate(90deg);
     }
 
     45%, 55% {
-        transform: rotate(180deg)
+        transform: rotate(180deg);
     }
 
     70%, 80% {
-        transform: rotate(270deg)
+        transform: rotate(270deg);
     }
 
     95%, 100% {
-        transform: rotate(360deg)
+        transform: rotate(360deg);
     }
-
-    }
+}

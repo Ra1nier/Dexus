@@ -2,16 +2,13 @@
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
-using GuardianServices.Models;
-
 namespace RequestManager;
 
+using GuardianServices.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Data.Sqlite;
 using System.Text.Json;
 using SQLitePCL;
-using GuardianServices.Models.ItemDetails;
-using GuardianServices.Models.PerkDetails;
 
 /// <summary>
 /// Handles interactions with the Destiny 2 Manifest.
@@ -58,7 +55,7 @@ public class ManifestServer
         // Convert itemHash to manifest id and construct query.
         int id = this.ConvertHashToID(itemHash);
         string query = $"SELECT json FROM DestinyInventoryItemDefinition WHERE id = {id};";
-        
+
         // Execute Query and get response
         (bool success, string json) = await this.QueryManifest(query);
 
@@ -190,6 +187,12 @@ public class ManifestServer
     /// <returns>A Tuple where Item1 is a bool indicating whether the associated JSON was found, and Item2 is a string containing the JSON.</returns>
     private async Task<Tuple<bool, string>> QueryManifest(string query)
     {
+        if (string.IsNullOrWhiteSpace(this.ManifestPath) || !File.Exists(this.ManifestPath))
+        {
+            this.logger.LogWarning("Manifest database path is not ready.");
+            return new Tuple<bool, string>(false, "{}");
+        }
+
         string connectionString = $"Data Source={this.ManifestPath};";
 
         try

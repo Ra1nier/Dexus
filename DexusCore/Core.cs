@@ -1,6 +1,7 @@
-﻿// <copyright file="Core.cs" company="PlaceholderCompany">
+// <copyright file="Core.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
+
 namespace DexusCore;
 
 using Microsoft.Extensions.Logging;
@@ -15,6 +16,8 @@ using GuardianServices;
 /// </summary>
 public class Core
 {
+    private static readonly SemaphoreSlim ManifestUpdateLock = new SemaphoreSlim(1, 1);
+
     // Core libraries
     private OAuthProfile oauthProfile;
     private Profile profile;
@@ -32,42 +35,46 @@ public class Core
     private ILogger logger;
 
     // Local Values
-    private int oAuthStatus = 2;
+    private int oAuthStatus = 3;
+    private Task? manifestLoadTask;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Core"/> class.
     /// </summary>
-    public Core()
+    /// <param name="oauthProfile">Injected oauthProfile service.</param>
+    /// <param name="profile">Injected profile service.</param>
+    /// <param name="oauth">Injected oauth service.</param>
+    /// <param name="request">Injected request service.</param>
+    /// <param name="manifest">Injected manifest service.</param>
+    /// <param name="content">Injected content service.</param>
+    /// <param name="snackbar">Injected snackbar service.</param>
+    /// <param name="loadingbars">Injected loadingbars service.</param>
+    /// <param name="timeline">Injected timeline service.</param>
+    /// <param name="logger">Injected logger service.</param>
+    public Core(
+        OAuthProfile oauthProfile,
+        Profile profile,
+        OAuthServer oauth,
+        RequestServer request,
+        ManifestServer manifest,
+        ContentManager content,
+        SnackbarService snackbar,
+        LoadingbarService loadingbars,
+        TimelineService timeline,
+        ILogger<Core> logger)
     {
-        // Create logger
-        using var loggerFactory = LoggerFactory.Create(builder =>
-        {
-            builder
-                .SetMinimumLevel(LogLevel.Trace)
-                .AddConsole()
-                .AddDebug();
-        });
-        this.logger = loggerFactory.CreateLogger<Core>();
-
-        // Start instances of core services
-        this.snackbar = new SnackbarService();
-        this.loadingbars = new LoadingbarService();
-        this.timeline = new TimelineService();
-
-        // Start local instances of libraries needed by core
-        this.profile = new Profile();
-        this.oauthProfile = new OAuthProfile();
-        this.logger.LogDebug($"OAuth Profile Created. State = {this.oauthProfile.State}");
-        this.oauth = new OAuthServer(this.logger, this.oauthProfile);
-        this.request = new RequestServer(this.logger, this.profile, this.oauthProfile);
-        this.manifest = new ManifestServer(this.logger);
-        this.content = new ContentManager(this.logger, this.profile, this.request, this.manifest, this.snackbar, this.loadingbars);
-
-        // Setting Local Values
+        this.oauthProfile = oauthProfile;
+        this.profile = profile;
+        this.oauth = oauth;
+        this.request = request;
+        this.manifest = manifest;
+        this.content = content;
+        this.snackbar = snackbar;
+        this.loadingbars = loadingbars;
+        this.timeline = timeline;
+        this.logger = logger;
         this.loadingbars.GenerateLoadingbar("Main");
-        this.OAuthStatus = 3;
-
-        this.StartCoreService();
+        this.OAuthStatus = oauthProfile.HasValidAPIKeys() ? 2 : 3;
     }
 
     /// <summary>
@@ -123,30 +130,6 @@ public class Core
     // Main Functionality
 
     /// <summary>
-    /// Starts the DexusCore.
-    /// </summary>
-    public async void StartCoreService()
-    {
-        if (!this.oauthProfile.LoadUserAPIKeys())
-        {
-            this.logger.LogError("Could not load the user's api keys.");
-            return;
-        }
-
-        this.OAuthStatus = 2;
-
-        if (!await this.SignIn())
-        {
-            this.logger.LogError("Could not sign the client in. Sign In Failed.");
-            return;
-        }
-
-        this.GetDestiny2Manifest();
-
-        this.logger.LogDebug("Core started.");
-    }
-
-    /// <summary>
     /// Attempts to sign in the client and create the user profile.
     /// </summary>
     /// <returns>A bool value indicating whether Sign-In was successful.</returns>
@@ -181,88 +164,23 @@ public class Core
     }
 
     /// <summary>
-    /// Informs the OAuthProfile of the users inputed API keys.
+    /// Ensures the Destiny 2 manifest is loaded before manifest-dependent content is queried.
     /// </summary>
-    /// <param name="apiKey">User provided API key.</param>
-    /// <param name="clientId">User provided Client ID key.</param>
-    /// <param name="clientSecret">User provided Client Secret key.</param>
-    /// <returns>True if completed successfully, False otherwise.</returns>
-    public bool SetOAuthKeys(string apiKey, string clientId, string clientSecret)
+    /// <returns>A task representing the manifest load operation.</returns>
+    public async Task EnsureManifestLoaded()
     {
-        if (this.oauthProfile.ConstructUserAPIFile(apiKey, clientId, clientSecret))
+        if (!string.IsNullOrWhiteSpace(this.manifest.ManifestPath))
         {
-            this.OAuthStatus = 2;
-            this.logger.LogInformation("OAuth Keys have been set.");
-
-            this.oauthProfile.LoadUserAPIKeys();
-
-            return true;
+            return;
         }
 
-        this.logger.LogInformation("OAuth Keys could not be set.");
-        return false;
-    }
+        this.manifestLoadTask ??= this.GetDestiny2Manifest();
+        await this.manifestLoadTask;
 
-    /// <summary>
-    /// Handles signing in the user to bungie to retrieve necessary data.
-    /// </summary>
-    /// <param name="code">Authorization code.</param>
-    /// <exception cref="Exception">If the Exchange could not take place.</exception>
-    public async void StartOAuth(string code)
-    {
-        bool tokensStored = false;
-        bool destinyIDStored = false;
-
-        this.logger.LogDebug("Starting OAuth");
-
-        // Get Tokens from Bungie
-        string tokens = await this.oauth.StartOAuthProcessAsync(code);
-        if (tokens != "Error")
+        if (string.IsNullOrWhiteSpace(this.manifest.ManifestPath))
         {
-            tokensStored = this.profile.StoreUserTokens(tokens);
+            this.manifestLoadTask = null;
         }
-
-        // Create Profile
-        if (tokensStored)
-        {
-            if (!this.profile.Create())
-            {
-                tokensStored = false;
-                this.logger.LogWarning("Client Profile could not be created. Functionality will be extremely limited.");
-            }
-        }
-
-        // Get DestinyMembershipID
-        string[] destinyID = await this.request.PlatformDestiny2_Request_MembershipIDAsync();
-        if (destinyID[0] != "Error")
-        {
-            destinyIDStored = this.profile.StoreDestinyMembershipID(destinyID[0], destinyID[1]);
-        }
-
-        // Load the Destiny ID into the profile
-        if (destinyIDStored)
-        {
-            if (!this.profile.LoadDestinyID())
-            {
-                destinyIDStored = false;
-                this.logger.LogWarning("Destiny ID could not be loaded into the profile. DestinyMembershipID failed to initialize");
-            }
-        }
-
-        if (tokensStored && destinyIDStored)
-        {
-            this.logger.LogDebug("Profile has been successfully created.");
-            this.OAuthStatus = 0;
-        }
-        else
-        {
-            string reason = tokensStored ? "Destiny ID could not be loaded" : "Tokens could not be loaded.";
-
-            this.logger.LogError($"Profile failed to initialize. {reason}");
-        }
-
-        // Get the most current version of the Destiny 2 manifest.
-        this.GetDestiny2Manifest();
     }
 
     /// <summary>
@@ -271,36 +189,57 @@ public class Core
     /// <returns>True if the access token can be used. False otherwise.</returns>
     public async Task<bool> ConfirmOAuthStatus()
     {
-        // Check if the API keys are valid. If not, set the OAuth status to 3 and return false.
-        if (!this.OAuthProfile.HasValidAPIKeys())
+        await this.profile.RefreshLock.WaitAsync();
+        try
         {
-            this.OAuthStatus = 3;
-            return false;
-        }
+            // Check if the API keys are valid. If not, set the OAuth status to 3 and return false.
+            if (!this.OAuthProfile.HasValidAPIKeys())
+            {
+                this.OAuthStatus = 3;
+                return false;
+            }
 
-        // Check if the refresh token is expired, and if so, start the OAuth process
-        if (this.CheckExpiry(this.profile.RefreshTokenExpireDate))
+            // Check if the refresh token is expired, and if so, start the OAuth process
+            if (!this.profile.Create() || this.CheckExpiry(this.profile.RefreshTokenExpireDate))
+            {
+                this.OAuthStatus = 2;
+                return false;
+            }
+
+            // Check if the access token is expired and if so, refresh the user tokens
+            if (this.CheckExpiry(this.profile.AccessTokenExpireDate))
+            {
+                this.OAuthStatus = 1;
+                return await this.RefreshAccessToken();
+            }
+
+            this.OAuthStatus = 0;
+            return true;
+        }
+        finally
         {
-            this.OAuthStatus = 2;
-            return false;
+            this.profile.RefreshLock.Release();
         }
-
-        // Check if the access token is expired and if so, refresh the user tokens
-        if (this.CheckExpiry(this.profile.AccessTokenExpireDate))
-        {
-            this.OAuthStatus = 1;
-            return await this.RefreshAccessToken();
-        }
-
-        return true;
     }
 
     /// <summary>
     /// Gets the Destiny 2 manifest from bungie and saves the path to it in the manifest manager.
     /// </summary>
-    private async void GetDestiny2Manifest()
+    private async Task GetDestiny2Manifest()
     {
-        this.manifest.ManifestPath = await this.request.Destiny2Manifest_Request_GetCurrentManifest();
+        await ManifestUpdateLock.WaitAsync();
+        try
+        {
+            string englishManifestPath = await this.request.Destiny2Manifest_Request_GetManifestPath("en");
+            if (!string.IsNullOrWhiteSpace(englishManifestPath))
+            {
+                this.manifest.ManifestPath = await this.request.Destiny2Manifest_Request_GetCurrentManifest(englishManifestPath);
+            }
+        }
+        finally
+        {
+            ManifestUpdateLock.Release();
+        }
     }
 
     /// <summary>
@@ -335,7 +274,7 @@ public class Core
     /// <returns>True if it has expired, False if not.</returns>
     private bool CheckExpiry(DateTime expiry)
     {
-        int expiredCondition = DateTime.Compare(DateTime.Now, expiry);
+        int expiredCondition = DateTime.Compare(DateTime.UtcNow, expiry);
 
         if (expiredCondition > 0 || expiredCondition == 0)
         {

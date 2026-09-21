@@ -4,6 +4,7 @@
 @using Flairs.DialogBoxes
 
 @inherits LayoutComponentBase
+@implements IDisposable
 
 @inject Core Core
 @inject ISnackbar Snackbar
@@ -16,8 +17,8 @@
 <MudPopoverProvider/>
 <MudDialogProvider/>
 <MudSnackbarProvider/>
-<MudLayout>
-    <MudAppBar Elevation="1">
+<MudLayout Class="dexus-layout">
+    <MudAppBar Elevation="1" Class="dexus-appbar">
         <!-- Left Side of app bar -->
         <NavMenu />
         
@@ -52,6 +53,8 @@
 </div>
 
 @code {
+    private readonly CancellationTokenSource lifetime = new();
+
     // Layout Variables
     private bool _drawerOpen = true;
     private bool _isDarkMode = true;
@@ -91,25 +94,28 @@
     /// </summary>
     private void StartSnackbarProvider()
     {
-        new Thread(async void () =>
+        _ = Task.Run(async () =>
         {
             try
             {
-                while (true)
+                while (!lifetime.IsCancellationRequested)
                 {
-                    await Task.Delay(1000);
+                    await Task.Delay(1000, lifetime.Token);
                     while (Core.Snackbar.NextMessage(out string message, out string severity, out Action<SnackbarOptions> config))
                     {
                         Severity mode = (Severity)Enum.Parse(typeof(Severity), severity);
-                        Snackbar.Add(message, mode, config);
+                        await InvokeAsync(() => Snackbar.Add(message, mode, config));
                     }
                 }
+            }
+            catch (OperationCanceledException) when (lifetime.IsCancellationRequested)
+            {
             }
             catch (Exception e)
             {
                 Logger.LogError($"An unknown error occured when executing the Snackbar Task that has shutdown the task down: {e.Message}");
             }
-        }).Start();
+        });
     }
 
     /// <summary>
@@ -117,32 +123,35 @@
     /// </summary>
     private void StartDialogService()
     {
-        new Thread(async void () =>
+        _ = Task.Run(async () =>
         {
             try
             {
-                while (true)
+                while (!lifetime.IsCancellationRequested)
                 {
-                    await Task.Delay(1000);
+                    await Task.Delay(1000, lifetime.Token);
                     while (DialogUIService.NextDialog(out string title, out string message, out var action, out int type))
                     {
                         switch (type)
                         {
                             case 0:
-                                await OpenMessageDialog(title, message);
+                                await InvokeAsync(() => OpenMessageDialog(title, message));
                                 break;
                             case 1:
-                                await OpenConfirmationDialog(title, message, action);
+                                await InvokeAsync(() => OpenConfirmationDialog(title, message, action));
                                 break;
                         }
                     }
                 }
             }
+            catch (OperationCanceledException) when (lifetime.IsCancellationRequested)
+            {
+            }
             catch (Exception e)
             {
                 Logger.LogError($"An unknown error occured when executing the Dialog Task that has shutdown the task down: {e.Message}");
             }
-        }).Start();
+        });
     }
     
     /// <summary>
@@ -277,5 +286,11 @@
         true => Icons.Material.Rounded.AutoMode,
         false => Icons.Material.Outlined.DarkMode,
     };
+
+    public void Dispose()
+    {
+        lifetime.Cancel();
+        refreshUpdateTimer?.Dispose();
+    }
 
 }

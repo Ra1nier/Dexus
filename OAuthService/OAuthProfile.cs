@@ -1,44 +1,45 @@
-﻿// <copyright file="OAuthProfile.cs" company="PlaceholderCompany">
+// <copyright file="OAuthProfile.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
 namespace OAuthService;
 
 using Microsoft.Extensions.Configuration;
+using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 
 /// <summary>
 /// Contains the necessary Bungie access points and tokens in a data class.
 /// </summary>
 public class OAuthProfile
 {
-    // Data paths
-    private readonly string dataFolderPath;
-    private readonly string userTokenFileLocation;
-
     // OAuth Variables
-    private readonly string state;
     private readonly string authorizationURL = "https://www.bungie.net/en/OAuth/Authorize";
     private readonly string tokenEndpoint = "https://www.bungie.net/Platform/App/OAuth/Token/";
+    private string state;
     private string apiKey = string.Empty;
     private string clientID = string.Empty;
     private string clientSecret = string.Empty;
+    private bool usesConfiguredAPIKeys;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OAuthProfile"/> class.
     /// </summary>
     public OAuthProfile()
+        : this(null)
     {
-        // Grab information from user secrets file
-        // var bungieSecrets = new ConfigurationBuilder().AddUserSecrets<OAuthProfile>();
-        // IConfigurationRoot configuration = bungieSecrets.Build();
-        // var secrets = configuration.GetSection("BungieAPIKeys");
-        this.dataFolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "OAuthProfile");
-        this.userTokenFileLocation = Path.Combine(this.dataFolderPath, "UserBungieAPITokens.json");
+    }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OAuthProfile"/> class.
+    /// </summary>
+    /// <param name="configuration">Application configuration used to load hosted Bungie API keys.</param>
+    public OAuthProfile(IConfiguration? configuration)
+    {
         // Profile Configuration
         this.state = this.GenerateRandomStateValue();
+
+        this.LoadConfiguredAPIKeys(configuration);
     }
 
     /// <summary>
@@ -55,6 +56,11 @@ public class OAuthProfile
     /// Gets the Client Secret key for GuardianVaultManger given by Bungie.
     /// </summary>
     public string Client_Secret => this.clientSecret;
+
+    /// <summary>
+    /// Gets a value indicating whether API keys were loaded from application configuration.
+    /// </summary>
+    public bool UsesConfiguredAPIKeys => this.usesConfiguredAPIKeys;
 
     /// <summary>
     /// Gets the Application State Code. Used to prevent Cross site forgery.
@@ -81,6 +87,34 @@ public class OAuthProfile
     }
 
     /// <summary>
+    /// Creates a fresh OAuth state value for a new authorization request.
+    /// </summary>
+    /// <returns>The new state value.</returns>
+    public string RefreshState()
+    {
+        this.state = this.GenerateRandomStateValue();
+        return this.state;
+    }
+
+    /// <summary>
+    /// Validates an OAuth state value using a fixed-time comparison.
+    /// </summary>
+    /// <param name="candidate">State value returned by the OAuth provider.</param>
+    /// <returns>True when the state value matches the current request.</returns>
+    public bool ValidateState(string? candidate)
+    {
+        if (string.IsNullOrEmpty(candidate))
+        {
+            return false;
+        }
+
+        byte[] expectedBytes = Encoding.UTF8.GetBytes(this.state);
+        byte[] candidateBytes = Encoding.UTF8.GetBytes(candidate);
+        return expectedBytes.Length == candidateBytes.Length
+            && CryptographicOperations.FixedTimeEquals(expectedBytes, candidateBytes);
+    }
+
+    /// <summary>
     /// Constructs a Authorization URL from the OAuthProfile.
     /// </summary>
     /// <returns>The Authorization URI.</returns>
@@ -104,85 +138,41 @@ public class OAuthProfile
     }
 
     /// <summary>
-    /// Constructs the User's API File based on the user provided keys.
-    /// </summary>
-    /// <param name="apiKey">API to use for Bungie's API.</param>
-    /// <param name="clientID">Client ID of the User.</param>
-    /// <param name="clientSecret">Client Secret of the user.</param>
-    /// <returns>True if completed successfully, False otherwise.</returns>
-    public bool ConstructUserAPIFile(string apiKey, string clientID, string clientSecret)
-    {
-        this.EnsureDataFolderExists();
-
-        try
-        {
-            var obj = new
-            {
-                BungieAPIKeys = new
-                {
-                    API_Key = apiKey,
-                    Client_ID = clientID,
-                    Client_Secret = clientSecret,
-                },
-            };
-
-            string json = JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(this.userTokenFileLocation, json);
-            return true;
-        }
-        catch (Exception)
-        {
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Loads the API Keys provided by the user.
-    /// </summary>
-    /// <returns>True if completed successfully, False otherwise.</returns>
-    public bool LoadUserAPIKeys()
-    {
-        try
-        {
-            var apiKeys = JsonDocument.Parse(File.ReadAllText(this.userTokenFileLocation)).RootElement.GetProperty("BungieAPIKeys");
-
-            this.apiKey = apiKeys.GetProperty("API_Key").ToString();
-            this.clientID = apiKeys.GetProperty("Client_ID").ToString();
-            this.clientSecret = apiKeys.GetProperty("Client_Secret").ToString();
-
-            return true;
-        }
-        catch (Exception)
-        {
-            return false;
-        }
-    }
-
-    /// <summary>
     /// Generates a random state value to be used in Authorization URI creation.
     /// </summary>
     /// <returns>The state string.</returns>
     private string GenerateRandomStateValue()
     {
-        const string pool = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        StringBuilder builder = new StringBuilder();
-
-        for (int i = 0; i < 20; i++)
-        {
-            builder.Append(pool[new Random().Next(0, pool.Length)]);
-        }
-
-        return builder.ToString();
+        return Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
     }
 
     /// <summary>
-    /// Ensures that the data folder exists.
+    /// Loads Bungie API keys from application configuration.
     /// </summary>
-    private void EnsureDataFolderExists()
+    /// <param name="configuration">Application configuration.</param>
+    private void LoadConfiguredAPIKeys(IConfiguration? configuration)
     {
-        if (!Directory.Exists(this.dataFolderPath))
+        if (configuration is null)
         {
-            Directory.CreateDirectory(this.dataFolderPath);
+            return;
         }
+
+        IConfigurationSection apiKeys = configuration.GetSection("BungieAPIKeys");
+
+        string configuredApiKey = apiKeys["API_Key"] ?? string.Empty;
+        string configuredClientID = apiKeys["Client_ID"] ?? string.Empty;
+        string configuredClientSecret = apiKeys["Client_Secret"] ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(configuredApiKey)
+            || string.IsNullOrWhiteSpace(configuredClientID)
+            || string.IsNullOrWhiteSpace(configuredClientSecret))
+        {
+            return;
+        }
+
+        this.apiKey = configuredApiKey;
+        this.clientID = configuredClientID;
+        this.clientSecret = configuredClientSecret;
+        this.usesConfiguredAPIKeys = true;
     }
 }
