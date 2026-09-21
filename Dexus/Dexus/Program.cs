@@ -117,6 +117,8 @@ app.MapBungieAuthentication();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(Dexus.Client._Imports).Assembly);
+    .AddAdditionalAssemblies(
+        typeof(Dexus.Client._Imports).Assembly,
+        typeof(Dexus.Demo.DemoAssemblyMarker).Assembly);
 
 app.Run();

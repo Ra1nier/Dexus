@@ -27,6 +27,10 @@ Cloudflare terminates public HTTPS and forwards the original scheme and client a
 
 Sessions last up to eight hours. Restarting Dexus signs everyone out, and the current session store supports one application instance.
 
+## Interactive demo
+
+Open [`/demo`](https://dexus.maxbroome.dev/demo) to try a curated synthetic account without Bungie OAuth. The demo is implemented in the separate `Dexus.Demo` Razor project and has no references to production account, OAuth, request, or content-manager projects. Its transfers and equip actions exist only in the current interactive circuit; reloading restores the original inventory. A persistent notice makes clear that no real account or Bungie API is involved.
+
 ## Technology
 
 - .NET 9 and ASP.NET Core
@@ -92,7 +96,7 @@ Never commit `.env`, put these values in client `wwwroot` settings, or place tok
 
 ## Docker
 
-Build the solution and Docker image:
+Build the Docker image (the .NET restore and publish run inside the Docker build):
 
 ```bash
 ./build.sh
@@ -107,10 +111,10 @@ Build and start Dexus, or start an existing image:
 
 The launcher reads `.env`, creates persistent volumes for the manifest and ASP.NET Data Protection keys, and recreates the named container when necessary. The container runs as a non-root user with a read-only root filesystem, dropped Linux capabilities, `no-new-privileges`, and process and temporary-storage limits.
 
-Dexus binds to `127.0.0.1:5001` by default. A bridge-mode cloudflared container cannot reach the NAS loopback address, so bind Dexus to the NAS LAN address for that topology:
+A bridge-mode cloudflared container cannot reach the NAS loopback address, so bind Dexus to the NAS LAN address for that topology:
 
 ```bash
-sudo env BIND_ADDRESS=192.168.1.25 ./build.sh --run-only
+sudo env BIND_ADDRESS=192.168.1.25 ./build.sh --run
 ```
 
 Replace the example with the actual NAS address. Configure Cloudflare's origin as `http://NAS_ADDRESS:5001`, allow TCP 5001 from the Docker subnet in the NAS firewall, deny other sources, and do not forward that port on the router.

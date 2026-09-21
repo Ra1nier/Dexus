@@ -60,7 +60,9 @@ internal static class OAuthFlowChecks
         app.UseAntiforgery();
         app.MapBungieAuthentication();
         app.MapRazorComponents<App>().AddInteractiveServerRenderMode().AddInteractiveWebAssemblyRenderMode()
-            .AddAdditionalAssemblies(typeof(Dexus.Client._Imports).Assembly);
+            .AddAdditionalAssemblies(
+                typeof(Dexus.Client._Imports).Assembly,
+                typeof(Dexus.Demo.DemoAssemblyMarker).Assembly);
         app.MapGet("/test/session", (HttpContext context, BungieSessionStore sessions) =>
         {
             var session = sessions.Find(context.User);
@@ -82,6 +84,11 @@ internal static class OAuthFlowChecks
             var alice = new Browser(client);
             var bob = new Browser(client);
             Check((await alice.Send("/test/session")).StatusCode == HttpStatusCode.Unauthorized, "Anonymous session accepted.");
+            string demoPage = await (await alice.Send("/demo")).Content.ReadAsStringAsync();
+            Check(demoPage.Contains("Demo mode:")
+                && demoPage.Contains("Northstar Pulse")
+                && demoPage.Contains("does not connect to Bungie"),
+                "Anonymous demo did not render its notice and synthetic inventory.");
             string anonymousPage = await (await alice.Send("/DexusAccount?goToTab=2")).Content.ReadAsStringAsync();
             Check(anonymousPage.Contains("Sign In with Bungie"), "Account page did not render the Bungie sign-in button.");
             string aliceState = await alice.Start();
@@ -136,7 +143,7 @@ internal static class OAuthFlowChecks
             Check(provider.Exchanges == 2, "Expired/denied attempts exchanged a code.");
             clock.Advance(TimeSpan.FromHours(8));
             Check((await bob.Send("/test/session")).StatusCode == HttpStatusCode.Unauthorized, "Expired server session accepted.");
-            Console.WriteLine("OAuth HTTP checks passed: two visitors, redirect/reload, cross-browser rejection, replay, expiry, denial, cookie flags, logout CSRF, circuit revocation, non-cross-save membership, actual signed-in Razor account page.");
+            Console.WriteLine("OAuth HTTP checks passed: anonymous demo, two visitors, redirect/reload, cross-browser rejection, replay, expiry, denial, cookie flags, logout CSRF, circuit revocation, non-cross-save membership, actual signed-in Razor account page.");
         }
         finally { await app.StopAsync(); }
     }

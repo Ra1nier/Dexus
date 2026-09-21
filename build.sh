@@ -9,8 +9,7 @@ IMAGE_TAG="${IMAGE_TAG:-latest}"
 CONTAINER_NAME="${CONTAINER_NAME:-dexus}"
 HOST_PORT="${HOST_PORT:-5001}"
 CONTAINER_PORT="${CONTAINER_PORT:-8080}"
-BIND_ADDRESS="${BIND_ADDRESS:-127.0.0.1}"
-DOTNET_CONFIGURATION="${DOTNET_CONFIGURATION:-Release}"
+BIND_ADDRESS="${BIND_ADDRESS:-192.168.86.36}"
 ENV_FILE="${ENV_FILE:-.env}"
 RESTART_POLICY="${RESTART_POLICY:-unless-stopped}"
 PIDS_LIMIT="${PIDS_LIMIT:-256}"
@@ -24,7 +23,7 @@ usage() {
     cat <<'EOF'
 Usage: ./build.sh [OPTION]
 
-Build the Dexus solution and Docker image.
+Build the Dexus Docker image using its containerized .NET SDK stage.
 
 Options:
   -r, --run       Build, then run the image
@@ -33,7 +32,7 @@ Options:
 
 Run configuration can be overridden with environment variables:
   IMAGE_NAME, IMAGE_TAG, CONTAINER_NAME, HOST_PORT, CONTAINER_PORT,
-  BIND_ADDRESS, DOTNET_CONFIGURATION, ENV_FILE, RESTART_POLICY, PIDS_LIMIT,
+  BIND_ADDRESS, ENV_FILE, RESTART_POLICY, PIDS_LIMIT,
   MANIFEST_VOLUME, and DATA_PROTECTION_VOLUME.
 
 Examples:
@@ -59,18 +58,6 @@ absolute_path() {
     else
         printf '%s/%s\n' "$SCRIPT_DIR" "$1"
     fi
-}
-
-build_project() {
-    require_command dotnet
-
-    printf '\n==> Restoring .NET dependencies\n'
-    dotnet restore "$SCRIPT_DIR/Dexus.sln" --force-evaluate
-
-    printf '\n==> Building Dexus (%s)\n' "$DOTNET_CONFIGURATION"
-    dotnet build "$SCRIPT_DIR/Dexus.sln" \
-        --configuration "$DOTNET_CONFIGURATION" \
-        --no-restore
 }
 
 build_image() {
@@ -164,7 +151,6 @@ cd -- "$SCRIPT_DIR"
 if [[ "$RUN_ONLY" == true ]]; then
     run_image
 else
-    build_project
     build_image
 
     if [[ "$RUN_AFTER_BUILD" == true ]]; then

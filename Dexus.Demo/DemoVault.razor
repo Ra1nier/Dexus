@@ -1,0 +1,134 @@
+@page "/demo"
+@layout DemoLayout
+@rendermode InteractiveServer
+
+<PageTitle>Dexus Vault Manager Demo</PageTitle>
+
+<div class="vault-manager-shell demo-vault-manager"
+     style="--guardian-count: 3; --vault-weight: 3fr;">
+    <MudPaper Elevation="0" Class="vault-page-header">
+        <div>
+            <MudText Typo="Typo.h4" Class="vault-page-title">Dexus Vault</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Manage equipped gear, character inventories, and vault items using synthetic demo data.
+            </MudText>
+        </div>
+        <div class="demo-header-actions">
+            <div class="vault-summary-row">
+                <div class="vault-summary-tile"><span>@inventory.Guardians.Count</span><small>Guardians</small></div>
+                <div class="vault-summary-tile"><span>@inventory.Items.Count</span><small>Managed Items</small></div>
+            </div>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.RestartAlt" OnClick="Reset">
+                Reset Demo
+            </MudButton>
+        </div>
+    </MudPaper>
+
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="demo-session-note">
+        <strong>Demo inventory:</strong> These are fictional items. Transfers never contact Bungie or affect a real
+        Destiny account, and refreshing this page restores the original inventory.
+    </MudAlert>
+
+    <div class="vault-header-grid">
+        @foreach (DemoGuardian guardian in inventory.Guardians)
+        {
+            <div class="vault-header-column vault-header-character">
+                <MudText Typo="Typo.subtitle1" Class="vault-header-title">@guardian.ClassName</MudText>
+                <div class="vault-banner-frame demo-guardian-banner" style="@($"--guardian-accent:{guardian.Accent}")">
+                    <img src="@GuardianImage(guardian.Id)" alt="@guardian.ClassName emblem" class="demo-guardian-emblem"/>
+                </div>
+            </div>
+        }
+        <div class="vault-header-column vault-header-vault">
+            <MudText Typo="Typo.subtitle1" Class="vault-header-title">Vault</MudText>
+            <div class="vault-icon-frame">
+                <img src="Resources/VaultEmblem.png" alt="Vault" class="vault-icon-image"/>
+            </div>
+        </div>
+    </div>
+
+    @foreach (string category in inventory.Categories)
+    {
+        <section class="vault-section" @key="category + inventory.Revision">
+            <div class="vault-section-header">
+                <MudIcon Icon="@CategoryIcon(category)" Color="@CategoryColor(category)"/>
+                <MudText Typo="Typo.subtitle1">@category</MudText>
+            </div>
+
+            <MudPaper Class="management-shelf">
+                <MudDropContainer T="DemoItem"
+                                  Items="@inventory.Items.Where(item => item.Category == category).OrderByDescending(item => item.Power)"
+                                  ItemsSelector="@((item, zone) => item.Location == zone)"
+                                  ItemDropped="@Move"
+                                  Class="management-drop-container">
+                    <ChildContent>
+                        <div class="management-grid">
+                            @foreach (DemoGuardian guardian in inventory.Guardians)
+                            {
+                                <div class="guardian-column">
+                                    <span class="vault-location-label">@guardian.ClassName</span>
+                                    <MudDropZone T="DemoItem" Identifier="@(guardian.Id + "-equipped")"
+                                                 Class="drop-zone equipped-zone"/>
+                                    <MudDropZone T="DemoItem" Identifier="@guardian.Id"
+                                                 Class="drop-zone inventory-zone"/>
+                                </div>
+                            }
+                            <div class="vault-column">
+                                <span class="vault-location-label">Vault</span>
+                                <MudDropZone T="DemoItem" Identifier="Vault" Class="drop-zone vault-zone"/>
+                            </div>
+                        </div>
+                    </ChildContent>
+                    <ItemRenderer>
+                        <MudTooltip Text="@($"{context.Name} — {context.TypeName} ({context.Rarity})")">
+                            <MudCard Class="item-card demo-item-tile" Style="@($"--item-accent:{context.Accent}")">
+                                <div class="demo-item-glyph">@context.Glyph</div>
+                                <div class="power-label">@context.Power</div>
+                                <div class="demo-item-name">@context.Name</div>
+                            </MudCard>
+                        </MudTooltip>
+                    </ItemRenderer>
+                </MudDropContainer>
+            </MudPaper>
+        </section>
+    }
+</div>
+
+@code {
+    private DemoInventory inventory = new();
+
+    private void Move(MudItemDropInfo<DemoItem> drop)
+    {
+        if (drop.Item is not null && !string.IsNullOrWhiteSpace(drop.DropzoneIdentifier))
+        {
+            inventory.Move(drop.Item, drop.DropzoneIdentifier);
+        }
+    }
+
+    private void Reset() => inventory.Reset();
+
+    private static string GuardianImage(string id) => id switch
+    {
+        "hunter" => "Resources/Hunter_Emblem.svg",
+        "warlock" => "Resources/Warlock_Emblem.svg",
+        _ => "Resources/Titan_Emblem.svg",
+    };
+
+    private static string CategoryIcon(string category) => category switch
+    {
+        "Kinetic Weapons" => Icons.Material.Filled.Adjust,
+        "Energy Weapons" => Icons.Material.Filled.Bolt,
+        "Power Weapons" => Icons.Material.Filled.Whatshot,
+        "Helmets" => Icons.Material.Filled.Shield,
+        _ => Icons.Material.Filled.HealthAndSafety,
+    };
+
+    private static Color CategoryColor(string category) => category switch
+    {
+        "Kinetic Weapons" => Color.Primary,
+        "Energy Weapons" => Color.Info,
+        "Power Weapons" => Color.Error,
+        _ => Color.Secondary,
+    };
+}

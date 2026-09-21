@@ -1,0 +1,46 @@
+@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="@theme" IsDarkMode="true"/>
+<MudPopoverProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<MudLayout Class="dexus-layout demo-layout">
+    <MudAppBar Elevation="1" Class="dexus-appbar">
+        <NavLink href="/" class="demo-brand">
+            <span class="demo-brand-mark">D</span>
+            <span>Dexus</span>
+        </NavLink>
+        <MudChip T="string" Color="Color.Warning" Variant="Variant.Filled" Size="Size.Small">Demo</MudChip>
+        <MudSpacer/>
+        <MudTooltip Text="Return to the main site">
+            <MudIconButton Href="/" Icon="@Icons.Material.Filled.Home" Color="Color.Inherit"/>
+        </MudTooltip>
+        <MudTooltip Text="Connect a real Bungie account">
+            <MudIconButton Href="/DexusAccount?goToTab=2" Icon="@Icons.Material.Filled.AccountCircle"
+                           Color="Color.Inherit" Edge="Edge.End"/>
+        </MudTooltip>
+    </MudAppBar>
+
+    <MudMainContent Class="mt-16 pa-4 demo-main">
+        <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="demo-global-notice">
+            <strong>Demo mode:</strong> This uses fictional inventory data and does not connect to Bungie, require OAuth,
+            or affect a real Destiny account.
+        </MudAlert>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private readonly MudTheme theme = new()
+    {
+        PaletteDark = new PaletteDark
+        {
+            Primary = "#65c8ff",
+            Secondary = "#c77dff",
+            Surface = "#171a22",
+            Background = "#0f1117",
+            AppbarBackground = "#171a22",
+        },
+    };
+}

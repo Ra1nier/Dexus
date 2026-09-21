@@ -14,4 +14,9 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.19" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Dexus.Demo\Dexus.Demo.csproj" />
+  </ItemGroup>
+
 </Project>

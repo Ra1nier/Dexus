@@ -39,4 +39,6 @@ enabled.RefreshState();
 Check(!enabled.ValidateState(state) && !enabled.ValidateState(null), "Stale state accepted.");
 Console.WriteLine("Security checks passed: session isolation, logout, invalid tokens, server credential configuration, state generation.");
 
+DemoChecks.Run();
+
 await OAuthFlowChecks.RunAsync();

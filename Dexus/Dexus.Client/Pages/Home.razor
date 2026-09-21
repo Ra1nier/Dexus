@@ -1,71 +1,141 @@
 @page "/"
 @rendermode InteractiveServer
 
-@using DexusCore
 @using UIServices
 
-@inject NavigationManager Navigation
-@inject DialogUIService DialogUIService
-@inject Core Core
 @inject UICore UICore
 
-<PageTitle>Dexus</PageTitle>
+<PageTitle>Dexus — Destiny 2 Inventory Manager</PageTitle>
 
-<!-- Main content -->
-<MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
-    <MudGrid Spacing="4" Class="align-center">
-        <MudItem xs="12" md="7">
-            <MudText Typo="Typo.h3" Class="mb-3">Dexus</MudText>
-            <MudText Typo="Typo.h6" Class="mb-4" Color="Color.Secondary">
-                A Destiny 2 inventory manager built with .NET 9, Blazor, MudBlazor, and Bungie's Platform API.
+<MudContainer MaxWidth="MaxWidth.Large" Class="home-page">
+    <section class="home-hero">
+        <div class="home-hero-copy">
+            <MudText Typo="Typo.overline" Color="Color.Primary">Open-source Destiny 2 tooling</MudText>
+            <MudText Typo="Typo.h2" Class="home-title">Dexus: Destiny 2 Guardian Manager.</MudText>
+            <MudText Typo="Typo.h6" Color="Color.Secondary" Class="home-lead">
+                Dexus is a browser-based inventory manager built with .NET 9, Blazor, MudBlazor, and Bungie's
+                Platform API. Review equipment and move items between characters and the vault without changing pages.
             </MudText>
-            <MudText Typo="Typo.body1" Class="mb-5">
-                Sign in with Bungie to load characters, equipment, inventory, and vault items, then manage transfers from a browser-based interface.
-            </MudText>
-            <MudStack Row="true" Spacing="2" Class="flex-wrap">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                           StartIcon="@Icons.Material.Filled.Inventory2"
-                           OnClick="@(() => Navigation.NavigateTo("/DexusVaultManager"))">
-                    Open Vault Manager
+            <MudStack Row="true" Spacing="2" Class="home-actions">
+                <MudButton Href="/DexusAccount?goToTab=2" Variant="Variant.Filled" Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.AccountCircle">
+                    Connect Bungie Account
                 </MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
-                           StartIcon="@Icons.Material.Filled.AccountCircle"
-                           OnClick="@(() => Navigation.NavigateTo("/DexusAccount?goToTab=2"))">
-                    Bungie Account
+                <MudButton Href="#demo-mode" Variant="Variant.Outlined" Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.Science">
+                    Explore Demo Mode
                 </MudButton>
             </MudStack>
-        </MudItem>
-        <MudItem xs="12" md="5">
-            <MudPaper Elevation="2" Class="pa-4">
-                <MudText Typo="Typo.h6" Class="mb-3">Demo Scope</MudText>
-                <MudList T="string" Dense="true">
-                    <MudListItem Icon="@Icons.Material.Filled.Lock">Bungie OAuth over HTTPS</MudListItem>
-                    <MudListItem Icon="@Icons.Material.Filled.Storage">Local manifest cache and SQLite lookup</MudListItem>
-                    <MudListItem Icon="@Icons.Material.Filled.SwapHoriz">Authenticated item transfer workflow</MudListItem>
-                    <MudListItem Icon="@Icons.Material.Filled.VerifiedUser">Access your own Bungie account</MudListItem>
-                </MudList>
+        </div>
+
+        <MudPaper Elevation="0" Class="home-overview-card">
+            <MudText Typo="Typo.subtitle1" Class="home-card-title">What Dexus manages</MudText>
+            <div class="home-stat-grid">
+                <div><MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Primary"/><span>All Guardians</span></div>
+                <div><MudIcon Icon="@Icons.Material.Filled.Inventory2" Color="Color.Secondary"/><span>Shared Vault</span></div>
+                <div><MudIcon Icon="@Icons.Material.Filled.SwapHoriz" Color="Color.Info"/><span>Item Transfers</span></div>
+                <div><MudIcon Icon="@Icons.Material.Filled.Shield" Color="Color.Warning"/><span>Gear Details</span></div>
+            </div>
+        </MudPaper>
+    </section>
+
+    <section class="home-section" aria-labelledby="abilities-heading">
+        <div class="home-section-heading">
+            <MudText Typo="Typo.overline" Color="Color.Primary">Capabilities</MudText>
+            <MudText Typo="Typo.h4" id="abilities-heading">A focused inventory workflow</MudText>
+            <MudText Typo="Typo.body1" Color="Color.Secondary">
+                Dexus turns Bungie's account and manifest data into a responsive vault workspace while keeping
+                credentials and account operations on the server.
+            </MudText>
+        </div>
+        <div class="home-feature-grid">
+            <MudPaper Elevation="0" Class="home-feature-card">
+                <MudIcon Icon="@Icons.Material.Filled.ViewColumn" Color="Color.Primary" Size="Size.Large"/>
+                <MudText Typo="Typo.h6">One inventory view</MudText>
+                <MudText Typo="Typo.body2">Compare equipped gear, character inventories, and vault contents by item category.</MudText>
             </MudPaper>
-        </MudItem>
-    </MudGrid>
+            <MudPaper Elevation="0" Class="home-feature-card">
+                <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Color="Color.Info" Size="Size.Large"/>
+                <MudText Typo="Typo.h6">Direct transfers</MudText>
+                <MudText Typo="Typo.body2">Drag supported items between Guardians and the vault, including equipment-slot changes.</MudText>
+            </MudPaper>
+            <MudPaper Elevation="0" Class="home-feature-card">
+                <MudIcon Icon="@Icons.Material.Filled.Search" Color="Color.Secondary" Size="Size.Large"/>
+                <MudText Typo="Typo.h6">Manifest-backed details</MudText>
+                <MudText Typo="Typo.body2">Resolve Bungie definitions from a local SQLite manifest cache for useful item metadata.</MudText>
+            </MudPaper>
+            <MudPaper Elevation="0" Class="home-feature-card">
+                <MudIcon Icon="@Icons.Material.Filled.Security" Color="Color.Success" Size="Size.Large"/>
+                <MudText Typo="Typo.h6">Server-side sessions</MudText>
+                <MudText Typo="Typo.body2">OAuth tokens remain in isolated server memory and are not exposed to browser storage.</MudText>
+            </MudPaper>
+        </div>
+    </section>
+
+    <section class="home-section" aria-labelledby="internals-heading">
+        <MudPaper Elevation="0" Class="home-internals">
+            <div class="home-section-heading">
+                <MudText Typo="Typo.overline" Color="Color.Primary">Under the hood</MudText>
+                <MudText Typo="Typo.h4" id="internals-heading">How a request moves through Dexus</MudText>
+            </div>
+            <div class="home-flow" aria-label="Dexus request flow">
+                <div class="home-flow-step"><span>1</span><div><strong>Blazor UI</strong><small>Renders the vault and collects transfer actions.</small></div></div>
+                <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Class="home-flow-arrow"/>
+                <div class="home-flow-step"><span>2</span><div><strong>Dexus Core</strong><small>Coordinates account state, content, and UI services.</small></div></div>
+                <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Class="home-flow-arrow"/>
+                <div class="home-flow-step"><span>3</span><div><strong>Content services</strong><small>Organize characters, buckets, items, and transfer work.</small></div></div>
+                <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Class="home-flow-arrow"/>
+                <div class="home-flow-step"><span>4</span><div><strong>Bungie API</strong><small>Authenticates the player and performs authorized requests.</small></div></div>
+            </div>
+
+            <div class="home-component-grid" aria-label="Dexus component responsibilities">
+                <article><MudIcon Icon="@Icons.Material.Filled.Web" Color="Color.Primary"/><div><strong>Dexus.Client</strong><small>Blazor pages and MudBlazor components render the account, vault, and transfer interface.</small></div></article>
+                <article><MudIcon Icon="@Icons.Material.Filled.Hub" Color="Color.Info"/><div><strong>DexusCore</strong><small>The composition layer connects UI services, profile state, content loading, and account checks.</small></div></article>
+                <article><MudIcon Icon="@Icons.Material.Filled.Inventory2" Color="Color.Secondary"/><div><strong>ContentManager</strong><small>Groups inventory into buckets and coordinates the transfer queue without owning HTTP details.</small></div></article>
+                <article><MudIcon Icon="@Icons.Material.Filled.Badge" Color="Color.Warning"/><div><strong>GuardianServices</strong><small>Defines the character and item models shared by inventory and presentation logic.</small></div></article>
+                <article><MudIcon Icon="@Icons.Material.Filled.Api" Color="Color.Success"/><div><strong>RequestManager</strong><small>Builds Bungie Platform requests and resolves definitions through the local manifest cache.</small></div></article>
+                <article><MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Error"/><div><strong>OAuthService</strong><small>Handles Bungie authorization while server-side session storage keeps tokens out of the browser.</small></div></article>
+            </div>
+
+            <div class="home-boundary-note">
+                <MudIcon Icon="@Icons.Material.Filled.AccountTree" Color="Color.Primary"/>
+                <div><strong>Separated by responsibility</strong><span>The UI does not call Bungie directly. Account authorization, HTTP requests, inventory organization, and rendering live in distinct projects so each boundary can be tested independently.</span></div>
+            </div>
+        </MudPaper>
+    </section>
+
+    <section id="demo-mode" class="home-section home-callout-section" aria-labelledby="demo-heading">
+        <div class="home-callout-copy">
+            <MudText Typo="Typo.overline" Color="Color.Warning">No Bungie account required</MudText>
+            <MudText Typo="Typo.h4" id="demo-heading">Try Demo Mode</MudText>
+            <MudText Typo="Typo.body1">
+                Demo Mode recreates the vault interface with a curated, fictional inventory. It is a safe way to
+                explore the layout without connecting a Bungie account. Function is very limited.
+            </MudText>
+            <MudButton Href="/demo" Variant="Variant.Filled" Color="Color.Warning"
+                       StartIcon="@Icons.Material.Filled.Science" Class="mt-4">
+                Launch Interactive Demo
+            </MudButton>
+        </div>
+        <div class="home-limitations-card">
+            <MudText Typo="Typo.h6">Demo limitations</MudText>
+            <ul class="home-limitations-list">
+                <li><MudIcon Icon="@Icons.Material.Filled.CloudOff"/><span>It never connects to Bungie or a real Destiny account.</span></li>
+                <li><MudIcon Icon="@Icons.Material.Filled.RestartAlt"/><span>Changes are temporary and reset when the page reloads.</span></li>
+                <li><MudIcon Icon="@Icons.Material.Filled.Inventory"/><span>It contains a smaller synthetic inventory, not every live item type.</span></li>
+                <li><MudIcon Icon="@Icons.Material.Filled.Block"/><span>API-dependent account and transfer behavior cannot be tested.</span></li>
+            </ul>
+        </div>
+    </section>
+
 </MudContainer>
 
-@code
-{
-    /// <summary>
-    /// Handles the first render of the webpage.
-    /// </summary>
-    /// <param name="firstRender">Indicates whether this is the first render of the webpage.</param>
+@code {
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender) return;
-        
-        await UICore.VerifyAPIAvaliablity();
-    }
-
-    /// <summary>
-    /// When page loads or reloads.
-    /// </summary>
-    protected override void OnInitialized()
-    {
+        if (firstRender)
+        {
+            await UICore.VerifyAPIAvaliablity();
+        }
     }
 }

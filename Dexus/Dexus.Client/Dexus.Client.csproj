@@ -34,6 +34,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\DexusCore\DexusCore.csproj" />
     <ProjectReference Include="..\..\RequestManager\RequestManager.csproj" />
+    <ProjectReference Include="..\..\Dexus.Demo\Dexus.Demo.csproj" />
   </ItemGroup>
 
   <ItemGroup>

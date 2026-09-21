@@ -4,6 +4,7 @@
 @inject BungieSessionStore Sessions
 @inject ClientProfile.Profile Profile
 @inject DexusCore.Core Core
+@inject NavigationManager Navigation
 
 @if (initialized)
 {
@@ -15,6 +16,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].Equals("demo", StringComparison.OrdinalIgnoreCase))
+        {
+            initialized = true;
+            return;
+        }
+
         var authentication = await AuthenticationState.GetAuthenticationStateAsync();
         var session = Sessions.Find(authentication.User);
         if (session is not null)
