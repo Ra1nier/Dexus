@@ -1,0 +1,157 @@
+/* Shared by the page and its child components; sizes follow browser space. */
+.vault-manager-shell {
+    --vault-base-item-size: clamp(44px, calc(5vw - 8px), 80px);
+    --vault-item-size: max(40px, calc(var(--vault-base-item-size) * var(--vault-icon-scale, 1)));
+    --vault-gap: clamp(4px, 0.5vw, 8px);
+    --vault-padding: clamp(6px, 0.65vw, 12px);
+    --vault-columns: repeat(var(--guardian-count, 3), minmax(0, 1fr)) minmax(0, var(--vault-weight, 3fr));
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1vw, 18px);
+    width: 100%;
+    max-width: 1920px;
+    margin-inline: auto;
+    padding: 8px clamp(0px, calc(2vw - 20px), 16px) 32px;
+}
+
+.vault-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: clamp(10px, 1.3vw, 20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+}
+
+.vault-page-title {
+    font-size: clamp(1.5rem, 2vw, 2.125rem);
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.vault-summary-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.vault-summary-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+}
+
+.vault-summary-tile span { font-size: 1.2rem; font-weight: 700; }
+.vault-summary-tile small { color: var(--mud-palette-text-secondary); font-size: 0.78rem; }
+
+.vault-header-grid,
+.management-grid,
+.bucket-grid {
+    display: grid;
+    grid-template-columns: var(--vault-columns);
+    gap: var(--vault-gap);
+    width: 100%;
+}
+
+.vault-header-grid,
+.management-shelf,
+.bucket-shelf {
+    padding: var(--vault-padding);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+}
+
+.vault-header-column,
+.guardian-column,
+.vault-column,
+.bucket-column {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--vault-gap);
+}
+
+.vault-header-title { text-align: center; font-weight: 600; }
+
+.vault-banner-frame,
+.vault-icon-frame {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: clamp(38px, 3.8vw, 58px);
+    overflow: hidden;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.045);
+}
+
+.vault-banner-image { display: block; width: 100%; height: 100%; object-fit: cover; }
+.vault-icon-image { width: auto; height: 75%; object-fit: contain; }
+.vault-section { display: flex; flex-direction: column; gap: 6px; }
+.vault-section-header { display: flex; align-items: center; gap: 8px; padding: 2px 4px; }
+.vault-section-header .mud-typography { font-weight: 650; }
+.management-drop-container { width: 100%; min-width: 0; }
+
+.drop-zone,
+.bucket-drop-zone {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: var(--vault-gap);
+    padding: var(--vault-padding);
+    width: 100%;
+    min-width: 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.045);
+}
+
+.equipped-zone,
+.bucket-drop-zone { min-height: calc(var(--vault-item-size) + 2 * var(--vault-padding) + 2px); }
+.inventory-zone {
+    flex: 1;
+    min-height: calc(3 * var(--vault-item-size) + 2 * var(--vault-gap) + 2 * var(--vault-padding) + 2px);
+}
+.vault-zone { height: 100%; min-height: calc(4 * var(--vault-item-size) + 3 * var(--vault-gap) + 4 * var(--vault-padding) + 4px); }
+.vault-location-label { display: none; font-weight: 600; color: var(--mud-palette-text-secondary); }
+.vault-manager-shell .power-label { padding: 1px 3px; top: 2px; right: 2px; }
+
+.vault-loading-shell { display: flex; flex-direction: column; justify-content: center; min-height: calc(100vh - 140px); }
+.vault-progress { border-radius: 999px; overflow: hidden; }
+
+/* Repeat labels once columns wrap, so every drop target stays identifiable. */
+@media (max-width: 999px) {
+    .vault-manager-shell {
+        --vault-columns: repeat(2, minmax(0, 1fr));
+        --vault-base-item-size: 56px;
+    }
+    .vault-header-vault,
+    .vault-column,
+    .bucket-vault-column { grid-column: 1 / -1; }
+    .vault-location-label { display: block; }
+    .vault-zone { min-height: calc(2 * var(--vault-item-size) + var(--vault-gap) + 2 * var(--vault-padding) + 2px); }
+}
+
+@media (max-width: 599px) {
+    .vault-manager-shell { --vault-columns: minmax(0, 1fr); }
+    .vault-page-header { align-items: flex-start; flex-direction: column; }
+}
+
+.vault-size-control {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 0.875rem;
+}
+.vault-size-control label { display: flex; align-items: center; gap: 12px; }
+.vault-size-control input { width: clamp(100px, 18vw, 220px); min-height: 32px; accent-color: var(--mud-palette-primary); cursor: pointer; }
+.vault-size-control output { min-width: 4ch; font-variant-numeric: tabular-nums; }
+.vault-size-reset { padding: 6px 12px; border: 1px solid var(--mud-palette-divider); border-radius: 6px; color: var(--mud-palette-text-primary); background: var(--mud-palette-surface); cursor: pointer; }
+.vault-size-reset:focus-visible,
+.vault-size-control input:focus-visible { outline: 2px solid var(--mud-palette-primary); outline-offset: 3px; }

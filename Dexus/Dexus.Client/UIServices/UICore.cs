@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Components;
 public class UICore
 {
     /// <summary>
-    /// Singleton instance of UI Libs and Core used by DI.
+    /// Circuit-scoped instance of UI Libs and Core used by DI.
     /// </summary>
     private readonly Core Core;
     private readonly DialogUIService Dialog;
@@ -43,7 +43,7 @@ public class UICore
             case 2:
                 Dialog.SendDialog("Not Authorized with Bungie.",
                     "You have not authorized Dexus to access your Bungie information or authorization has expired. Would you like to be redirected to the sign in page?",
-                    () => { Navigation.NavigateTo("/DexusAccount?signInRedirect=true&inputTokenRedirect=false"); });
+                    () => { Navigation.NavigateTo("/DexusAccount?goToTab=2"); });
                 return;
             case 1:
                 {
@@ -52,7 +52,7 @@ public class UICore
                             "Your authorization with Bungie has expired and Dexus was unable to refresh it. You really should not be seeing this error but resigning in should fix it. Would you like to be redirected to the sign in page?",
                             () =>
                             {
-                                Navigation.NavigateTo("/DexusAccount?signInRedirect=true&inputTokenRedirect=false");
+                                Navigation.NavigateTo("/DexusAccount?goToTab=2");
                             });
                     break;
                 }

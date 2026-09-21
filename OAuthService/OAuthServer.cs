@@ -1,4 +1,4 @@
-﻿// <copyright file="OAuthServer.cs" company="PlaceholderCompany">
+// <copyright file="OAuthServer.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 /// </summary>
 public class OAuthServer
 {
+    private readonly HttpClient client;
     private OAuthProfile profile;
 
     private ILogger logger;
@@ -21,10 +22,12 @@ public class OAuthServer
     /// </summary>
     /// <param name="logger">Logger service.</param>
     /// <param name="profile">OAuth profile to use during any OAuth requests.</param>
-    public OAuthServer(ILogger logger, OAuthProfile profile)
+    /// <param name="client">Managed HTTP client for Bungie requests.</param>
+    public OAuthServer(ILogger logger, OAuthProfile profile, HttpClient client)
     {
         this.logger = logger;
         this.profile = profile;
+        this.client = client;
     }
 
     /// <summary>
@@ -36,7 +39,7 @@ public class OAuthServer
     {
         this.logger.LogInformation("Bungie OAuth server started.");
 
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, this.profile.Token_Endpoint);
+        using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, this.profile.Token_Endpoint);
         request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.profile.Client_ID}");
 
         string tokens = await this.ExchangeForTokenAsync(request, authorizationCode);
@@ -60,7 +63,7 @@ public class OAuthServer
     {
         this.logger.LogInformation("Sending Access Token Refresh Request.");
 
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, this.profile.Token_Endpoint);
+        using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, this.profile.Token_Endpoint);
         request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.profile.Client_ID}");
 
         // Add form parameters for the POST body
@@ -75,17 +78,12 @@ public class OAuthServer
         // Create a FormUrlEncodedContent with the parameters
         var content = new FormUrlEncodedContent(formData);
 
-        using var client = new HttpClient();
-
         request.Method = HttpMethod.Post;
         request.Content = content;
 
         try
         {
-            // Log the request body for debugging purposes
-            var contentString = await content.ReadAsStringAsync();
-
-            var response = await client.SendAsync(request);
+            using var response = await this.client.SendAsync(request);
             if (response.IsSuccessStatusCode)
             {
                 string jsonResponse = await response.Content.ReadAsStringAsync();
@@ -96,16 +94,14 @@ public class OAuthServer
             }
             else
             {
-                // Log the response for debugging purposes
-                string errorResponse = await response.Content.ReadAsStringAsync();
-                this.logger.LogError($"Token Refresh failed: {response.StatusCode}, {errorResponse}");
+                this.logger.LogError("Token refresh failed with status code {StatusCode}.", response.StatusCode);
 
                 return "Error";
             }
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            this.logger.LogError($"Error sending OAuth request for Refreshed Authorization code: {e.Message}");
+            this.logger.LogError("Bungie token refresh request failed.");
             return "Error";
         }
     }
@@ -132,18 +128,13 @@ public class OAuthServer
         // Create a FormUrlEncodedContent with the parameters
         var content = new FormUrlEncodedContent(formData);
 
-        using var client = new HttpClient();
-
         request.Method = HttpMethod.Post;
         request.Content = content;
         request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.profile.Client_ID}");
 
         try
         {
-            // Log the request body for debugging purposes
-            var contentString = await content.ReadAsStringAsync();
-
-            var response = await client.SendAsync(request);
+            using var response = await this.client.SendAsync(request);
             if (response.IsSuccessStatusCode)
             {
                 string jsonResponse = await response.Content.ReadAsStringAsync();
@@ -154,16 +145,14 @@ public class OAuthServer
             }
             else
             {
-                // Log the response for debugging purposes
-                string errorResponse = await response.Content.ReadAsStringAsync();
-                this.logger.LogError($"Token Retrieval failed: {response.StatusCode}, {errorResponse}");
+                this.logger.LogError("Token retrieval failed with status code {StatusCode}.", response.StatusCode);
 
                 return "Error";
             }
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            this.logger.LogError($"Error sending OAuth request for Authorization code: {e.Message}");
+            this.logger.LogError("Bungie token exchange request failed.");
             return "Error";
         }
     }

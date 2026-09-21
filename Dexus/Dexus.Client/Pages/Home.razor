@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @rendermode InteractiveServer
 
 @using DexusCore
@@ -30,7 +30,7 @@
                 </MudButton>
                 <MudButton Variant="Variant.Outlined" Color="Color.Secondary"
                            StartIcon="@Icons.Material.Filled.AccountCircle"
-                           OnClick="@(() => Navigation.NavigateTo("/DexusAccount"))">
+                           OnClick="@(() => Navigation.NavigateTo("/DexusAccount?goToTab=2"))">
                     Bungie Account
                 </MudButton>
             </MudStack>
@@ -42,7 +42,7 @@
                     <MudListItem Icon="@Icons.Material.Filled.Lock">Bungie OAuth over HTTPS</MudListItem>
                     <MudListItem Icon="@Icons.Material.Filled.Storage">Local manifest cache and SQLite lookup</MudListItem>
                     <MudListItem Icon="@Icons.Material.Filled.SwapHoriz">Authenticated item transfer workflow</MudListItem>
-                    <MudListItem Icon="@Icons.Material.Filled.Warning">Portfolio demo, not production multi-user storage</MudListItem>
+                    <MudListItem Icon="@Icons.Material.Filled.VerifiedUser">Access your own Bungie account</MudListItem>
                 </MudList>
             </MudPaper>
         </MudItem>

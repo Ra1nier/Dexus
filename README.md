@@ -1,90 +1,163 @@
 # Dexus
 
-Dexus is a .NET 9 and Blazor application for managing Destiny 2 inventory data through Bungie's API. The current application focuses on OAuth sign-in, manifest download/caching, inventory visualization, and item transfer workflows between characters and the vault.
+Dexus is a self-hosted Destiny 2 inventory manager built with .NET and Blazor. It signs visitors in through Bungie, loads their characters and inventory, and provides a visual vault interface for moving and equipping items.
+
+The public demo is available at [dexus.maxbroome.dev](https://dexus.maxbroome.dev).
 
 ## Features
 
-- Bungie OAuth sign-in with server-side application credentials.
+- Bungie OAuth sign-in with application credentials and user tokens kept on the server.
 - Destiny 2 profile, character, equipment, inventory, and vault loading.
-- Local Destiny manifest download and SQLite-backed definition lookup.
-- Item grouping by character, equipment state, and vault location.
-- Drag-and-drop item transfer workflow through the Bungie API.
-- Docker deployment with HTTPS support for OAuth redirect requirements.
+- Local Destiny manifest caching and SQLite-backed item definition lookup.
+- Item grouping by character, equipped state, inventory, and vault location.
+- Drag-and-drop transfer and equip operations through Bungie's API.
 
-## Tech Stack
+## Architecture
 
-- .NET 9
-- Blazor interactive server/client components
-- MudBlazor UI components
+```mermaid
+flowchart LR
+    Browser -->|HTTPS| Cloudflare
+    Cloudflare -->|Tunnel| cloudflared
+    cloudflared -->|Private HTTP| Dexus
+    Dexus -->|OAuth and API requests| Bungie
+    Dexus -->|Definition queries| Manifest[(SQLite manifest)]
+```
+
+Cloudflare terminates public HTTPS and forwards the original scheme and client address. Dexus accepts those forwarded headers only from the configured proxy. Bungie OAuth begins and completes on server endpoints. The browser receives a protected cookie containing a random session identifier; API tokens remain in an isolated, in-memory server session.
+
+Sessions last up to eight hours. Restarting Dexus signs everyone out, and the current session store supports one application instance.
+
+## Technology
+
+- .NET 9 and ASP.NET Core
+- Blazor interactive server and WebAssembly components
+- MudBlazor
 - Bungie.net OAuth and Destiny 2 Platform APIs
-- SQLite manifest querying with `Microsoft.Data.Sqlite`
-- Docker
+- SQLite via `Microsoft.Data.Sqlite`
+- Docker and Cloudflare Tunnel
+
+## Local development
+
+Requirements:
+
+- .NET 9 SDK
+- Optional Bungie application credentials for live sign-in
+
+Build and run:
+
+```bash
+dotnet build Dexus/Dexus/Dexus.csproj -c Release
+env -u Dexus__KnownProxies__0 dotnet run --project Dexus/Dexus
+```
+
+`dotnet run` uses ASP.NET configuration and does not automatically import the repository `.env` file. That file is intended for the Docker launcher.
+
+Run the security regression suite:
+
+```bash
+env -u AllowedHosts -u Dexus__KnownProxies__0 \
+  dotnet run --project tests/Dexus.SecurityChecks -c Release
+```
+
+The suite exercises OAuth state expiry and replay protection, browser binding, separate visitor sessions, reloads, cookie flags, logout antiforgery, session revocation, and the actual account page using a fake Bungie provider.
 
 ## Configuration
 
-Dexus expects Bungie application credentials from ASP.NET configuration. For local Docker runs, place values in a local `.env` file based on `.env.example`:
+Copy the example and protect it:
 
 ```bash
-BungieAPIKeys__API_Key=replace-with-your-bungie-api-key
-BungieAPIKeys__Client_ID=replace-with-your-bungie-client-id
-BungieAPIKeys__Client_Secret=replace-with-your-bungie-client-secret
-ASPNETCORE_Kestrel__Certificates__Default__Password=replace-with-your-local-dev-cert-password
+cp .env.example .env
+chmod 600 .env
 ```
 
-Do not commit `.env`, certificates, OAuth token files, or generated manifest data.
+Configure server-side values:
 
-## HTTPS
-
-Bungie OAuth redirect URLs require HTTPS. The Docker image expects a mounted certificate at `/https/dexus.pfx`.
-
-For local testing:
-
-```bash
-mkdir -p https
-dotnet dev-certs https -ep ./https/dexus.pfx -p "dev-password"
-dotnet dev-certs https --trust
+```dotenv
+BungieAPIKeys__API_Key=YOUR_BUNGIE_API_KEY
+BungieAPIKeys__Client_ID=YOUR_CONFIDENTIAL_CLIENT_ID
+BungieAPIKeys__Client_Secret=YOUR_CLIENT_SECRET
+AllowedHosts=dexus.example.com
+Dexus__KnownProxies__0=YOUR_PROXY_ADDRESS_AS_SEEN_BY_DEXUS
 ```
 
-Then set the matching certificate password in `.env`.
+Register this exact callback in the Bungie application portal:
+
+```text
+https://dexus.example.com/callback
+```
+
+Never commit `.env`, put these values in client `wwwroot` settings, or place tokens in browser storage. Configuration can alternatively be mounted as files under `/run/secrets` using the same double-underscore names.
+
+`Dexus__KnownProxies__0` is the immediate source address Dexus observes, not the public hostname or a URL. With Docker dual-stack networking, an IPv4 gateway may appear as an IPv4-mapped IPv6 address such as `::ffff:172.17.0.1`.
 
 ## Docker
 
-Build the image:
+Build the solution and Docker image:
 
 ```bash
-docker build -t dexus .
+./build.sh
 ```
 
-Run the container:
+Build and start Dexus, or start an existing image:
 
 ```bash
-docker run --env-file .env -p 5001:5001 -v "$PWD/https:/https:ro" dexus
+./build.sh --run
+./build.sh --run-only
 ```
 
-Open:
+The launcher reads `.env`, creates persistent volumes for the manifest and ASP.NET Data Protection keys, and recreates the named container when necessary. The container runs as a non-root user with a read-only root filesystem, dropped Linux capabilities, `no-new-privileges`, and process and temporary-storage limits.
 
-```text
-https://localhost:5001
+Dexus binds to `127.0.0.1:5001` by default. A bridge-mode cloudflared container cannot reach the NAS loopback address, so bind Dexus to the NAS LAN address for that topology:
+
+```bash
+sudo env BIND_ADDRESS=192.168.1.25 ./build.sh --run-only
 ```
 
-## Security Notes
+Replace the example with the actual NAS address. Configure Cloudflare's origin as `http://NAS_ADDRESS:5001`, allow TCP 5001 from the Docker subnet in the NAS firewall, deny other sources, and do not forward that port on the router.
 
-- Bungie application credentials are loaded from environment/configuration, not committed source files.
-- Local OAuth tokens and generated profile data are ignored by Git and Docker build context rules.
-- The current token/profile persistence layer is file-backed. For a public multi-user deployment, replace this with isolated per-user storage or deploy the app as a private/single-user demo.
-- Avoid publishing a Docker image that contains local build output, certificates, manifest caches, or token files.
+Useful NAS checks:
 
-## Current Limitations
+```bash
+sudo docker ps --filter name=dexus
+sudo docker port dexus
+sudo docker logs --tail 100 dexus
+```
 
-- File-backed user token/profile storage is not suitable for a multi-user public service.
-- Automated test coverage has not been added yet.
-- Some compiler and StyleCop warnings remain in supporting model/request projects.
-- The hosted demo should be treated as a portfolio preview unless the persistence model is hardened.
+See [BUNGIE_OAUTH_SETUP.md](BUNGIE_OAUTH_SETUP.md) for the complete deployment and troubleshooting guide.
 
-## Release Checklist
+## Security model
 
-- Build with `dotnet build Dexus/Dexus/Dexus.csproj -c Release`.
-- Build the Docker image from a clean working tree.
-- Verify `.env`, `https/`, `.idea/`, `bin/`, `obj/`, and generated manifest/profile data are not included.
-- Confirm the Bungie application redirect URL matches the hosted HTTPS URL.
-- Test sign-in, manifest download, inventory loading, and one safe transfer workflow.
+- Application credentials stay in server configuration or mounted secrets.
+- OAuth tokens stay in bounded, user-isolated server memory.
+- OAuth state is random, hashed, browser-bound, expires after ten minutes, and is consumed before code exchange.
+- Session and antiforgery cookies are `Secure` and `HttpOnly`.
+- Forwarded headers are accepted only from configured proxies.
+- Sensitive account and authentication responses use `Cache-Control: no-store`.
+- Global request limiting and conservative Kestrel request limits are enabled.
+- Generated manifests, profiles, build output, credentials, and environment files are excluded from Git and Docker builds.
+
+See [SECURITY.md](SECURITY.md) for the supported deployment and reporting policy.
+
+## Limitations
+
+- One Dexus process is supported; there is no distributed session store.
+- A restart invalidates every login.
+- Full local ownership validation and transfer-concurrency coverage remain future work; Bungie also authorizes operations against the signed-in user's token.
+- Manifest downloads are serialized, but atomic replacement and corruption recovery remain future work.
+- Some supporting projects retain analyzer and nullability warnings.
+
+The current verification record is in [DEMO_READINESS.md](DEMO_READINESS.md).
+
+## Release checklist
+
+1. Run the Release build and security regression suite.
+2. Run `dotnet list Dexus.sln package --vulnerable --include-transitive`.
+3. Build a fresh image from the intended commit.
+4. Confirm environment files, build output, manifests, and profile data are absent from the image and Git history.
+5. Confirm the Bungie callback exactly matches the public HTTPS hostname.
+6. Verify the trusted proxy address, firewall, WebSockets, and HTTPS scheme forwarding.
+7. Rehearse sign-in, inventory loading, refresh, logout, and a consented transfer with real accounts.
+
+## License
+
+See [LICENSE](LICENSE). The repository is publicly viewable, but the current license does not grant general open-source reuse rights.

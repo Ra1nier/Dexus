@@ -5,20 +5,36 @@
 @inject ILogger<OAuthPage> Logger
 @inject DialogUIService DialogUIService
 @inject NavigationManager Navigation
-@inject IJSRuntime JS
 
 <MudPaper Class="oauth-card mx-auto" Elevation="0">
     <MudText Typo="Typo.h5" Class="oauth-card-title">Bungie Sign-In</MudText>
+    @if (!string.IsNullOrEmpty(AuthError))
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-4">
+            Sign-in could not be completed. Please try again and approve access to your Bungie account.
+        </MudAlert>
+    }
     @if (Core.OAuthStatus == 0)
     {
         <MudAlert Severity="Severity.Success" Class="mb-4">
             You are signed in with Bungie. Your access tokens are active.
         </MudAlert>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/DexusVaultManager" Class="mb-4"
+                   StartIcon="@Icons.Material.Filled.Inventory2">
+            Open My Vault
+        </MudButton>
+        <form method="post" action="/auth/logout" data-enhance="false">
+        <AntiforgeryToken />
         <MudButton Variant="Variant.Outlined" Color="Color.Error"
                    StartIcon="@Icons.Material.Filled.Logout"
-                   OnClick="Logout">
+                   ButtonType="ButtonType.Submit">
             Sign Out
         </MudButton>
+        </form>
+    }
+    else if (Core.OAuthStatus == 3)
+    {
+        <MudAlert Severity="Severity.Info">Bungie sign-in is waiting for the server’s application credentials.</MudAlert>
     }
     else
     {
@@ -38,32 +54,10 @@
 </MudPaper>
 
 @code {
-    
-    /// <summary>
-    /// Starts the Sign-In process at Bungie.
-    /// </summary>
-    private async Task HandleSignIn()
-    {
-        if (Core.OAuthStatus == 3)
-        {
-            DialogUIService.SendDialog("Bungie Sign-In is not available.", "This deployment has not been configured with Bungie application credentials yet.");
-            return;
-        }
+    [Microsoft.AspNetCore.Components.SupplyParameterFromQuery(Name = "authError")]
+    public string? AuthError { get; set; }
 
-        Logger.LogDebug("Sign In Started");
-
-        if (Core.OAuthStatus > 0)
-        {
-            string state = Core.OAuthProfile.RefreshState();
-            await JS.InvokeVoidAsync("sessionStorage.setItem", "dexus.oauth.state", state);
-            Navigation.NavigateTo(Core.OAuthProfile.ConstructAuthorizationURL().ToString(), true);
-        }
-    }
-    
-    private void Logout()
-    {
-        Core.Logout();
-    }
+    private void HandleSignIn() => Navigation.NavigateTo("/auth/bungie/start", forceLoad: true);
 }
 
 <style>

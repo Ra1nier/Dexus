@@ -1,4 +1,4 @@
-﻿// <copyright file="RequestServer.cs" company="PlaceholderCompany">
+// <copyright file="RequestServer.cs" company="PlaceholderCompany">
 // Copyright (c) PlaceholderCompany. All rights reserved.
 // </copyright>
 
@@ -34,9 +34,10 @@ public class RequestServer
     /// <param name="profile">Client Profile.</param>
     /// <param name="auth">OAuth Profile.</param>
     /// <param name="logger">logging service.</param>
-    public RequestServer(ILogger logger, Profile profile, OAuthProfile auth)
+    /// <param name="client">Managed HTTP client for Bungie requests.</param>
+    public RequestServer(ILogger logger, Profile profile, OAuthProfile auth, HttpClient client)
     {
-        this.client = new HttpClient();
+        this.client = client;
         this.profile = profile;
         this.auth = auth;
         this.logger = logger;
@@ -48,13 +49,18 @@ public class RequestServer
     /// <returns>The primary membershipID or an error message.</returns>
     public async Task<string[]> PlatformDestiny2_Request_MembershipIDAsync()
     {
+        if (!this.profile.Create() || this.profile.AccessTokenExpireDate <= DateTime.UtcNow)
+        {
+            return new[] { "Error", "Error" };
+        }
+
         string[] result = new string[2];
         this.logger.LogInformation("REQUEST: Destiny Membership ID");
 
         // Construct HTTP request
         string requestURI =
             $"https://www.bungie.net/Platform/Destiny2/-1/Profile/{this.profile.MembershipID}/LinkedProfiles/?getAllMemberships=false";
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
+        using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
 
         // Add headers
         request.Headers.Authorization =
@@ -65,7 +71,7 @@ public class RequestServer
         // Send request
         try
         {
-            HttpResponseMessage response = await this.client.SendAsync(request);
+            using HttpResponseMessage response = await this.client.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
@@ -75,30 +81,24 @@ public class RequestServer
                 using JsonDocument document = JsonDocument.Parse(jsonResponse);
                 JsonElement responseRoot = document.RootElement.GetProperty("Response");
 
-                string membershipId = "Error";
-
-                // Look for the primary profile where isCrossSavePrimary == true
+                // Prefer the cross-save primary, then the most recently played linked profile.
                 if (responseRoot.TryGetProperty("profiles", out JsonElement profilesElement))
                 {
-                    foreach (var profile in profilesElement.EnumerateArray())
+                    var profiles = profilesElement.EnumerateArray().ToArray();
+                    var selected = profiles
+                        .Where(p => p.TryGetProperty("membershipType", out var type) && type.GetInt32() > 0)
+                        .OrderByDescending(p => p.TryGetProperty("isCrossSavePrimary", out var primary) && primary.GetBoolean())
+                        .ThenByDescending(p => p.TryGetProperty("dateLastPlayed", out var date) ? date.GetString() : string.Empty)
+                        .FirstOrDefault();
+                    if (selected.ValueKind == JsonValueKind.Object)
                     {
-                        bool isCrossSavePrimary = profile.GetProperty("isCrossSavePrimary").GetBoolean();
-                        int crossSaveOverride = profile.GetProperty("crossSaveOverride").GetInt32();
-
-                        if (isCrossSavePrimary || crossSaveOverride != 0)
-                        {
-                            membershipId = profile.GetProperty("membershipId").GetString() ?? string.Empty;
-                            this.logger.LogDebug($"Primary Membership ID found: {membershipId}");
-
-                            result[1] = crossSaveOverride.ToString();
-                            result[0] = membershipId;
-
-                            return result;
-                        }
+                        result[0] = selected.GetProperty("membershipId").GetString() ?? "Error";
+                        result[1] = selected.GetProperty("membershipType").GetInt32().ToString();
+                        return result;
                     }
                 }
 
-                this.logger.LogDebug($"JSON Response: No valid membership ID found. {jsonResponse}");
+                this.logger.LogInformation("No Destiny membership was available for the signed-in account.");
                 result[0] = "Error";
 
                 return result;
@@ -127,6 +127,11 @@ public class RequestServer
     /// <returns>The JSON response from bungie.</returns>
     public async Task<string> PlatformDestiny2_Request_ProfileContents(string contentType, bool includeDefinitions)
     {
+        if (!this.profile.Create() || this.profile.AccessTokenExpireDate <= DateTime.UtcNow)
+        {
+            return "Error";
+        }
+
         // Convert componentType to a component
         int content = ComponentTypeLookup.GetContent(contentType);
         this.logger.LogInformation($"REQUEST: Destiny Profile Content ({contentType}={content})");
@@ -134,7 +139,7 @@ public class RequestServer
         // Construct HTTP request
         string requestURI =
             $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.DestinyMembershipID}/?components={content}&definitions={includeDefinitions}";
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
+        using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
 
         // Add headers
         request.Headers.Authorization =
@@ -145,7 +150,7 @@ public class RequestServer
         // Send request
         try
         {
-            HttpResponseMessage response = await this.client.SendAsync(request);
+            using HttpResponseMessage response = await this.client.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
@@ -175,6 +180,11 @@ public class RequestServer
     /// <returns>The JSON response from bungie.</returns>
     public async Task<string> PlatformDestiny2_Request_ProfileContents(string[] contentTypes, bool includeDefinitions)
     {
+        if (!this.profile.Create() || this.profile.AccessTokenExpireDate <= DateTime.UtcNow)
+        {
+            return "Error";
+        }
+
         // Convert componentType to a component
         List<int> contents = new List<int>();
         foreach (string contentType in contentTypes)
@@ -188,7 +198,7 @@ public class RequestServer
         // Construct HTTP request
         string requestURI =
             $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.DestinyMembershipID}/?components={contents.PrintCSV()}&definitions={includeDefinitions}";
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
+        using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
 
         // Add headers
         request.Headers.Authorization =
@@ -199,7 +209,7 @@ public class RequestServer
         // Send request
         try
         {
-            HttpResponseMessage response = await this.client.SendAsync(request);
+            using HttpResponseMessage response = await this.client.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
@@ -235,6 +245,11 @@ public class RequestServer
     public async Task<string> PlatformDestiny2_Request_CharacterContents(string contentType, string characterId,
         bool includeDefinitions)
     {
+        if (!this.profile.Create() || this.profile.AccessTokenExpireDate <= DateTime.UtcNow)
+        {
+            return "Error";
+        }
+
         // Convert componentType to a component
         int content = ComponentTypeLookup.GetContent(contentType);
         this.logger.LogInformation(
@@ -243,7 +258,7 @@ public class RequestServer
         // Construct HTTP request
         string requestURI =
             $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.DestinyMembershipID}/Character/{characterId}/?components={content}&definitions={includeDefinitions}";
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
+        using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
 
         // Add headers
         request.Headers.Authorization =
@@ -254,7 +269,7 @@ public class RequestServer
         // Send request
         try
         {
-            HttpResponseMessage response = await this.client.SendAsync(request);
+            using HttpResponseMessage response = await this.client.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
@@ -288,6 +303,11 @@ public class RequestServer
     public async Task<string> PlatformDestiny2_Request_CharacterContents(string[] contentTypes, string characterId,
         bool includeDefinitions)
     {
+        if (!this.profile.Create() || this.profile.AccessTokenExpireDate <= DateTime.UtcNow)
+        {
+            return "Error";
+        }
+
         // Convert componentType to a component
         List<int> contents = new List<int>();
         foreach (string contentType in contentTypes)
@@ -301,7 +321,7 @@ public class RequestServer
         // Construct HTTP request
         string requestURI =
             $"https://www.bungie.net/Platform/Destiny2/{this.profile.MembershipType}/Profile/{this.profile.DestinyMembershipID}/Character/{characterId}/?components={contents.PrintCSV()}&definitions={includeDefinitions}";
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
+        using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
 
         // Add headers
         request.Headers.Authorization =
@@ -312,7 +332,7 @@ public class RequestServer
         // Send request
         try
         {
-            HttpResponseMessage response = await this.client.SendAsync(request);
+            using HttpResponseMessage response = await this.client.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
@@ -351,12 +371,17 @@ public class RequestServer
     public async Task<bool> ActionItem_Request_TransferItem(string membershipType, uint itemHash, string itemID,
         int stackSize, string characterID, bool vaultTransfer)
     {
+        if (!this.profile.Create() || this.profile.AccessTokenExpireDate <= DateTime.UtcNow || membershipType != this.profile.MembershipType)
+        {
+            return false;
+        }
+
         this.logger.LogInformation($"REQUEST: Destiny Item Transfer - {itemID} TO " +
                                    (vaultTransfer ? "Vault" : $"Character({characterID})"));
 
         // Construct HTTP request
         string requestURI = $"https://www.bungie.net/Platform/Destiny2/Actions/Items/TransferItem/";
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, requestURI);
+        using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, requestURI);
 
         // Construct request body in JSON format
         var body = new
@@ -380,7 +405,7 @@ public class RequestServer
         // Send request
         try
         {
-            HttpResponseMessage response = await this.client.SendAsync(request);
+            using HttpResponseMessage response = await this.client.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
@@ -412,11 +437,16 @@ public class RequestServer
     /// <returns>True if bungie returns a successful response, false otherwise.</returns>
     public async Task<bool> ActionItem_Request_EquipItem(string membershipType, string itemID, string characterID)
     {
+        if (!this.profile.Create() || this.profile.AccessTokenExpireDate <= DateTime.UtcNow || membershipType != this.profile.MembershipType)
+        {
+            return false;
+        }
+
         this.logger.LogInformation($"REQUEST: Equip Item - {itemID}, FOR Character - {characterID}");
 
         // Construct HTTP request
         string requestURI = $"https://www.bungie.net/Platform/Destiny2/Actions/Items/EquipItem/";
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, requestURI);
+        using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, requestURI);
 
         // Construct request body in JSON format
         var body = new { membershipType = membershipType, itemID = itemID, characterID = characterID, };
@@ -432,7 +462,7 @@ public class RequestServer
         // Send request
         try
         {
-            HttpResponseMessage response = await this.client.SendAsync(request);
+            using HttpResponseMessage response = await this.client.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
@@ -466,11 +496,16 @@ public class RequestServer
     public async Task<bool> ActionItem_Request_PullFromPostmaster(string membershipType, uint itemHash, string itemID,
         int stackSize, string characterID)
     {
+        if (!this.profile.Create() || this.profile.AccessTokenExpireDate <= DateTime.UtcNow || membershipType != this.profile.MembershipType)
+        {
+            return false;
+        }
+
         this.logger.LogInformation($"REQUEST: Postmaster Pull of Item - {itemID}, FOR Character - {characterID}");
 
         // Construct HTTP request
         string requestURI = $"https://www.bungie.net/Platform/Destiny2/Actions/Items/PullFromPostmaster/";
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, requestURI);
+        using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, requestURI);
 
         // Construct request body in JSON format
         var body = new
@@ -493,7 +528,7 @@ public class RequestServer
         // Send request
         try
         {
-            HttpResponseMessage response = await this.client.SendAsync(request);
+            using HttpResponseMessage response = await this.client.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
@@ -525,7 +560,7 @@ public class RequestServer
         this.logger.LogInformation("REQUEST: Destiny Manifest Versions");
 
         string requestURI = "https://www.bungie.net/Platform/Destiny2/Manifest/";
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
+        using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
 
         request.Headers.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", this.profile.AccessToken);
@@ -535,7 +570,7 @@ public class RequestServer
         try
         {
             // Send Request
-            HttpResponseMessage response = await this.client.SendAsync(request);
+            using HttpResponseMessage response = await this.client.SendAsync(request);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -655,7 +690,7 @@ public class RequestServer
         // Construct HTTP request
         string requestURI =
             $"https://www.bungie.net/Platform/Destiny2/Manifest/DestinyInventoryItemDefinition/{itemHash}";
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
+        using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestURI);
 
         // Add headers
         request.Headers.Authorization =
@@ -666,7 +701,7 @@ public class RequestServer
         // Send request
         try
         {
-            HttpResponseMessage response = await this.client.SendAsync(request);
+            using HttpResponseMessage response = await this.client.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
@@ -705,7 +740,7 @@ public class RequestServer
             request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
             // Send the request
-            using HttpResponseMessage manifestResponse = await this.client.SendAsync(request);
+            using HttpResponseMessage manifestResponse = await this.client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
             if (!manifestResponse.IsSuccessStatusCode)
             {
@@ -745,7 +780,7 @@ public class RequestServer
             request.Headers.UserAgent.ParseAdd($"Dexus/1.0 AppId/{this.auth.Client_ID}");
 
             // Send the request
-            using HttpResponseMessage manifestResponse = await this.client.SendAsync(request);
+            using HttpResponseMessage manifestResponse = await this.client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
             if (!manifestResponse.IsSuccessStatusCode)
             {

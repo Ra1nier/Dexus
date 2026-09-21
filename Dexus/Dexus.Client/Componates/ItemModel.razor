@@ -6,7 +6,8 @@
 @inject Core Core
 
 @{
-    string sizeStyle = $"width: {Size}px; height: {Size}px;";
+    string cardSize = $"max(40px, calc(min({Size}px, var(--vault-base-item-size, {Size}px)) * var(--vault-icon-scale, 1)))";
+    string sizeStyle = $"width: {cardSize}; height: {cardSize};";
     string borderStyle = string.Empty;
     bool hasDisplayData = Item?.Details?.DisplayProperties != null;
     string iconPath = hasDisplayData ? $"https://www.bungie.net{Item!.Details.DisplayProperties.Icon}" : string.Empty;
