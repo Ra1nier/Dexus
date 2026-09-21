@@ -13,6 +13,8 @@ BIND_ADDRESS="${BIND_ADDRESS:-192.168.86.36}"
 ENV_FILE="${ENV_FILE:-.env}"
 RESTART_POLICY="${RESTART_POLICY:-unless-stopped}"
 PIDS_LIMIT="${PIDS_LIMIT:-256}"
+MEMORY_LIMIT="${MEMORY_LIMIT:-1g}"
+CPU_LIMIT="${CPU_LIMIT:-1.0}"
 MANIFEST_VOLUME="${MANIFEST_VOLUME:-${CONTAINER_NAME}-manifest-data}"
 DATA_PROTECTION_VOLUME="${DATA_PROTECTION_VOLUME:-${CONTAINER_NAME}-data-protection}"
 
@@ -32,7 +34,7 @@ Options:
 
 Run configuration can be overridden with environment variables:
   IMAGE_NAME, IMAGE_TAG, CONTAINER_NAME, HOST_PORT, CONTAINER_PORT,
-  BIND_ADDRESS, ENV_FILE, RESTART_POLICY, PIDS_LIMIT,
+  BIND_ADDRESS, ENV_FILE, RESTART_POLICY, PIDS_LIMIT, MEMORY_LIMIT, CPU_LIMIT,
   MANIFEST_VOLUME, and DATA_PROTECTION_VOLUME.
 
 Examples:
@@ -71,6 +73,9 @@ build_image() {
 
 run_image() {
     require_command docker
+
+    [[ "$MEMORY_LIMIT" =~ ^[1-9][0-9]*[mMgG]$ ]] || fail "MEMORY_LIMIT must be a positive size such as 512m or 1g."
+    [[ "$CPU_LIMIT" =~ ^([1-9][0-9]*([.][0-9]+)?|0[.][0-9]*[1-9][0-9]*)$ ]] || fail "CPU_LIMIT must be positive, for example 0.5 or 1.0."
 
     local env_path
     local env_mode
@@ -112,6 +117,12 @@ run_image() {
         --cap-drop ALL \
         --security-opt no-new-privileges=true \
         --pids-limit "$PIDS_LIMIT" \
+        --memory "$MEMORY_LIMIT" \
+        --memory-swap "$MEMORY_LIMIT" \
+        --cpus "$CPU_LIMIT" \
+        --log-driver json-file \
+        --log-opt max-size=10m \
+        --log-opt max-file=3 \
         --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m \
         --env-file "$env_path" \
         --publish "${BIND_ADDRESS}:${HOST_PORT}:${CONTAINER_PORT}" \
