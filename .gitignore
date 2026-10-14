@@ -393,3 +393,6 @@ ClientProfile/data/
 **/JSON/
 
 TransferManager.cs.imp
+
+# Local project learning roadmap
+/PROJECT_TODO.md
